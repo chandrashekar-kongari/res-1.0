@@ -47,6 +47,7 @@ export const InlineSuggestion = Extension.create<InlineSuggestionOptions>({
             // Only clear if it's not our own suggestion being accepted
             if (!meta?.acceptingSuggestion) {
               waitingForNewInput = false;
+              return { decorationSet: DecorationSet.empty };
             }
           }
 
@@ -54,12 +55,13 @@ export const InlineSuggestion = Extension.create<InlineSuggestionOptions>({
           if (meta?.clear) {
             return { decorationSet: DecorationSet.empty };
           }
-          if (meta?.add) {
+          if (meta?.add && meta.decorations) {
             return { decorationSet: meta.decorations };
           }
-          return {
-            decorationSet: state.decorationSet.map(tr.mapping, tr.doc),
-          };
+
+          // Map decorations to new positions
+          const mapped = state.decorationSet.map(tr.mapping, tr.doc);
+          return { decorationSet: mapped };
         },
       },
 
@@ -73,15 +75,25 @@ export const InlineSuggestion = Extension.create<InlineSuggestionOptions>({
             const { state } = view;
             const { $from } = state.selection;
 
-            view.dispatch(
-              state.tr
-                .insertText(currentSuggestion)
-                .setMeta(plugin, { clear: true, acceptingSuggestion: true })
-            );
+            // Validate position before applying suggestion
+            if (!$from.parent.isTextblock) {
+              return false;
+            }
 
-            currentSuggestion = null;
-            waitingForNewInput = true;
-            return true;
+            try {
+              view.dispatch(
+                state.tr
+                  .insertText(currentSuggestion)
+                  .setMeta(plugin, { clear: true, acceptingSuggestion: true })
+              );
+
+              currentSuggestion = null;
+              waitingForNewInput = true;
+              return true;
+            } catch (error) {
+              console.error("Error applying suggestion:", error);
+              return false;
+            }
           }
           return false;
         },
@@ -97,7 +109,13 @@ export const InlineSuggestion = Extension.create<InlineSuggestionOptions>({
             const { state } = view;
             const { $from } = state.selection;
 
-            if (!$from.parent.isTextblock) return;
+            if (!$from.parent.isTextblock) {
+              if (decorations) {
+                view.dispatch(state.tr.setMeta(plugin, { clear: true }));
+                decorations = null;
+              }
+              return;
+            }
 
             const textBefore = $from.parent.textContent;
 
@@ -120,6 +138,12 @@ export const InlineSuggestion = Extension.create<InlineSuggestionOptions>({
             if (timeout) clearTimeout(timeout);
             timeout = setTimeout(async () => {
               try {
+                // Validate that the state hasn't changed significantly
+                const currentState = view.state;
+                if (currentState !== state || !$from.parent.isTextblock) {
+                  return;
+                }
+
                 const suggestion = await options.getSuggestions(textBefore);
                 if (!suggestion) {
                   if (decorations) {
@@ -130,6 +154,11 @@ export const InlineSuggestion = Extension.create<InlineSuggestionOptions>({
                 }
 
                 currentSuggestion = suggestion;
+
+                // Validate position before creating decoration
+                if ($from.pos > currentState.doc.content.size) {
+                  return;
+                }
 
                 // Create ghost text decoration
                 const deco = Decoration.widget($from.pos, () => {
@@ -143,11 +172,19 @@ export const InlineSuggestion = Extension.create<InlineSuggestionOptions>({
                 });
 
                 decorations = DecorationSet.create(state.doc, [deco]);
-                view.dispatch(
-                  state.tr.setMeta(plugin, { add: true, decorations })
-                );
+
+                // Check if state is still valid
+                if (view.state === currentState) {
+                  view.dispatch(
+                    currentState.tr.setMeta(plugin, { add: true, decorations })
+                  );
+                }
               } catch (error) {
                 console.error("Error getting suggestions:", error);
+                if (decorations) {
+                  view.dispatch(state.tr.setMeta(plugin, { clear: true }));
+                  decorations = null;
+                }
               }
             }, options.debounce);
           },

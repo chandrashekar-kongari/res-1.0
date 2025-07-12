@@ -19,6 +19,7 @@ import { ExportDocx } from "@tiptap-pro/extension-export-docx";
 import { ImportDocx } from "@tiptap-pro/extension-import-docx";
 import { Ai } from "@tiptap-pro/extension-ai";
 import { InlineSuggestion } from "@/lib/extensions/inline-suggestion";
+import { InlineReplace } from "@/lib/extensions/inline-replace";
 
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -162,7 +163,11 @@ const TiptapEditor = forwardRef<TiptapEditorRef, TiptapEditorProps>(
         },
       },
       extensions: [
-        StarterKit,
+        StarterKit.configure({
+          // Disable these since we're adding them separately
+          link: false,
+          underline: false,
+        }),
         Image.configure({
           inline: true,
           HTMLAttributes: {
@@ -267,9 +272,28 @@ const TiptapEditor = forwardRef<TiptapEditorRef, TiptapEditorProps>(
           minLength: 2,
           debounce: 300,
           getSuggestions: async (text: string) => {
-            if (text.length < 2) return "";
-
             try {
+              // First detect which mode to use
+              const detectResponse = await fetch("/api/detect-mode", {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                },
+                body: JSON.stringify({ text }),
+              });
+
+              if (!detectResponse.ok) {
+                console.error("Failed to detect mode");
+                return "";
+              }
+
+              const { mode } = await detectResponse.json();
+
+              // If mode is replace, don't show suggestion
+              if (mode === "replace") {
+                return "";
+              }
+
               const response = await fetch("/api/suggest", {
                 method: "POST",
                 headers: {
@@ -278,18 +302,62 @@ const TiptapEditor = forwardRef<TiptapEditorRef, TiptapEditorProps>(
                 body: JSON.stringify({ text }),
               });
 
-              console.log("response", response);
-
               if (!response.ok) {
                 console.error("Failed to get suggestion");
                 return "";
               }
 
               const { suggestion } = await response.json();
-              console.log("suggestion", suggestion);
               return suggestion || "";
             } catch (error) {
               console.error("Error getting suggestion:", error);
+              return "";
+            }
+          },
+        }),
+        InlineReplace.configure({
+          minLength: 2,
+          debounce: 300,
+          getReplacement: async (text: string) => {
+            try {
+              // First detect which mode to use
+              const detectResponse = await fetch("/api/detect-mode", {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                },
+                body: JSON.stringify({ text }),
+              });
+
+              if (!detectResponse.ok) {
+                console.error("Failed to detect mode");
+                return "";
+              }
+
+              const { mode } = await detectResponse.json();
+
+              // If mode is suggest, don't show replacement
+              if (mode === "suggest") {
+                return "";
+              }
+
+              const response = await fetch("/api/rephrase", {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                },
+                body: JSON.stringify({ text }),
+              });
+
+              if (!response.ok) {
+                console.error("Failed to get replacement");
+                return "";
+              }
+
+              const { rephrasedText } = await response.json();
+              return rephrasedText || "";
+            } catch (error) {
+              console.error("Error getting replacement:", error);
               return "";
             }
           },
@@ -661,7 +729,8 @@ const TiptapEditor = forwardRef<TiptapEditorRef, TiptapEditorProps>(
         <div className="p-2 text-sm border-b border-input">
           <div className="flex items-center gap-2 text-gray-600">
             <span>
-              💡 Try typing a sentence and press TAB for AI suggestions
+              💡 Try typing a sentence and press TAB for AI suggestions or
+              replacements
             </span>
             <span className="text-green-600">• AI Extension Loaded</span>
           </div>
