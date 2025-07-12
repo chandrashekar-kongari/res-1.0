@@ -116,6 +116,8 @@ interface TiptapEditorProps {
 export interface TiptapEditorRef {
   getEditorElement: () => HTMLElement | null;
   getEditor: () => any;
+  getHTML: () => string;
+  setHTML: (html: string) => void;
 }
 
 const TiptapEditor = forwardRef<TiptapEditorRef, TiptapEditorProps>(
@@ -438,6 +440,12 @@ const TiptapEditor = forwardRef<TiptapEditorRef, TiptapEditorProps>(
     useImperativeHandle(ref, () => ({
       getEditorElement: () => editorContentRef.current,
       getEditor: () => editor,
+      getHTML: () => editor?.getHTML() ?? "",
+      setHTML: (html: string) => {
+        if (editor) {
+          editor.commands.setContent(html);
+        }
+      },
     }));
 
     const createExport = useCallback(() => {
@@ -725,16 +733,6 @@ const TiptapEditor = forwardRef<TiptapEditorRef, TiptapEditorProps>(
             <span className="text-red-800 text-sm">{error}</span>
           </div>
         )}
-
-        <div className="p-2 text-sm border-b border-input">
-          <div className="flex items-center gap-2 text-gray-600">
-            <span>
-              💡 Try typing a sentence and press TAB for AI suggestions or
-              replacements
-            </span>
-            <span className="text-green-600">• AI Extension Loaded</span>
-          </div>
-        </div>
 
         <div className="p-4" ref={editorContentRef}>
           <EditorContent editor={editor} />
