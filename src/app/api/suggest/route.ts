@@ -20,12 +20,12 @@ export async function POST(request: Request) {
     }
 
     const completion = await openai.chat.completions.create({
-      model: "gpt-3.5-turbo",
+      model: "gpt-4.1",
       messages: [
         {
           role: "system",
           content:
-            "You are a helpful assistant that completes text naturally. Provide only the completion part, not the entire sentence. Keep it concise.",
+            "Suggest only if required, otherwise return empty string. Do not return additional text. Just return the suggestion. You are a helpful assistant that completes text naturally. Provide only the completion part, not the entire sentence. Keep it concise.",
         },
         {
           role: "user",

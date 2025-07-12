@@ -14,12 +14,12 @@ export async function POST(request: Request) {
     }
 
     const completion = await openai.chat.completions.create({
-      model: "gpt-3.5-turbo",
+      model: "gpt-4.1",
       messages: [
         {
           role: "system",
           content:
-            "You are a helpful assistant that rephrases text while maintaining its meaning but improving its clarity and style.",
+            "Rephrase only if required, otherwise return empty string. Do not return additional text. Just return the rephrased text. if no rephrasing is required, just return empty string. You are a helpful assistant that rephrases text while maintaining its meaning but improving its clarity and style.",
         },
         {
           role: "user",
