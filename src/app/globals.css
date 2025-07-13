@@ -108,3 +108,14 @@
   line-height: inherit;
   margin-left: 2px;
 }
+
+/* Preserve inline styles */
+.ProseMirror .inline-styles {
+  all: revert;
+  display: inline;
+}
+
+.ProseMirror span[style] {
+  all: revert;
+  display: inline;
+}

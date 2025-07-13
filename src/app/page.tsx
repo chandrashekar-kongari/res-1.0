@@ -5,10 +5,14 @@ import TiptapEditor, { TiptapEditorRef } from "@/components/tiptap-editor";
 import ChatInput from "./ChatInput";
 import { AppSidebar } from "@/components/app-sidebar";
 import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
+import { Button } from "@/components/ui/button";
+import { Check, X } from "lucide-react";
 
 interface ChatMessage {
   role: "user" | "assistant";
   content: string;
+  newEditorHTML?: string;
+  diffEditorHTML?: string;
 }
 
 export default function Home() {
@@ -16,13 +20,32 @@ export default function Home() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [showingDiff, setShowingDiff] = useState(false);
+  const [originalContent, setOriginalContent] = useState<string>("");
   const editorRef = useRef<TiptapEditorRef>(null);
+
+  const handleAcceptChanges = () => {
+    if (!editorRef.current) return;
+    const currentMessage = messages[messages.length - 1];
+    if (currentMessage?.newEditorHTML) {
+      editorRef.current.setHTML(currentMessage.newEditorHTML);
+      setShowingDiff(false);
+    }
+  };
+
+  const handleRejectChanges = () => {
+    if (!editorRef.current || !originalContent) return;
+    editorRef.current.setHTML(originalContent);
+    setShowingDiff(false);
+  };
 
   const handleSendMessage = async (message: string) => {
     if (!message.trim()) return;
 
     // Get the current editor HTML
     const editorHTML = editorRef.current?.getHTML?.() || "";
+    // Store the original content before any changes
+    setOriginalContent(editorHTML);
 
     const newMessages = [
       ...messages,
@@ -44,14 +67,20 @@ export default function Home() {
         throw new Error("Failed to get response");
       }
 
-      const aiMessage = (await response.json()) as ChatMessage & {
-        newEditorHTML?: string;
-      };
+      const aiMessage = (await response.json()) as ChatMessage;
       setMessages([...newMessages, aiMessage]);
 
       // If the backend returns new editor HTML, update the editor content
       if (aiMessage.newEditorHTML) {
-        editorRef.current?.setHTML?.(aiMessage.newEditorHTML);
+        console.log("newEditorHTML", aiMessage.newEditorHTML);
+        // First show the diff view if available
+        if (aiMessage.diffEditorHTML) {
+          editorRef.current?.setHTML?.(aiMessage.diffEditorHTML);
+          setShowingDiff(true);
+        } else {
+          // If no diff view, just apply the changes directly
+          editorRef.current?.setHTML?.(aiMessage.newEditorHTML);
+        }
       }
     } catch (error) {
       console.error("Failed to get AI response:", error);
@@ -82,6 +111,7 @@ export default function Home() {
                   placeholder=""
                   className="h-full"
                   enableExport={true}
+                  previousState="<p>Hello</p>"
                 />
               </div>
             </div>
@@ -144,7 +174,28 @@ export default function Home() {
               </div>
 
               {/* Chat Input - Fixed at bottom */}
-              <div className="p-4 border-t bg-gray-50/50">
+              <div className="py-1 bg-gray-50/50">
+                {showingDiff && (
+                  <div className="flex items-center justify-end gap-1 py-1 px-2 ">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="flex items-center gap-0.5 text-xs h-6 min-h-0 px-2"
+                      onClick={handleRejectChanges}
+                    >
+                      <X className="w-3 h-3" />
+                      Reject
+                    </Button>
+                    <Button
+                      size="sm"
+                      className="flex items-center gap-0.5 text-xs h-6 min-h-0 px-2"
+                      onClick={handleAcceptChanges}
+                    >
+                      <Check className="w-3 h-3" />
+                      Accept
+                    </Button>
+                  </div>
+                )}
                 <ChatInput onSend={handleSendMessage} />
               </div>
             </div>

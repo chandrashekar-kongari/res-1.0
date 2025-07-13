@@ -114,6 +114,7 @@ interface TiptapEditorProps {
   enableExport?: boolean;
   aiAppId?: string;
   aiToken?: string;
+  previousState?: string;
 }
 
 export interface TiptapEditorRef {
@@ -133,6 +134,7 @@ const TiptapEditor = forwardRef<TiptapEditorRef, TiptapEditorProps>(
       enableExport = false,
       aiAppId = "",
       aiToken = "",
+      previousState = "",
     },
     ref
   ) => {
@@ -194,7 +196,13 @@ const TiptapEditor = forwardRef<TiptapEditorRef, TiptapEditorProps>(
           },
         }),
         TextStyle.configure({
+          HTMLAttributes: {
+            class: "inline-styles",
+          },
           mergeNestedSpanStyles: true,
+        }),
+        Color.configure({
+          types: ["textStyle"],
         }),
         ImportDocx.configure({
           appId: "v91pj729",
@@ -227,100 +235,7 @@ const TiptapEditor = forwardRef<TiptapEditorRef, TiptapEditorProps>(
             setError(`AI Configuration Error: ${error.message}`);
           },
         }),
-        InlineSuggestion.configure({
-          minLength: 2,
-          debounce: 300,
-          getSuggestions: async (text: string) => {
-            try {
-              // First detect which mode to use
-              const detectResponse = await fetch("/api/detect-mode", {
-                method: "POST",
-                headers: {
-                  "Content-Type": "application/json",
-                },
-                body: JSON.stringify({ text }),
-              });
 
-              if (!detectResponse.ok) {
-                console.error("Failed to detect mode");
-                return "";
-              }
-
-              const { mode } = await detectResponse.json();
-
-              // If mode is replace, don't show suggestion
-              if (mode === "replace") {
-                return "";
-              }
-
-              const response = await fetch("/api/suggest", {
-                method: "POST",
-                headers: {
-                  "Content-Type": "application/json",
-                },
-                body: JSON.stringify({ text }),
-              });
-
-              if (!response.ok) {
-                console.error("Failed to get suggestion");
-                return "";
-              }
-
-              const { suggestion } = await response.json();
-              return suggestion || "";
-            } catch (error) {
-              console.error("Error getting suggestion:", error);
-              return "";
-            }
-          },
-        }),
-        InlineReplace.configure({
-          minLength: 2,
-          debounce: 300,
-          getReplacement: async (text: string) => {
-            try {
-              // First detect which mode to use
-              const detectResponse = await fetch("/api/detect-mode", {
-                method: "POST",
-                headers: {
-                  "Content-Type": "application/json",
-                },
-                body: JSON.stringify({ text }),
-              });
-
-              if (!detectResponse.ok) {
-                console.error("Failed to detect mode");
-                return "";
-              }
-
-              const { mode } = await detectResponse.json();
-
-              // If mode is suggest, don't show replacement
-              if (mode === "suggest") {
-                return "";
-              }
-
-              const response = await fetch("/api/rephrase", {
-                method: "POST",
-                headers: {
-                  "Content-Type": "application/json",
-                },
-                body: JSON.stringify({ text }),
-              });
-
-              if (!response.ok) {
-                console.error("Failed to get replacement");
-                return "";
-              }
-
-              const { rephrasedText } = await response.json();
-              return rephrasedText || "";
-            } catch (error) {
-              console.error("Error getting replacement:", error);
-              return "";
-            }
-          },
-        }),
         PageLimit.configure({
           onOverflow: (overflow: boolean) => {
             setIsOverflowing(overflow);
@@ -334,6 +249,9 @@ const TiptapEditor = forwardRef<TiptapEditorRef, TiptapEditorProps>(
       ],
       content,
       onUpdate: ({ editor }) => {
+        console.log("onUpdate", editor.getHTML());
+        console.log("previousState", previousState);
+
         onChange?.(editor.getHTML());
       },
       onSelectionUpdate: ({ editor }) => {

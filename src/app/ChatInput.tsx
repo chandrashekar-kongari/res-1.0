@@ -32,7 +32,10 @@ const ChatInput = ({ onSend }: ChatInputProps) => {
   return (
     <div className="relative flex flex-col w-full rounded-lg bg-white border border-gray-200 p-2">
       <div className="flex-1">
-        <EditorContent editor={editor} className="w-full overflow-y-auto" />
+        <EditorContent
+          editor={editor}
+          className="w-full overflow-y-auto max-h-[100px]"
+        />
       </div>
       <div className="flex justify-end ">
         <Button
