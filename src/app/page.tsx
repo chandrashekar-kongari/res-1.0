@@ -3,6 +3,8 @@
 import { useRef, useState } from "react";
 import TiptapEditor, { TiptapEditorRef } from "@/components/tiptap-editor";
 import ChatInput from "./ChatInput";
+import { AppSidebar } from "@/components/app-sidebar";
+import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
 
 interface ChatMessage {
   role: "user" | "assistant";
@@ -13,6 +15,7 @@ export default function Home() {
   const [content, setContent] = useState(``);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const editorRef = useRef<TiptapEditorRef>(null);
 
   const handleSendMessage = async (message: string) => {
@@ -58,61 +61,96 @@ export default function Home() {
   };
 
   return (
-    <main className="min-h-screen h-screen overflow-hidden">
-      <div className="container mx-auto py-8 h-full relative">
-        <div className="flex gap-4 h-full pr-[400px]">
-          <div className="flex-1 overflow-hidden">
-            <div className="bg-white rounded-lg shadow-lg h-full overflow-auto">
-              <TiptapEditor
-                ref={editorRef}
-                content={content}
-                onChange={setContent}
-                aiAppId="v91pj729"
-                aiToken="eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpYXQiOjE3NTIzNDQzMzksIm5iZiI6MTc1MjM0NDMzOSwiZXhwIjoxNzUyNDMwNzM5LCJpc3MiOiJodHRwczovL2Nsb3VkLnRpcHRhcC5kZXYiLCJhdWQiOiJkM2VhNGU4ZC0xNmJiLTQyNTYtYmE5NC0xNGNiYjhkNjgxOGMifQ.wP1sL4WrSSW42_sRmp53RSBa4bDLsTOWZVkn79ieWLc"
-                placeholder=""
-                className="bg-background focus:outline-none h-full min-h-[1123px]"
-                enableExport={true}
-              />
+    <SidebarProvider
+      defaultOpen={false}
+      open={isSidebarOpen}
+      onOpenChange={setIsSidebarOpen}
+    >
+      <AppSidebar />
+      <div className="flex min-h-screen w-full">
+        <SidebarInset className="flex-1 w-full">
+          <div className="h-screen w-full flex flex-row gap-4 p-4">
+            {/* Editor Section - Left side */}
+            <div className="flex-1 flex flex-col overflow-hidden rounded-lg border shadow-sm bg-background">
+              <div className="flex-1 overflow-hidden">
+                <TiptapEditor
+                  ref={editorRef}
+                  content={content}
+                  onChange={setContent}
+                  aiAppId="v91pj729"
+                  aiToken="eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpYXQiOjE3NTIzNDQzMzksIm5iZiI6MTc1MjM0NDMzOSwiZXhwIjoxNzUyNDMwNzM5LCJpc3MiOiJodHRwczovL2Nsb3VkLnRpcHRhcC5kZXYiLCJhdWQiOiJkM2VhNGU4ZC0xNmJiLTQyNTYtYmE5NC0xNGNiYjhkNjgxOGMifQ.wP1sL4WrSSW42_sRmp53RSBa4bDLsTOWZVkn79ieWLc"
+                  placeholder=""
+                  className="h-full"
+                  enableExport={true}
+                />
+              </div>
             </div>
-          </div>
 
-          <div className="w-[400px] bg-white flex flex-col overflow-hidden fixed top-8 right-4 bottom-8 border rounded-sm">
-            <div className="p-2 border-b">
-              <h2 className="text-sm font-semibold">Chat</h2>
-            </div>
+            {/* Chat Section - Right side */}
+            <div className="w-[400px] flex flex-col overflow-hidden rounded-lg border shadow-sm bg-background">
+              <div className="p-4 border-b bg-gray-50/50">
+                <h2 className="text-lg font-semibold text-gray-900">
+                  AI Assistant
+                </h2>
+                <p className="text-sm text-gray-500 mt-1">
+                  Ask questions about your document
+                </p>
+              </div>
 
-            <div className="flex-1 overflow-y-auto space-y-2 p-2">
-              {messages.map((message, index) => (
-                <div
-                  key={index}
-                  className={`flex ${
-                    message.role === "user" ? "justify-end" : "justify-start"
-                  }`}
-                >
+              {/* Messages Container */}
+              <div className="flex-1 overflow-y-auto p-4 space-y-4">
+                {messages.map((message, index) => (
                   <div
-                    className={`w-full rounded-lg ${
-                      message.role === "user"
-                        ? "bg-black/5 text-black px-4 py-2 rounded-xs"
-                        : "px-2"
+                    key={index}
+                    className={`flex ${
+                      message.role === "user" ? "justify-end" : "justify-start"
                     }`}
                   >
-                    {message.content}
+                    <div
+                      className={`max-w-[85%] rounded-2xl ${
+                        message.role === "user"
+                          ? "bg-blue-500 text-white px-4 py-3 rounded-br-md"
+                          : "bg-gray-100 text-gray-800 px-4 py-3 rounded-bl-md"
+                      }`}
+                    >
+                      <div className="text-sm leading-relaxed whitespace-pre-wrap">
+                        {message.content}
+                      </div>
+                    </div>
                   </div>
-                </div>
-              ))}
-              {isLoading && (
-                <div className="flex justify-start">
-                  <div className="bg-gray-100 rounded-lg p-3">Thinking...</div>
-                </div>
-              )}
-            </div>
+                ))}
+                {isLoading && (
+                  <div className="flex justify-start">
+                    <div className="bg-gray-100 rounded-2xl rounded-bl-md px-4 py-3">
+                      <div className="flex items-center space-x-2">
+                        <div className="flex space-x-1">
+                          <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
+                          <div
+                            className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
+                            style={{ animationDelay: "0.1s" }}
+                          ></div>
+                          <div
+                            className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
+                            style={{ animationDelay: "0.2s" }}
+                          ></div>
+                        </div>
+                        <span className="text-sm text-gray-600">
+                          Thinking...
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
 
-            <div className="p-4 border-t">
-              <ChatInput onSend={handleSendMessage} />
+              {/* Chat Input - Fixed at bottom */}
+              <div className="p-4 border-t bg-gray-50/50">
+                <ChatInput onSend={handleSendMessage} />
+              </div>
             </div>
           </div>
-        </div>
+        </SidebarInset>
       </div>
-    </main>
+    </SidebarProvider>
   );
 }
