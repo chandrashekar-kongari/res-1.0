@@ -121,6 +121,7 @@ export interface TiptapEditorRef {
   getEditor: () => any;
   getHTML: () => string;
   setHTML: (html: string) => void;
+  getText: () => string;
 }
 
 const TiptapEditor = forwardRef<TiptapEditorRef, TiptapEditorProps>(

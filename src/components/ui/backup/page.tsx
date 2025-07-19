@@ -12,7 +12,6 @@ import {
   fetchEventSource,
   EventSourceMessage,
 } from "@microsoft/fetch-event-source";
-import TiptapEditorReplica from "@/components/tiptap-editor-replica";
 
 export interface ChatMessage {
   role: "user" | "assistant";
@@ -29,7 +28,6 @@ export interface ChatMessage {
       oldEditorHTML?: any;
     };
   }>;
-  attachPartOfHTML?: string[]; // <-- Add this line
 }
 
 export default function Home() {
@@ -43,8 +41,6 @@ export default function Home() {
   const [diffContent, setDiffContent] = useState<string>("");
   const [streamingMessage, setStreamingMessage] = useState<string>("");
   const editorRef = useRef<TiptapEditorRef>(null);
-  const replicaRef = useRef<TiptapEditorRef>(null);
-  const [attachPartOfHTML, setAttachPartOfHTML] = useState<string[]>([]);
 
   const handleAcceptChanges = () => {
     if (!editorRef.current) return;
@@ -73,8 +69,6 @@ export default function Home() {
       role: "user",
       content: message.trim(),
       events: [],
-      newEditorHTML: editorHTML, // <-- Attach the current HTML here
-      attachPartOfHTML, // <-- Attach the array of HTML parts here
     };
     // Add user message and an empty AI message for accumulating events
     const updatedMessages = [
@@ -94,11 +88,7 @@ export default function Home() {
       await fetchEventSource("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          messages: updatedMessagesForAI,
-          editorHTML,
-          attachPartOfHTML,
-        }), // <-- Send attachPartOfHTML here
+        body: JSON.stringify({ messages: updatedMessagesForAI, editorHTML }),
         onmessage(ev: EventSourceMessage) {
           if (ev.data) {
             try {
@@ -125,7 +115,7 @@ export default function Home() {
                 event?.data?.event?.item?.type == "function_call" &&
                 event?.data?.event?.item?.status == "completed"
               ) {
-                console.log("event: ", event);
+                // console.log("event: ", event);
 
                 // Accumulate events in the last AI message
                 setMessages((prev) => {
@@ -169,7 +159,7 @@ export default function Home() {
 
                   if (responseObj[0]?.content) {
                     const res = JSON.parse(responseObj[0]?.content[0]?.text);
-                    console.log("res: ", res);
+                    // console.log("res: ", res);
                     if (res?.diffEditorHTML) {
                       const htmlOfEditor = editorRef.current?.getHTML?.();
                       // console.log("htmlOfEditor: ", htmlOfEditor);
@@ -180,19 +170,6 @@ export default function Home() {
                             "oldEditorHTML not found in current editor HTML!"
                           );
                         }
-                        const replicaInitialHTML =
-                          replicaRef.current?.getHTML();
-                        if (replicaInitialHTML) {
-                          replicaRef.current?.setHTML(
-                            replicaInitialHTML.replace(
-                              replicaInitialHTML,
-                              res?.diffEditorHTML
-                            )
-                          );
-                        }
-                        const replicaHtml = replicaRef.current
-                          ?.getHTML()
-                          ?.replace(/<p><\/p>\s*$/, "");
                         const newHtml = htmlOfEditor.replace(
                           res?.oldEditorHTML,
                           res?.diffEditorHTML
@@ -220,7 +197,7 @@ export default function Home() {
                                         ...e,
                                         status: true,
                                         output: {
-                                          diffEditorHTML: replicaHtml,
+                                          diffEditorHTML: res?.diffEditorHTML,
                                           newEditorHTML: res?.newEditorHTML,
                                           oldEditorHTML: res?.oldEditorHTML,
                                         },
@@ -235,6 +212,42 @@ export default function Home() {
                         });
                       }
                     }
+                  }
+                }
+              } else if (event?.item?.type == "message_output_item") {
+                if (event?.item?.rawItem?.content?.length > 0) {
+                  const messageObj = event?.item?.rawItem?.content[0];
+                  if (messageObj?.type == "output_text") {
+                    // Simulate streaming by revealing text character by character
+                    const textObj = messageObj.text;
+                    const responseObj = JSON.parse(textObj);
+                    const newEditorHTML = responseObj.newEditorHTML;
+                    const diffEditorHTML = responseObj.diffEditorHTML;
+                    const fullText = responseObj.response;
+                    if (diffEditorHTML && newEditorHTML) {
+                      // console.log("diffEditorHTML: ", diffEditorHTML);
+                      // console.log("newEditorHTML: ", newEditorHTML);
+                      // editorRef.current?.setHTML?.(diffEditorHTML);
+                      // setDiffContent(diffEditorHTML);
+                      // setUpdatedContent(newEditorHTML);
+                      // setShowingDiff(true);
+                    }
+                    let currentIndex = 0;
+                    setMessages((prev) => {
+                      const lastIndex = prev.length - 1;
+                      if (
+                        lastIndex >= 0 &&
+                        prev[lastIndex].role === "assistant"
+                      ) {
+                        const updated = [...prev];
+                        updated[lastIndex] = {
+                          ...updated[lastIndex],
+                          content: fullText,
+                        };
+                        return updated;
+                      }
+                      return prev;
+                    });
                   }
                 }
               }
@@ -291,9 +304,8 @@ export default function Home() {
                   placeholder=""
                   className="h-full"
                   enableExport={true}
-                  setAttachPartOfHTML={setAttachPartOfHTML}
+                  previousState="<p>Hello</p>"
                 />
-                <TiptapEditorReplica ref={replicaRef} />
               </div>
             </div>
 
@@ -312,7 +324,6 @@ export default function Home() {
               handleRejectChanges={handleRejectChanges}
               handleAcceptChanges={handleAcceptChanges}
               handleSendMessage={handleSendMessage}
-              canvasEditor={editorRef}
             />
           </div>
         </SidebarInset>

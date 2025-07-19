@@ -119,3 +119,11 @@
   all: revert;
   display: inline;
 }
+
+/* Pagination Breaks for Tiptap */
+.page-break {
+  height: 20px;
+  width: 100%;
+  border-top: 1px dashed #ccc;
+  margin: 10px 0;
+}
