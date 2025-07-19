@@ -12,6 +12,7 @@ interface PaginationPlusOptions {
   footerLeft: string;
   headerRight: string;
   headerLeft: string;
+  maxPages: number;
 }
 const page_count_meta_key = "PAGE_COUNT_META_KEY";
 export const PaginationPlus = Extension.create<PaginationPlusOptions>({
@@ -27,6 +28,7 @@ export const PaginationPlus = Extension.create<PaginationPlusOptions>({
       footerLeft: "",
       headerRight: "",
       headerLeft: "",
+      maxPages: 3,
     };
   },
   onCreate() {
@@ -207,6 +209,9 @@ const calculatePageCount = (
     pageOptions.pageHeight - pageOptions.pageHeaderHeight * 2;
   const paginationElement = editorDom.querySelector("[data-rm-pagination]");
   const currentPageCount = getExistingPageCount(view);
+
+  let calculatedPageCount = 1;
+
   if (paginationElement) {
     const lastElementOfEditor = editorDom.lastElementChild;
     const lastPageBreak =
@@ -217,28 +222,30 @@ const calculatePageCount = (
         lastPageBreak.getBoundingClientRect().bottom;
       if (lastPageGap > 0) {
         const addPage = Math.ceil(lastPageGap / pageContentAreaHeight);
-        return currentPageCount + addPage;
+        calculatedPageCount = currentPageCount + addPage;
       } else {
         const lpFrom = -pageOptions.pageHeaderHeight;
         const lpTo = -(pageOptions.pageHeight - pageOptions.pageHeaderHeight);
         if (lastPageGap > lpTo && lastPageGap < lpFrom) {
-          return currentPageCount;
+          calculatedPageCount = currentPageCount;
         } else if (lastPageGap < lpTo) {
           const pageHeightOnRemove =
             pageOptions.pageHeight + pageOptions.pageGap;
           const removePage = Math.floor(lastPageGap / pageHeightOnRemove);
-          return currentPageCount + removePage;
+          calculatedPageCount = currentPageCount + removePage;
         } else {
-          return currentPageCount;
+          calculatedPageCount = currentPageCount;
         }
       }
     }
-    return 1;
   } else {
     const editorHeight = editorDom.scrollHeight;
-    const pageCount = Math.ceil(editorHeight / pageContentAreaHeight);
-    return pageCount <= 0 ? 1 : pageCount;
+    calculatedPageCount = Math.ceil(editorHeight / pageContentAreaHeight);
+    calculatedPageCount = calculatedPageCount <= 0 ? 1 : calculatedPageCount;
   }
+
+  // Respect the maxPages limit
+  return Math.min(calculatedPageCount, pageOptions.maxPages);
 };
 
 function createDecoration(
@@ -254,7 +261,7 @@ function createDecoration(
       const _pageHeight = pageOptions.pageHeight - _pageHeaderHeight * 2;
       const _pageBreakBackground = pageOptions.pageBreakBackground;
 
-      const breakerWidth = view.dom.clientWidth;
+      const breakerWidth = 794; // A4 width in pixels (210mm at 96 DPI)
 
       const el = document.createElement("div");
       el.dataset.rmPagination = "true";

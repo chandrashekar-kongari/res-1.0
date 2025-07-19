@@ -14,7 +14,6 @@ import TableRow from "@tiptap/extension-table-row";
 import TextAlign from "@tiptap/extension-text-align";
 import { TextStyle } from "@tiptap/extension-text-style";
 import Underline from "@tiptap/extension-underline";
-import { Ai } from "@tiptap-pro/extension-ai";
 import Document from "@tiptap/extension-document";
 import Paragraph from "@tiptap/extension-paragraph";
 import Text from "@tiptap/extension-text";
@@ -70,11 +69,6 @@ const DiffEditor = ({ html }: { html: string }) => {
         }),
         FontFamily,
         Underline,
-        Ai.configure({
-          appId: "",
-          token: "",
-          autocompletion: false,
-        }),
         // Do NOT include PageLimit or PaginationPlus here
       ],
     });

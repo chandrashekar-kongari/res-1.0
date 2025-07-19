@@ -15,17 +15,10 @@ import TableRow from "@tiptap/extension-table-row";
 import TextAlign from "@tiptap/extension-text-align";
 import { TextStyle } from "@tiptap/extension-text-style";
 import Underline from "@tiptap/extension-underline";
-import { Ai } from "@tiptap-pro/extension-ai";
 import { InlineSuggestion } from "@/lib/extensions/inline-suggestion";
 import { InlineReplace } from "@/lib/extensions/inline-replace";
 import { PageLimit } from "@/lib/extensions/page-limit";
 import { PaginationPlus } from "@/lib/extensions/pagination-plus";
-import {
-  SkillsSection,
-  ExperienceSection,
-  EducationSection,
-  ProjectsSection,
-} from "@/lib/extensions/sections";
 
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -164,10 +157,6 @@ const TiptapEditorReplica = forwardRef<TiptapEditorRef, TiptapEditorProps>(
         },
       },
       extensions: [
-        SkillsSection,
-        ExperienceSection,
-        EducationSection,
-        ProjectsSection,
         Document,
         Paragraph,
         Text,
@@ -211,18 +200,6 @@ const TiptapEditorReplica = forwardRef<TiptapEditorRef, TiptapEditorProps>(
         }),
         FontFamily,
         Underline,
-        Ai.configure({
-          appId: aiAppId,
-          token: aiToken,
-          autocompletion: true,
-          autocompletionOptions: {
-            debounce: 10,
-            inputLength: 4000,
-          },
-          onError: (error: Error) => {
-            setError(`AI Configuration Error: ${error.message}`);
-          },
-        }),
         PageLimit.configure({
           onOverflow: (overflow: boolean) => {
             setIsOverflowing(overflow);
@@ -234,9 +211,11 @@ const TiptapEditorReplica = forwardRef<TiptapEditorRef, TiptapEditorProps>(
           },
         }),
         PaginationPlus.configure({
-          pageHeight: 1000,
+          pageHeight: 1123, // A4 height: 297mm = 1123px at 96 DPI
           pageGap: 20,
           pageBreakBackground: "#f7f7f7",
+          pageHeaderHeight: 30,
+          maxPages: 10, // Allow more pages for longer documents
         }),
       ],
       content,

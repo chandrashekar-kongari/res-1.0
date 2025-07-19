@@ -8,28 +8,38 @@ import Highlight from "@tiptap/extension-highlight";
 import { Image } from "@tiptap/extension-image";
 import Link from "@tiptap/extension-link";
 import Placeholder from "@tiptap/extension-placeholder";
-import { Table } from "@tiptap/extension-table";
-import TableCell from "@tiptap/extension-table-cell";
-import TableHeader from "@tiptap/extension-table-header";
-import TableRow from "@tiptap/extension-table-row";
 import TextAlign from "@tiptap/extension-text-align";
 import { TextStyle } from "@tiptap/extension-text-style";
 import Underline from "@tiptap/extension-underline";
-import { Ai } from "@tiptap-pro/extension-ai";
-import { InlineSuggestion } from "@/lib/extensions/inline-suggestion";
-import { InlineReplace } from "@/lib/extensions/inline-replace";
+import {
+  FontBoldIcon,
+  FontItalicIcon,
+  FontSizeIcon,
+  Link2Icon,
+  ListBulletIcon,
+  TextAlignCenterIcon,
+  TextAlignJustifyIcon,
+  TextAlignLeftIcon,
+  TextAlignRightIcon,
+  UnderlineIcon,
+  TextIcon,
+  FontStyleIcon,
+  ResetIcon,
+  BorderBottomIcon,
+} from "@radix-ui/react-icons";
+
 import { PageLimit } from "@/lib/extensions/page-limit";
 import { PaginationPlus } from "@/lib/extensions/pagination-plus";
-import {
-  SkillsSection,
-  ExperienceSection,
-  EducationSection,
-  ProjectsSection,
-} from "@/lib/extensions/sections";
 
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Toggle } from "@/components/ui/toggle";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   forwardRef,
   useImperativeHandle,
@@ -37,34 +47,16 @@ import {
   useState,
   useCallback,
 } from "react";
-import {
-  Bold as BoldIcon,
-  Italic as ItalicIcon,
-  Underline as UnderlineIcon,
-  Heading1,
-  Heading2,
-  Heading3,
-  List,
-  ListOrdered,
-  Undo,
-  Redo,
-  AlignLeft,
-  AlignCenter,
-  AlignRight,
-  AlignJustify,
-  Upload,
-  Download,
-  Type,
-  MessageSquarePlus,
-} from "lucide-react";
+
 import { cn } from "@/lib/utils";
-import Stream from "stream";
-import { exportToPDF } from "@/lib/pdf-export";
 import Document from "@tiptap/extension-document";
 import Paragraph from "@tiptap/extension-paragraph";
 import Text from "@tiptap/extension-text";
 import { getHTMLFromFragment } from "@tiptap/core";
 import { trpc } from "@/lib/trpc";
+import { DownloadIcon, HeadingIcon } from "lucide-react";
+import { BorderBottom } from "@/lib/extensions/border-bottom";
+import { CustomHeading } from "@/lib/extensions/custom-heading";
 
 interface FloatingButtonProps {
   x: number;
@@ -86,32 +78,69 @@ const FloatingButton = ({
       top: `${y}px`,
       transform: "translateY(-100%)",
       zIndex: 50,
-      padding: "4px",
+      padding: "2px",
       display: "flex",
-      gap: "4px",
+      gap: "2px",
+      backgroundColor: "white",
+      border: "1px solid #e0e0e0",
+      borderRadius: "4px",
+      boxShadow: "0 1px 2px rgba(0, 0, 0, 0.1)",
     }}
   >
     <Button
       size="sm"
-      className="bg-primary text-primary-foreground hover:bg-primary/90 shadow-md"
+      variant="ghost"
+      className="text-xs rounded-none p-1 h-fit"
       onClick={(e) => {
         e.preventDefault();
         onAddToChat();
       }}
     >
-      <MessageSquarePlus className="h-4 w-4 mr-1" />
       Add to Chat
     </Button>
     <Button
       size="sm"
-      variant="secondary"
-      className="shadow-md"
+      variant="ghost"
+      className="text-xs rounded-none p-1 h-fit"
       onClick={(e) => {
         e.preventDefault();
         onReplaceText();
       }}
     >
-      Replace Text
+      <FontBoldIcon className="h-4 w-4" />
+    </Button>
+    <Button
+      size="sm"
+      variant="ghost"
+      className="text-xs rounded-none p-1 h-fit"
+      onClick={(e) => {
+        e.preventDefault();
+        onReplaceText();
+      }}
+    >
+      <FontItalicIcon className="h-4 w-4" />
+    </Button>
+    <Button
+      size="sm"
+      variant="ghost"
+      className="text-xs rounded-none p-1 h-fit"
+      onClick={(e) => {
+        e.preventDefault();
+        onReplaceText();
+      }}
+    >
+      <Link2Icon className="h-4 w-4" />
+    </Button>
+    <Button
+      size="sm"
+      variant="ghost"
+      className="text-xs rounded-none p-1 h-fit"
+      onClick={(e) => {
+        e.preventDefault();
+        onReplaceText();
+      }}
+    >
+      <FontSizeIcon className="h-4 w-4" />
     </Button>
   </div>
 );
@@ -178,9 +207,9 @@ const TiptapEditor = forwardRef<TiptapEditorRef, TiptapEditorProps>(
       editorProps: {
         attributes: {
           class: cn(
-            "!outline-none min-h-[150px] prose prose-sm max-w-none",
+            "!outline-none min-h-[150px] max-w-none",
             // Add custom spacing overrides
-            "[&>*]:my-1 [&_p]:my-1 [&_h1]:mt-3 [&_h2]:mt-2 [&_h3]:mt-2 mx-auto !focus:outline-none min-h-[200px] px-10",
+            "!focus:outline-none min-h-[200px] px-[42px]",
             // Force remove all outline styles
             "!outline-0 !focus:outline-0 !active:outline-0 !focus-visible:outline-0"
           ),
@@ -190,17 +219,23 @@ const TiptapEditor = forwardRef<TiptapEditorRef, TiptapEditorProps>(
         },
       },
       extensions: [
-        SkillsSection,
-        ExperienceSection,
-        EducationSection,
-        ProjectsSection,
         Document,
-        Paragraph,
+        Paragraph.configure({
+          HTMLAttributes: {
+            style:
+              "font-size: 12px; margin: 0; padding: 0; line-height: 1; font-family: Calibri, Arial, sans-serif;",
+          },
+        }),
         Text,
         StarterKit.configure({
           // Disable these since we're adding them separately
           link: false,
           underline: false,
+          heading: false, // Disable default heading to add custom one
+          paragraph: false, // Disable default paragraph to add custom one
+        }),
+        CustomHeading.configure({
+          levels: [1, 2, 3, 4, 5, 6],
         }),
         Image.configure({
           inline: true,
@@ -241,19 +276,7 @@ const TiptapEditor = forwardRef<TiptapEditorRef, TiptapEditorProps>(
 
         FontFamily,
         Underline,
-        Ai.configure({
-          appId: aiAppId,
-          token: aiToken,
-          autocompletion: true,
-          autocompletionOptions: {
-            debounce: 10,
-            inputLength: 4000,
-          },
-          onError: (error: Error) => {
-            console.error("AI Extension Error:", error);
-            setError(`AI Configuration Error: ${error.message}`);
-          },
-        }),
+        BorderBottom,
 
         PageLimit.configure({
           onOverflow: (overflow: boolean) => {
@@ -266,10 +289,11 @@ const TiptapEditor = forwardRef<TiptapEditorRef, TiptapEditorProps>(
           },
         }),
         PaginationPlus.configure({
-          pageHeight: 1000,
+          pageHeight: 1123, // A4 height: 297mm = 1123px at 96 DPI
           pageGap: 20,
           pageBreakBackground: "#f7f7f7",
-          // pageHeaderHeight: 50,
+          pageHeaderHeight: 37.8,
+          maxPages: 10, // Allow more pages for longer documents
         }),
       ],
       content,
@@ -387,6 +411,7 @@ const TiptapEditor = forwardRef<TiptapEditorRef, TiptapEditorProps>(
 
       try {
         const html = editor.getHTML();
+        console.log("html", html);
         const response = await fetch("/api/export-pdf", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -422,15 +447,15 @@ const TiptapEditor = forwardRef<TiptapEditorRef, TiptapEditorProps>(
       <div className="flex flex-col h-full  min-w-[794px]">
         {/* Toolbar - Fixed at top */}
         <div className="sticky top-0 z-10 border-b justify-center flex flex-row">
-          <div className="p-1 flex flex-wrap gap-1 items-center">
-            <Separator orientation="vertical" className="mx-1 h-6" />
+          <div className="p-[2px] flex flex-wrap gap-1 items-center">
+            <Separator orientation="vertical" className=" h-6" />
 
             <Toggle
               size="sm"
               pressed={editor.isActive("bold")}
               onPressedChange={() => editor.chain().focus().toggleBold().run()}
             >
-              <BoldIcon className="h-4 w-4" />
+              <FontBoldIcon className="h-4 w-4" />
             </Toggle>
             <Toggle
               size="sm"
@@ -439,7 +464,7 @@ const TiptapEditor = forwardRef<TiptapEditorRef, TiptapEditorProps>(
                 editor.chain().focus().toggleItalic().run()
               }
             >
-              <ItalicIcon className="h-4 w-4" />
+              <FontItalicIcon className="h-4 w-4" />
             </Toggle>
             <Toggle
               size="sm"
@@ -452,33 +477,98 @@ const TiptapEditor = forwardRef<TiptapEditorRef, TiptapEditorProps>(
             </Toggle>
 
             <Separator orientation="vertical" className="mx-1 h-6" />
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="sm" className="h-8 px-2">
+                  {editor.isActive("heading", { level: 1 })
+                    ? "30px"
+                    : editor.isActive("heading", { level: 2 })
+                    ? "24px"
+                    : editor.isActive("heading", { level: 3 })
+                    ? "20px"
+                    : editor.isActive("heading", { level: 4 })
+                    ? "16px"
+                    : editor.isActive("heading", { level: 5 })
+                    ? "14px"
+                    : editor.isActive("heading", { level: 6 })
+                    ? "12px"
+                    : "Text"}
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start">
+                <DropdownMenuItem
+                  onClick={() =>
+                    editor.chain().focus().toggleHeading({ level: 6 }).run()
+                  }
+                  className={cn(
+                    editor.isActive("heading", { level: 6 }) && "bg-accent"
+                  )}
+                >
+                  12px
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() =>
+                    editor.chain().focus().toggleHeading({ level: 5 }).run()
+                  }
+                  className={cn(
+                    editor.isActive("heading", { level: 5 }) && "bg-accent"
+                  )}
+                >
+                  14px
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() =>
+                    editor.chain().focus().toggleHeading({ level: 4 }).run()
+                  }
+                  className={cn(
+                    editor.isActive("heading", { level: 4 }) && "bg-accent"
+                  )}
+                >
+                  16px
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() =>
+                    editor.chain().focus().toggleHeading({ level: 3 }).run()
+                  }
+                  className={cn(
+                    editor.isActive("heading", { level: 3 }) && "bg-accent"
+                  )}
+                >
+                  20px
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() =>
+                    editor.chain().focus().toggleHeading({ level: 2 }).run()
+                  }
+                  className={cn(
+                    editor.isActive("heading", { level: 2 }) && "bg-accent"
+                  )}
+                >
+                  24px
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() =>
+                    editor.chain().focus().toggleHeading({ level: 1 }).run()
+                  }
+                  className={cn(
+                    editor.isActive("heading", { level: 1 }) && "bg-accent"
+                  )}
+                >
+                  30px
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+
+            <Separator orientation="vertical" className="mx-1 h-6" />
 
             <Toggle
               size="sm"
-              pressed={editor.isActive("heading", { level: 1 })}
+              pressed={editor.getAttributes("paragraph").borderBottom}
               onPressedChange={() =>
-                editor.chain().focus().toggleHeading({ level: 1 }).run()
+                editor.chain().focus().toggleBorderBottom().run()
               }
             >
-              <Heading1 className="h-4 w-4" />
-            </Toggle>
-            <Toggle
-              size="sm"
-              pressed={editor.isActive("heading", { level: 2 })}
-              onPressedChange={() =>
-                editor.chain().focus().toggleHeading({ level: 2 }).run()
-              }
-            >
-              <Heading2 className="h-4 w-4" />
-            </Toggle>
-            <Toggle
-              size="sm"
-              pressed={editor.isActive("heading", { level: 3 })}
-              onPressedChange={() =>
-                editor.chain().focus().toggleHeading({ level: 3 }).run()
-              }
-            >
-              <Heading3 className="h-4 w-4" />
+              <BorderBottomIcon className="h-4 w-4" />
             </Toggle>
 
             <Separator orientation="vertical" className="mx-1 h-6" />
@@ -491,7 +581,7 @@ const TiptapEditor = forwardRef<TiptapEditorRef, TiptapEditorProps>(
                 editor.chain().focus().toggleBulletList().run()
               }
             >
-              <List className="h-4 w-4" />
+              <ListBulletIcon className="h-4 w-4" />
             </Toggle>
             <Toggle
               size="sm"
@@ -500,7 +590,7 @@ const TiptapEditor = forwardRef<TiptapEditorRef, TiptapEditorProps>(
                 editor.chain().focus().toggleOrderedList().run()
               }
             >
-              <ListOrdered className="h-4 w-4" />
+              <ListBulletIcon className="h-4 w-4" />
             </Toggle>
 
             <Separator orientation="vertical" className="mx-1 h-6" />
@@ -512,7 +602,7 @@ const TiptapEditor = forwardRef<TiptapEditorRef, TiptapEditorProps>(
                 editor.chain().focus().setTextAlign("left").run()
               }
             >
-              <AlignLeft className="h-4 w-4" />
+              <TextAlignLeftIcon className="h-4 w-4" />
             </Toggle>
             <Toggle
               size="sm"
@@ -521,7 +611,7 @@ const TiptapEditor = forwardRef<TiptapEditorRef, TiptapEditorProps>(
                 editor.chain().focus().setTextAlign("center").run()
               }
             >
-              <AlignCenter className="h-4 w-4" />
+              <TextAlignCenterIcon className="h-4 w-4" />
             </Toggle>
             <Toggle
               size="sm"
@@ -530,7 +620,7 @@ const TiptapEditor = forwardRef<TiptapEditorRef, TiptapEditorProps>(
                 editor.chain().focus().setTextAlign("right").run()
               }
             >
-              <AlignRight className="h-4 w-4" />
+              <TextAlignRightIcon className="h-4 w-4" />
             </Toggle>
             <Toggle
               size="sm"
@@ -539,7 +629,7 @@ const TiptapEditor = forwardRef<TiptapEditorRef, TiptapEditorProps>(
                 editor.chain().focus().setTextAlign("justify").run()
               }
             >
-              <AlignJustify className="h-4 w-4" />
+              <TextAlignJustifyIcon className="h-4 w-4" />
             </Toggle>
 
             <Separator orientation="vertical" className="mx-1 h-6" />
@@ -560,7 +650,7 @@ const TiptapEditor = forwardRef<TiptapEditorRef, TiptapEditorProps>(
                 }) && "bg-accent"
               )}
             >
-              <Type className="h-4 w-4" />
+              <TextIcon className="h-4 w-4" />
             </Button>
             <Button
               variant="ghost"
@@ -573,7 +663,7 @@ const TiptapEditor = forwardRef<TiptapEditorRef, TiptapEditorProps>(
                   "bg-accent"
               )}
             >
-              <Type className="h-4 w-4" />
+              <FontStyleIcon className="h-4 w-4" />
             </Button>
 
             <Separator orientation="vertical" className="mx-1 h-6" />
@@ -584,7 +674,7 @@ const TiptapEditor = forwardRef<TiptapEditorRef, TiptapEditorProps>(
               onClick={() => editor.chain().focus().undo().run()}
               disabled={!editor.can().undo()}
             >
-              <Undo className="h-4 w-4" />
+              <ResetIcon className="h-4 w-4" />
             </Button>
             <Button
               variant="ghost"
@@ -592,18 +682,20 @@ const TiptapEditor = forwardRef<TiptapEditorRef, TiptapEditorProps>(
               onClick={() => editor.chain().focus().redo().run()}
               disabled={!editor.can().redo()}
             >
-              <Redo className="h-4 w-4" />
+              <ResetIcon className="h-4 w-4" />
             </Button>
             <Button
               size="sm"
               onClick={createPDFExport}
               disabled={isLoading || editor.isEmpty}
+              variant="ghost"
             >
               PDF
-              <Download className="h-4 w-4 ml-1" />
+              <DownloadIcon className="h-4 w-4 ml-1" />
             </Button>
             <Button
               size="sm"
+              variant="ghost"
               onClick={() => {
                 saveResume({
                   content: editor.getHTML(),
