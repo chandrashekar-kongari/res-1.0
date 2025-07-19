@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { ChevronsUpDown, LoaderIcon, X } from "lucide-react";
+import { ChevronsUpDown, History, LoaderIcon, Plus, X } from "lucide-react";
 import { Check } from "lucide-react";
 import ChatInput from "./ChatInput";
 import ReactMarkdown from "react-markdown";
@@ -142,12 +142,19 @@ const ChatUI = ({
   };
 
   return (
-    <div className="w-[350px] flex flex-col overflow-hidden rounded-lg border shadow-sm bg-background">
-      <div className="p-4 border-b bg-gray-50/50">
-        <h2 className="text-lg font-semibold text-gray-900">AI Assistant</h2>
-        <p className="text-sm text-gray-500 mt-1">
-          Ask questions about your document
-        </p>
+    <div className="w-[390px] flex flex-col overflow-hidden rounded-lg border shadow-sm bg-background">
+      <div className="py-[2px] border-b flex flex-row justify-between items-center">
+        <div>
+          <p className="p-2 text-sm font-semibold">New Chat</p>
+        </div>
+        <div className="flex flex-row gap-2 items-center ">
+          <Button variant="ghost" size="sm">
+            <Plus className="w-8 h-8 text-black/80" />
+          </Button>
+          <Button variant="ghost" size="sm">
+            <History className="w-8 h-8 text-black/80" />
+          </Button>
+        </div>
       </div>
 
       {/* Messages Container */}

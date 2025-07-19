@@ -48,20 +48,20 @@ const ChatInput = ({ onSend }: ChatInputProps) => {
   }, [editor, onSend]);
 
   return (
-    <div className="relative flex flex-col w-full rounded-lg bg-white border border-gray-200 p-2">
+    <div className="relative flex flex-col w-full rounded-lg bg-white border-t px-2 pt-2 pb-0 mb-0">
       <div className="flex flex-col">
         <div className="flex-1">
           <div
             ref={editorContainerRef}
-            className="w-full overflow-y-auto max-h-[150px] scroll-smooth"
+            className="w-full overflow-y-auto max-h-[150px] min-h-[50px] scroll-smooth"
           >
             <EditorContent editor={editor} />
           </div>
         </div>
-        <div className="flex justify-end mt-2">
+        <div className="flex justify-end ">
           <Button
             onClick={handleSend}
-            className="shrink-0 bg-white text-gray-700 hover:bg-gray-50 hover:text-gray-900 rounded-full border border-gray-200 w-6 h-6 p-0 flex items-center justify-center"
+            className="shrink-0 bg-white text-black/80 hover:bg-gray-50 hover:text-black/90 rounded-full border border-black/20 w-6 h-6 p-0 flex items-center justify-center"
           >
             <ArrowUp className="w-3 h-3" />
           </Button>
