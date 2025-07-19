@@ -8,16 +8,10 @@ import Highlight from "@tiptap/extension-highlight";
 import { Image } from "@tiptap/extension-image";
 import Link from "@tiptap/extension-link";
 import Placeholder from "@tiptap/extension-placeholder";
-import { Table } from "@tiptap/extension-table";
-import TableCell from "@tiptap/extension-table-cell";
-import TableHeader from "@tiptap/extension-table-header";
-import TableRow from "@tiptap/extension-table-row";
 import TextAlign from "@tiptap/extension-text-align";
 import { TextStyle } from "@tiptap/extension-text-style";
 import Underline from "@tiptap/extension-underline";
-import { Ai } from "@tiptap-pro/extension-ai";
-import { InlineSuggestion } from "@/lib/extensions/inline-suggestion";
-import { InlineReplace } from "@/lib/extensions/inline-replace";
+
 import { PageLimit } from "@/lib/extensions/page-limit";
 import { PaginationPlus } from "@/lib/extensions/pagination-plus";
 import {
@@ -241,19 +235,6 @@ const TiptapEditor = forwardRef<TiptapEditorRef, TiptapEditorProps>(
 
         FontFamily,
         Underline,
-        Ai.configure({
-          appId: aiAppId,
-          token: aiToken,
-          autocompletion: true,
-          autocompletionOptions: {
-            debounce: 10,
-            inputLength: 4000,
-          },
-          onError: (error: Error) => {
-            console.error("AI Extension Error:", error);
-            setError(`AI Configuration Error: ${error.message}`);
-          },
-        }),
 
         PageLimit.configure({
           onOverflow: (overflow: boolean) => {

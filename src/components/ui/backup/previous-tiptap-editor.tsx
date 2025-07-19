@@ -15,7 +15,6 @@ import TableRow from "@tiptap/extension-table-row";
 import TextAlign from "@tiptap/extension-text-align";
 import { TextStyle } from "@tiptap/extension-text-style";
 import Underline from "@tiptap/extension-underline";
-import { ExportDocx } from "@tiptap-pro/extension-export-docx";
 import { ImportDocx } from "@tiptap-pro/extension-import-docx";
 import { Ai } from "@tiptap-pro/extension-ai";
 import { InlineSuggestion } from "@/lib/extensions/inline-suggestion";

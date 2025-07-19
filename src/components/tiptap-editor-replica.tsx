@@ -15,7 +15,6 @@ import TableRow from "@tiptap/extension-table-row";
 import TextAlign from "@tiptap/extension-text-align";
 import { TextStyle } from "@tiptap/extension-text-style";
 import Underline from "@tiptap/extension-underline";
-import { Ai } from "@tiptap-pro/extension-ai";
 import { InlineSuggestion } from "@/lib/extensions/inline-suggestion";
 import { InlineReplace } from "@/lib/extensions/inline-replace";
 import { PageLimit } from "@/lib/extensions/page-limit";
@@ -211,18 +210,6 @@ const TiptapEditorReplica = forwardRef<TiptapEditorRef, TiptapEditorProps>(
         }),
         FontFamily,
         Underline,
-        Ai.configure({
-          appId: aiAppId,
-          token: aiToken,
-          autocompletion: true,
-          autocompletionOptions: {
-            debounce: 10,
-            inputLength: 4000,
-          },
-          onError: (error: Error) => {
-            setError(`AI Configuration Error: ${error.message}`);
-          },
-        }),
         PageLimit.configure({
           onOverflow: (overflow: boolean) => {
             setIsOverflowing(overflow);
