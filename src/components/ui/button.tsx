@@ -10,7 +10,7 @@ const buttonVariants = cva(
     variants: {
       variant: {
         default:
-          "bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] shadow-xs hover:bg-[hsl(var(--primary))/0.9]",
+          "bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] shadow-xs hover:bg-[hsl(var(--primary-hover))]",
         destructive:
           "bg-[hsl(var(--destructive))] text-white shadow-xs hover:bg-[hsl(var(--destructive))/0.9] focus-visible:ring-[hsl(var(--destructive))/0.2] dark:focus-visible:ring-[hsl(var(--destructive))/0.4] dark:bg-[hsl(var(--destructive))/0.6]",
         outline:
