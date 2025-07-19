@@ -131,6 +131,7 @@ export interface TiptapEditorRef {
   getEditor: () => any;
   getHTML: () => string;
   setHTML: (html: string) => void;
+  getText: () => string;
 }
 
 const TiptapEditor = forwardRef<TiptapEditorRef, TiptapEditorProps>(
@@ -374,6 +375,7 @@ const TiptapEditor = forwardRef<TiptapEditorRef, TiptapEditorProps>(
           editor.commands.setContent(html);
         }
       },
+      getText: () => editor?.getText() ?? "",
     }));
 
     const createPDFExport = useCallback(async () => {
