@@ -64,6 +64,7 @@ import Document from "@tiptap/extension-document";
 import Paragraph from "@tiptap/extension-paragraph";
 import Text from "@tiptap/extension-text";
 import { getHTMLFromFragment } from "@tiptap/core";
+import { trpc } from "@/lib/trpc";
 
 interface FloatingButtonProps {
   x: number;
@@ -152,6 +153,7 @@ const TiptapEditor = forwardRef<TiptapEditorRef, TiptapEditorProps>(
     const importRef = useRef<HTMLInputElement>(null);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const { mutate: saveResume } = trpc.resume.create.useMutation();
     const [floatingButton, setFloatingButton] = useState<{
       x: number;
       y: number;
@@ -599,6 +601,16 @@ const TiptapEditor = forwardRef<TiptapEditorRef, TiptapEditorProps>(
             >
               PDF
               <Download className="h-4 w-4 ml-1" />
+            </Button>
+            <Button
+              size="sm"
+              onClick={() => {
+                saveResume({
+                  content: editor.getHTML(),
+                });
+              }}
+            >
+              Save
             </Button>
           </div>
         </div>

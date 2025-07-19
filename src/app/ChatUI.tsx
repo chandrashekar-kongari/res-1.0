@@ -1,3 +1,4 @@
+"use client";
 import { Button } from "@/components/ui/button";
 import { ChevronsUpDown, History, LoaderIcon, Plus, X } from "lucide-react";
 import { Check } from "lucide-react";
@@ -142,8 +143,8 @@ const ChatUI = ({
   };
 
   return (
-    <div className="w-[390px] flex flex-col overflow-hidden rounded-lg border shadow-sm bg-background">
-      <div className="py-[2px] border-b flex flex-row justify-between items-center">
+    <div className="w-[390px] flex flex-col overflow-hidden">
+      <div className="py-[2px] border rounded-md flex flex-row justify-between items-center">
         <div>
           <p className="p-2 text-sm font-semibold">New Chat</p>
         </div>

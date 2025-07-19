@@ -2,17 +2,15 @@
 
 import { useEffect, useRef, useState } from "react";
 import TiptapEditor, { TiptapEditorRef } from "@/components/tiptap-editor";
-import ChatInput from "./ChatInput";
 import { AppSidebar } from "@/components/app-sidebar";
 import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
-import { Button } from "@/components/ui/button";
-import { Check, X } from "lucide-react";
 import ChatUI from "./ChatUI";
 import {
   fetchEventSource,
   EventSourceMessage,
 } from "@microsoft/fetch-event-source";
 import TiptapEditorReplica from "@/components/tiptap-editor-replica";
+import { trpc } from "@/lib/trpc";
 
 export interface ChatMessage {
   role: "user" | "assistant";
@@ -45,6 +43,7 @@ export default function Home() {
   const editorRef = useRef<TiptapEditorRef>(null);
   const replicaRef = useRef<TiptapEditorRef>(null);
   const [attachPartOfHTML, setAttachPartOfHTML] = useState<string[]>([]);
+  const { data: resumes } = trpc.resume.list.useQuery();
 
   const handleAcceptChanges = () => {
     if (!editorRef.current) return;

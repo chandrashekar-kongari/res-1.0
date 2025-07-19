@@ -3,7 +3,7 @@
 import { EditorContent, useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import { Button } from "@/components/ui/button";
-import { KeyboardEvent, useCallback, useRef, useEffect } from "react";
+import { useCallback, useRef } from "react";
 import { ArrowUp } from "lucide-react";
 
 interface ChatInputProps {
@@ -48,7 +48,7 @@ const ChatInput = ({ onSend }: ChatInputProps) => {
   }, [editor, onSend]);
 
   return (
-    <div className="relative flex flex-col w-full rounded-lg bg-white border-t px-2 pt-2 pb-0 mb-0">
+    <div className="relative flex flex-col w-full rounded-lg bg-white border p-2">
       <div className="flex flex-col">
         <div className="flex-1">
           <div
