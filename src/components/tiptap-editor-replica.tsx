@@ -19,12 +19,6 @@ import { InlineSuggestion } from "@/lib/extensions/inline-suggestion";
 import { InlineReplace } from "@/lib/extensions/inline-replace";
 import { PageLimit } from "@/lib/extensions/page-limit";
 import { PaginationPlus } from "@/lib/extensions/pagination-plus";
-import {
-  SkillsSection,
-  ExperienceSection,
-  EducationSection,
-  ProjectsSection,
-} from "@/lib/extensions/sections";
 
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -163,10 +157,6 @@ const TiptapEditorReplica = forwardRef<TiptapEditorRef, TiptapEditorProps>(
         },
       },
       extensions: [
-        SkillsSection,
-        ExperienceSection,
-        EducationSection,
-        ProjectsSection,
         Document,
         Paragraph,
         Text,
