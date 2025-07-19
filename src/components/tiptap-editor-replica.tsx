@@ -211,9 +211,11 @@ const TiptapEditorReplica = forwardRef<TiptapEditorRef, TiptapEditorProps>(
           },
         }),
         PaginationPlus.configure({
-          pageHeight: 1000,
+          pageHeight: 1123, // A4 height: 297mm = 1123px at 96 DPI
           pageGap: 20,
           pageBreakBackground: "#f7f7f7",
+          pageHeaderHeight: 30,
+          maxPages: 10, // Allow more pages for longer documents
         }),
       ],
       content,

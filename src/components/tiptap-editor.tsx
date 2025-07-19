@@ -209,7 +209,7 @@ const TiptapEditor = forwardRef<TiptapEditorRef, TiptapEditorProps>(
           class: cn(
             "!outline-none min-h-[150px] max-w-none",
             // Add custom spacing overrides
-            "!focus:outline-none min-h-[200px] px-10",
+            "!focus:outline-none min-h-[200px] px-[42px]",
             // Force remove all outline styles
             "!outline-0 !focus:outline-0 !active:outline-0 !focus-visible:outline-0"
           ),
@@ -289,10 +289,11 @@ const TiptapEditor = forwardRef<TiptapEditorRef, TiptapEditorProps>(
           },
         }),
         PaginationPlus.configure({
-          pageHeight: 1090,
+          pageHeight: 1123, // A4 height: 297mm = 1123px at 96 DPI
           pageGap: 20,
           pageBreakBackground: "#f7f7f7",
-          pageHeaderHeight: 30,
+          pageHeaderHeight: 37.8,
+          maxPages: 10, // Allow more pages for longer documents
         }),
       ],
       content,

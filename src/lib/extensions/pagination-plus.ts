@@ -261,7 +261,7 @@ function createDecoration(
       const _pageHeight = pageOptions.pageHeight - _pageHeaderHeight * 2;
       const _pageBreakBackground = pageOptions.pageBreakBackground;
 
-      const breakerWidth = view.dom.clientWidth;
+      const breakerWidth = 794; // A4 width in pixels (210mm at 96 DPI)
 
       const el = document.createElement("div");
       el.dataset.rmPagination = "true";
