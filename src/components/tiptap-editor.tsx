@@ -2,7 +2,7 @@
 
 import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
-import Color from "@tiptap/extension-color";
+import { CustomColor } from "@/lib/extensions/custom-color";
 import FontFamily from "@tiptap/extension-font-family";
 import Highlight from "@tiptap/extension-highlight";
 import { Image } from "@tiptap/extension-image";
@@ -15,12 +15,17 @@ import TableRow from "@tiptap/extension-table-row";
 import TextAlign from "@tiptap/extension-text-align";
 import { TextStyle } from "@tiptap/extension-text-style";
 import Underline from "@tiptap/extension-underline";
-import { ExportDocx } from "@tiptap-pro/extension-export-docx";
-import { ImportDocx } from "@tiptap-pro/extension-import-docx";
 import { Ai } from "@tiptap-pro/extension-ai";
 import { InlineSuggestion } from "@/lib/extensions/inline-suggestion";
 import { InlineReplace } from "@/lib/extensions/inline-replace";
 import { PageLimit } from "@/lib/extensions/page-limit";
+import { PaginationPlus } from "@/lib/extensions/pagination-plus";
+import {
+  SkillsSection,
+  ExperienceSection,
+  EducationSection,
+  ProjectsSection,
+} from "@/lib/extensions/sections";
 
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -55,6 +60,10 @@ import {
 import { cn } from "@/lib/utils";
 import Stream from "stream";
 import { exportToPDF } from "@/lib/pdf-export";
+import Document from "@tiptap/extension-document";
+import Paragraph from "@tiptap/extension-paragraph";
+import Text from "@tiptap/extension-text";
+import { getHTMLFromFragment } from "@tiptap/core";
 
 interface FloatingButtonProps {
   x: number;
@@ -114,7 +123,7 @@ interface TiptapEditorProps {
   enableExport?: boolean;
   aiAppId?: string;
   aiToken?: string;
-  previousState?: string;
+  setAttachPartOfHTML?: (content: string[]) => void;
 }
 
 export interface TiptapEditorRef {
@@ -134,7 +143,7 @@ const TiptapEditor = forwardRef<TiptapEditorRef, TiptapEditorProps>(
       enableExport = false,
       aiAppId = "",
       aiToken = "",
-      previousState = "",
+      setAttachPartOfHTML,
     },
     ref
   ) => {
@@ -149,6 +158,7 @@ const TiptapEditor = forwardRef<TiptapEditorRef, TiptapEditorProps>(
       text: string;
       from: number;
       to: number;
+      selectedHTML: string;
     }>({
       x: 0,
       y: 0,
@@ -156,6 +166,7 @@ const TiptapEditor = forwardRef<TiptapEditorRef, TiptapEditorProps>(
       text: "",
       from: 0,
       to: 0,
+      selectedHTML: "",
     });
     const [isOverflowing, setIsOverflowing] = useState(false);
 
@@ -164,14 +175,25 @@ const TiptapEditor = forwardRef<TiptapEditorRef, TiptapEditorProps>(
       editorProps: {
         attributes: {
           class: cn(
-            "outline-none min-h-[150px] prose prose-sm max-w-none",
+            "!outline-none min-h-[150px] prose prose-sm max-w-none",
             // Add custom spacing overrides
-            "[&>*]:my-1 [&_p]:my-1 [&_h1]:mt-3 [&_h2]:mt-2 [&_h3]:mt-2",
-            isOverflowing && "border-2 border-red-500"
+            "[&>*]:my-1 [&_p]:my-1 [&_h1]:mt-3 [&_h2]:mt-2 [&_h3]:mt-2 mx-auto !focus:outline-none min-h-[200px] px-10",
+            // Force remove all outline styles
+            "!outline-0 !focus:outline-0 !active:outline-0 !focus-visible:outline-0"
           ),
+          // class:
+          //   "prose prose-sm sm:prose lg:prose-lg xl:prose-2xl mx-auto focus:outline-none min-h-[200px] px-10",
+          style: "outline: none !important; box-shadow: none !important;",
         },
       },
       extensions: [
+        SkillsSection,
+        ExperienceSection,
+        EducationSection,
+        ProjectsSection,
+        Document,
+        Paragraph,
+        Text,
         StarterKit.configure({
           // Disable these since we're adding them separately
           link: false,
@@ -201,14 +223,8 @@ const TiptapEditor = forwardRef<TiptapEditorRef, TiptapEditorProps>(
           },
           mergeNestedSpanStyles: true,
         }),
-        Color.configure({
+        CustomColor.configure({
           types: ["textStyle"],
-        }),
-        ImportDocx.configure({
-          appId: "v91pj729",
-          token:
-            "CowwvBxz4Hn1mSg21WwYevrw1HV9rz0owJcOBbyN00UyrWqJRwQufU8tuFWKUSEu",
-          endpoint: "https://app.tiptap.com/api/import",
         }),
 
         TextAlign.configure({
@@ -246,11 +262,16 @@ const TiptapEditor = forwardRef<TiptapEditorRef, TiptapEditorProps>(
             }
           },
         }),
+        PaginationPlus.configure({
+          pageHeight: 1000,
+          pageGap: 20,
+          pageBreakBackground: "#f7f7f7",
+          // pageHeaderHeight: 50,
+        }),
       ],
       content,
       onUpdate: ({ editor }) => {
         console.log("onUpdate", editor.getHTML());
-        console.log("previousState", previousState);
 
         onChange?.(editor.getHTML());
       },
@@ -259,6 +280,21 @@ const TiptapEditor = forwardRef<TiptapEditorRef, TiptapEditorProps>(
         const selectedText = selection.empty
           ? ""
           : editor.state.doc.textBetween(selection.from, selection.to);
+
+        let selectedHTML = "";
+        if (!selection.empty) {
+          editor
+            .chain()
+            .focus()
+            .command(({ tr }) => {
+              selectedHTML = getHTMLFromFragment(
+                tr.doc.slice(selection.from, selection.to).content,
+                editor.schema
+              );
+              return true;
+            })
+            .run();
+        }
 
         if (selectedText) {
           const { view } = editor;
@@ -276,6 +312,7 @@ const TiptapEditor = forwardRef<TiptapEditorRef, TiptapEditorProps>(
             text: selectedText,
             from: from,
             to: to,
+            selectedHTML, // new property
           });
         } else {
           setFloatingButton((prev) => ({ ...prev, visible: false }));
@@ -284,9 +321,15 @@ const TiptapEditor = forwardRef<TiptapEditorRef, TiptapEditorProps>(
     });
 
     const handleAddToChat = useCallback(() => {
-      console.log("Adding to chat:", floatingButton.text);
+      console.log("Adding to chat:", floatingButton.selectedHTML);
+      if (setAttachPartOfHTML) {
+        setAttachPartOfHTML([
+          ...(Array.isArray(setAttachPartOfHTML) ? setAttachPartOfHTML : []),
+          floatingButton.selectedHTML,
+        ]);
+      }
       setFloatingButton((prev) => ({ ...prev, visible: false }));
-    }, [floatingButton.text]);
+    }, [floatingButton.selectedHTML]);
 
     const handleReplaceText = useCallback(async () => {
       if (!editor) return;
@@ -339,11 +382,25 @@ const TiptapEditor = forwardRef<TiptapEditorRef, TiptapEditorProps>(
       setError(null);
 
       try {
-        const jsonContent = editor.getJSON();
-        await exportToPDF(jsonContent, "document.pdf");
+        const html = editor.getHTML();
+        const response = await fetch("/api/export-pdf", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ html, filename: "document.pdf" }),
+        });
+
+        if (!response.ok) throw new Error("Failed to export PDF");
+
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "document.pdf";
+        a.click();
+        window.URL.revokeObjectURL(url);
+
         setIsLoading(false);
       } catch (error: any) {
-        console.error("PDF Export error:", error);
         setError(error.message);
         setIsLoading(false);
       }
@@ -353,64 +410,15 @@ const TiptapEditor = forwardRef<TiptapEditorRef, TiptapEditorProps>(
       importRef.current?.click();
     }, []);
 
-    const handleImportFilePick = useCallback(
-      (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0];
-        if (importRef.current) {
-          importRef.current.value = "";
-        }
-        if (!file || !editor) return;
-
-        setIsLoading(true);
-        setError(null);
-
-        editor
-          .chain()
-          .importDocx({
-            file,
-            onImport(context: any) {
-              if (context.error) {
-                setError(context.error.message);
-                setIsLoading(false);
-                return;
-              }
-              context.setEditorContent();
-              setError(null);
-              setIsLoading(false);
-            },
-          })
-          .run();
-      },
-      [editor]
-    );
-
     if (!editor) {
       return null;
     }
 
     return (
-      <div className="flex flex-col h-full overflow-hidden">
+      <div className="flex flex-col h-full  min-w-[794px]">
         {/* Toolbar - Fixed at top */}
         <div className="sticky top-0 z-10 border-b justify-center flex flex-row">
           <div className="p-1 flex flex-wrap gap-1 items-center">
-            <div className="flex items-center gap-1">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleImportClick}
-                disabled={isLoading}
-              >
-                <Upload className="h-4 w-4" />
-              </Button>
-              <input
-                ref={importRef}
-                type="file"
-                accept=".docx"
-                onChange={handleImportFilePick}
-                style={{ display: "none" }}
-              />
-            </div>
-
             <Separator orientation="vertical" className="mx-1 h-6" />
 
             <Toggle
@@ -605,7 +613,7 @@ const TiptapEditor = forwardRef<TiptapEditorRef, TiptapEditorProps>(
           )}
 
           {/* A4 Container with responsive scaling */}
-          <div
+          {/* <div
             className="mx-auto relative"
             style={{
               width: "210mm",
@@ -626,6 +634,15 @@ const TiptapEditor = forwardRef<TiptapEditorRef, TiptapEditorProps>(
               }
             >
               <EditorContent editor={editor} />
+            </div>
+          </div> */}
+          <div className="flex justify-center items-center">
+            <div className="bg-white w-[794px] ">
+              <EditorContent
+                editor={editor}
+                className="w-full !outline-none !focus:outline-none !focus-visible:outline-none"
+                style={{ outline: "none !important" }}
+              />
             </div>
           </div>
         </div>
