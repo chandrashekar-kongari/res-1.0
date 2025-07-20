@@ -277,9 +277,9 @@ export default function Home() {
       <AppSidebar />
       <div className="flex min-h-screen w-full">
         <SidebarInset className="flex-1 w-full">
-          <div className="h-screen w-full flex flex-row gap-2 p-2">
+          <div className="h-screen w-full flex flex-row gap-2 p-2 bg-white">
             {/* Editor Section - Left side */}
-            <div className="flex-1 flex flex-col overflow-hidden rounded-lg border shadow-sm bg-background">
+            <div className="flex-1 flex flex-col overflow-hidden rounded-lg border shadow-sm bg-white">
               <div className="flex-1 overflow-hidden">
                 <TiptapEditor
                   ref={editorRef}
