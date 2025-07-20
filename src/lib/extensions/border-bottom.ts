@@ -49,7 +49,7 @@ export const BorderBottom = Extension.create<BorderBottomOptions>({
               }
               return {
                 style:
-                  "border-bottom: 1px solid #b7b7b7; display: block; width: 100%; padding-bottom: 5px; margin-bottom: 5px; ",
+                  "border-bottom: 1px solid #b7b7b7; display: block; width: 100%; padding-bottom: 0px; margin-bottom: 5px; ",
               };
             },
           },

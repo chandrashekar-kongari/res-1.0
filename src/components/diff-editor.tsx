@@ -1,167 +1,35 @@
-"use client";
-
-import { useEditor, EditorContent } from "@tiptap/react";
+import React, { useEffect, useState } from "react";
+import { Editor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
-import { CustomColor } from "@/lib/extensions/custom-color";
+import Color from "@tiptap/extension-color";
 import FontFamily from "@tiptap/extension-font-family";
 import Highlight from "@tiptap/extension-highlight";
 import { Image } from "@tiptap/extension-image";
 import Link from "@tiptap/extension-link";
 import Placeholder from "@tiptap/extension-placeholder";
+
 import TextAlign from "@tiptap/extension-text-align";
-import { FontSize } from "@/lib/extensions/font-size";
-
-import { LineHeight, TextStyle } from "@tiptap/extension-text-style";
+import { FontSize, LineHeight, TextStyle } from "@tiptap/extension-text-style";
 import Underline from "@tiptap/extension-underline";
-
-import { PageLimit } from "@/lib/extensions/page-limit";
-import { PaginationPlus } from "@/lib/extensions/pagination-plus";
-
-import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
-import { Toggle } from "@/components/ui/toggle";
-import {
-  forwardRef,
-  useImperativeHandle,
-  useRef,
-  useState,
-  useCallback,
-} from "react";
-import {
-  Bold as BoldIcon,
-  Italic as ItalicIcon,
-  Underline as UnderlineIcon,
-  Heading1,
-  Heading2,
-  Heading3,
-  List,
-  ListOrdered,
-  Undo,
-  Redo,
-  AlignLeft,
-  AlignCenter,
-  AlignRight,
-  AlignJustify,
-  Upload,
-  Download,
-  Type,
-  MessageSquarePlus,
-} from "lucide-react";
-import { cn } from "@/lib/utils";
-import Stream from "stream";
-import { exportToPDF } from "@/lib/pdf-export";
 import Document from "@tiptap/extension-document";
 import Paragraph from "@tiptap/extension-paragraph";
 import Text from "@tiptap/extension-text";
-import { BorderBottom } from "@/lib/extensions/border-bottom";
-import { Margin } from "@/lib/extensions/margin";
+
 import { CustomHeading } from "@/lib/extensions/custom-heading";
 import { CustomBulletList } from "@/lib/extensions/custom-bullet-list";
 import { CustomOrderedList } from "@/lib/extensions/custom-ordered-list";
 import { CustomListItem } from "@/lib/extensions/custom-list-item";
+import { CustomColor } from "@/lib/extensions/custom-color";
+import { BorderBottom } from "@/lib/extensions/border-bottom";
+import { Margin } from "@/lib/extensions/margin";
 
-interface FloatingButtonProps {
-  x: number;
-  y: number;
-  onAddToChat: () => void;
-  onReplaceText: () => void;
-}
+const DiffEditor = ({ html }: { html: string }) => {
+  const [editor, setEditor] = useState<Editor | null>(null);
 
-const FloatingButton = ({
-  x,
-  y,
-  onAddToChat,
-  onReplaceText,
-}: FloatingButtonProps) => (
-  <div
-    style={{
-      position: "fixed",
-      left: `${x}px`,
-      top: `${y}px`,
-      transform: "translateY(-100%)",
-      zIndex: 50,
-      padding: "4px",
-      display: "flex",
-      gap: "4px",
-    }}
-  >
-    <Button
-      size="sm"
-      className="bg-primary text-primary-foreground hover:bg-primary/90 shadow-md"
-      onClick={(e) => {
-        e.preventDefault();
-        onAddToChat();
-      }}
-    >
-      <MessageSquarePlus className="h-4 w-4 mr-1" />
-      Add to Chat
-    </Button>
-    <Button
-      size="sm"
-      variant="secondary"
-      className="shadow-md"
-      onClick={(e) => {
-        e.preventDefault();
-        onReplaceText();
-      }}
-    >
-      Replace Text
-    </Button>
-  </div>
-);
-
-interface TiptapEditorProps {
-  content?: string;
-  onChange?: (content: string) => void;
-  placeholder?: string;
-  className?: string;
-  enableExport?: boolean;
-  aiAppId?: string;
-  aiToken?: string;
-  previousState?: string;
-}
-
-export interface TiptapEditorRef {
-  getEditorElement: () => HTMLElement | null;
-  getEditor: () => any;
-  getHTML: () => string | undefined;
-  setHTML: (html: string) => void;
-  getText: () => string | undefined;
-}
-
-const TiptapEditorReplica = forwardRef<TiptapEditorRef, TiptapEditorProps>(
-  (
-    {
-      content = null,
-      onChange,
-      placeholder = "",
-      className = "",
-      enableExport = false,
-      aiAppId = "",
-      aiToken = "",
-      previousState = "",
-    },
-    ref
-  ) => {
-    const editorContentRef = useRef<HTMLDivElement>(null);
-    const [isOverflowing, setIsOverflowing] = useState(false);
-    const [error, setError] = useState<string | null>(null);
-
-    const editor = useEditor({
-      immediatelyRender: false,
-      editorProps: {
-        attributes: {
-          class: cn(
-            "!outline-none min-h-[150px] max-w-none",
-            // Add custom spacing overrides
-            "!focus:outline-none min-h-[200px] px-[44px]",
-            // Force remove all outline styles
-            "!outline-0 !focus:outline-0 !active:outline-0 !focus-visible:outline-0"
-          ),
-
-          style: "outline: none !important; box-shadow: none !important;",
-        },
-      },
+  useEffect(() => {
+    const ed = new Editor({
+      content: html,
+      editable: false,
       extensions: [
         Document,
         Paragraph.configure({
@@ -194,7 +62,7 @@ const TiptapEditorReplica = forwardRef<TiptapEditorRef, TiptapEditorProps>(
           },
         }),
         Placeholder.configure({
-          placeholder,
+          placeholder: "",
           emptyEditorClass:
             "before:content-[attr(data-placeholder)] before:text-gray-500 before:float-left before:pointer-events-none",
         }),
@@ -299,45 +167,26 @@ const TiptapEditorReplica = forwardRef<TiptapEditorRef, TiptapEditorProps>(
         LineHeight,
         Margin,
         FontSize,
-
-        PageLimit.configure({
-          onOverflow: (overflow: boolean) => {
-            setIsOverflowing(overflow);
-            if (overflow) {
-              setError("Content exceeds A4 page size");
-            } else {
-              setError(null);
-            }
-          },
-        }),
-        PaginationPlus.configure({
-          pageHeight: 1123, // A4 height: 297mm = 1123px at 96 DPI
-          pageGap: 20,
-          pageBreakBackground: "#f7f7f7",
-          pageHeaderHeight: 37.8,
-          maxPages: 10, // Allow more pages for longer documents
-        }),
       ],
-      content,
     });
+    setEditor(ed);
+    return () => {
+      ed.destroy();
+    };
+  }, [html]);
 
-    useImperativeHandle(ref, () => ({
-      getEditorElement: () => editorContentRef.current,
-      getEditor: () => editor,
-      getHTML: () => editor?.getHTML(),
-      setHTML: (html: string) => {
-        if (editor) {
-          editor.commands.setContent(html);
-        }
-      },
-      getText: () => editor?.getText(),
-    }));
+  if (!editor) return null;
+  return (
+    <div className="flex justify-center items-center">
+      <div className="bg-[hsl(var(--card))] w-[794px]  rounded p-2 prose prose-sm max-w-none transition-colors">
+        <EditorContent
+          editor={editor}
+          className="w-full !outline-none border-none !focus:outline-none !focus-visible:outline-none !focus:ring-0 !focus-visible:ring-0"
+          style={{ outline: "none !important" }}
+        />
+      </div>
+    </div>
+  );
+};
 
-    // Do not render anything
-    return null;
-  }
-);
-
-TiptapEditorReplica.displayName = "TiptapEditorReplica";
-
-export default TiptapEditorReplica;
+export default DiffEditor;

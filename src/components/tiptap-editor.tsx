@@ -39,6 +39,7 @@ import { PageLimit } from "@/lib/extensions/page-limit";
 import { PaginationPlus } from "@/lib/extensions/pagination-plus";
 import { LineHeight } from "@/lib/extensions/line-height";
 import { Margin } from "@/lib/extensions/margin";
+import { FontSize } from "@/lib/extensions/font-size";
 
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -239,7 +240,7 @@ const TiptapEditor = forwardRef<TiptapEditorRef, TiptapEditorProps>(
         Paragraph.configure({
           HTMLAttributes: {
             style:
-              "font-size: 16px; margin: 0; padding: 0; line-height: 1; font-family: Calibri, Arial, sans-serif;",
+              "font-size: 14px; margin: 0; padding: 0; line-height: 1.15; font-family: Calibri, Arial, sans-serif;",
           },
         }),
         Text,
@@ -370,6 +371,7 @@ const TiptapEditor = forwardRef<TiptapEditorRef, TiptapEditorProps>(
         BorderBottom,
         LineHeight,
         Margin,
+        FontSize,
 
         PageLimit.configure({
           onOverflow: (overflow: boolean) => {
@@ -685,87 +687,81 @@ const TiptapEditor = forwardRef<TiptapEditorRef, TiptapEditorProps>(
             >
               <BorderBottomIcon className="h-4 w-4" />
             </Toggle>
+            <Toggle
+              size="sm"
+              className={cn(
+                editor.getAttributes("fontSize").size === "14px"
+                  ? "bg-accent"
+                  : "",
+                "text-xs"
+              )}
+              pressed={editor.getAttributes("fontSize").size === "14px"}
+              onPressedChange={() =>
+                editor.chain().focus().setFontSize("14px").run()
+              }
+            >
+              14px
+            </Toggle>
+            <Toggle
+              size="sm"
+              className={cn(
+                editor.getAttributes("fontSize").size === "18px"
+                  ? "bg-accent"
+                  : "",
+                "text-xs"
+              )}
+              pressed={editor.getAttributes("fontSize").size === "18px"}
+              onPressedChange={() =>
+                editor.chain().focus().setFontSize("18px").run()
+              }
+            >
+              18px
+            </Toggle>
+            <Toggle
+              size="sm"
+              className={cn(
+                editor.getAttributes("fontSize").size === "21px"
+                  ? "bg-accent"
+                  : "",
+                "text-xs"
+              )}
+              pressed={editor.getAttributes("fontSize").size === "21px"}
+              onPressedChange={() =>
+                editor.chain().focus().setFontSize("21px").run()
+              }
+            >
+              21px
+            </Toggle>
 
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="sm" className="h-8 px-2">
-                  {editor.isActive("heading", { level: 1 }) ? (
-                    "9"
-                  ) : editor.isActive("heading", { level: 2 }) ? (
-                    "10"
-                  ) : editor.isActive("heading", { level: 3 }) ? (
-                    "11"
-                  ) : editor.isActive("heading", { level: 4 }) ? (
-                    "12"
-                  ) : editor.isActive("heading", { level: 5 }) ? (
-                    "14"
-                  ) : editor.isActive("heading", { level: 6 }) ? (
-                    "16"
-                  ) : (
-                    <TextIcon className="h-4 w-4" />
-                  )}
+                <Button variant="ghost" size="sm">
+                  <FontSizeIcon className="h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="start">
+                <DropdownMenuLabel className="text-xs">
+                  Font Size
+                </DropdownMenuLabel>
+                {["12px", "14px", "16px", "18px", "21px"].map((size) => (
+                  <DropdownMenuItem
+                    key={size}
+                    onClick={() =>
+                      editor.chain().focus().setFontSize(size).run()
+                    }
+                    className={cn(
+                      editor.getAttributes("fontSize").size === size
+                        ? "bg-accent"
+                        : ""
+                    )}
+                  >
+                    {size}
+                  </DropdownMenuItem>
+                ))}
                 <DropdownMenuItem
-                  onClick={() =>
-                    editor.chain().focus().toggleHeading({ level: 6 }).run()
-                  }
-                  className={cn(
-                    editor.isActive("heading", { level: 6 }) && "bg-accent"
-                  )}
+                  onClick={() => editor.chain().focus().unsetFontSize().run()}
                 >
-                  9
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() =>
-                    editor.chain().focus().toggleHeading({ level: 5 }).run()
-                  }
-                  className={cn(
-                    editor.isActive("heading", { level: 5 }) && "bg-accent"
-                  )}
-                >
-                  10
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() =>
-                    editor.chain().focus().toggleHeading({ level: 4 }).run()
-                  }
-                  className={cn(
-                    editor.isActive("heading", { level: 4 }) && "bg-accent"
-                  )}
-                >
-                  11
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() =>
-                    editor.chain().focus().toggleHeading({ level: 3 }).run()
-                  }
-                  className={cn(
-                    editor.isActive("heading", { level: 3 }) && "bg-accent"
-                  )}
-                >
-                  12
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() =>
-                    editor.chain().focus().toggleHeading({ level: 2 }).run()
-                  }
-                  className={cn(
-                    editor.isActive("heading", { level: 2 }) && "bg-accent"
-                  )}
-                >
-                  14
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() =>
-                    editor.chain().focus().toggleHeading({ level: 1 }).run()
-                  }
-                  className={cn(
-                    editor.isActive("heading", { level: 1 }) && "bg-accent"
-                  )}
-                >
-                  16
+                  Remove Font Size
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -849,6 +845,7 @@ const TiptapEditor = forwardRef<TiptapEditorRef, TiptapEditorProps>(
             </Toggle>
 
             <Separator orientation="vertical" className="mx-1 h-6" />
+
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="sm">
@@ -859,24 +856,32 @@ const TiptapEditor = forwardRef<TiptapEditorRef, TiptapEditorProps>(
                 <DropdownMenuLabel className="text-xs ">
                   Line Height
                 </DropdownMenuLabel>
-                {["0.25", "0.5", "0.75", "1", "1.25", "1.5", "1.75", "2"].map(
-                  (lh) => (
-                    <DropdownMenuItem
-                      key={lh}
-                      onClick={() =>
-                        editor.chain().focus().setLineHeight(lh).run()
-                      }
-                      className={cn(
-                        editor.getAttributes("paragraph").lineHeight === lh ||
-                          editor.getAttributes("heading").lineHeight === lh
-                          ? "bg-accent"
-                          : ""
-                      )}
-                    >
-                      {lh}
-                    </DropdownMenuItem>
-                  )
-                )}
+                {[
+                  "0.75",
+                  "0.80",
+                  "0.90",
+                  "1",
+                  "1.10",
+                  "1.25",
+                  "1.5",
+                  "1.75",
+                  "2",
+                ].map((lh) => (
+                  <DropdownMenuItem
+                    key={lh}
+                    onClick={() =>
+                      editor.chain().focus().setLineHeight(lh).run()
+                    }
+                    className={cn(
+                      editor.getAttributes("paragraph").lineHeight === lh ||
+                        editor.getAttributes("heading").lineHeight === lh
+                        ? "bg-accent"
+                        : ""
+                    )}
+                  >
+                    {lh}
+                  </DropdownMenuItem>
+                ))}
               </DropdownMenuContent>
             </DropdownMenu>
             <DropdownMenu>
@@ -949,22 +954,6 @@ const TiptapEditor = forwardRef<TiptapEditorRef, TiptapEditorProps>(
             <Separator orientation="vertical" className="mx-1 h-6" />
 
             <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => editor.chain().focus().undo().run()}
-              disabled={!editor.can().undo()}
-            >
-              <ResetIcon className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => editor.chain().focus().redo().run()}
-              disabled={!editor.can().redo()}
-            >
-              <ResetIcon className="h-4 w-4 scale-x-[-1]" />
-            </Button>
-            <Button
               size="sm"
               onClick={createPDFExport}
               disabled={isLoading || editor.isEmpty}
@@ -977,7 +966,7 @@ const TiptapEditor = forwardRef<TiptapEditorRef, TiptapEditorProps>(
         </div>
 
         {/* Editor Container - Scrollable */}
-        <div className={cn("flex-1 overflow-auto bg-gray-100 p-4", className)}>
+        <div className={cn("flex-1 overflow-auto bg-black/10 p-4", className)}>
           {floatingButton.visible && (
             <FloatingButton
               x={floatingButton.x}
