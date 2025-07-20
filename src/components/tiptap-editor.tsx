@@ -28,10 +28,17 @@ import {
   TextIcon,
   ResetIcon,
   BorderBottomIcon,
+  TextAlignBottomIcon,
+  TextAlignTopIcon,
+  LineHeightIcon,
+  CircleIcon,
+  ColorWheelIcon,
 } from "@radix-ui/react-icons";
 
 import { PageLimit } from "@/lib/extensions/page-limit";
 import { PaginationPlus } from "@/lib/extensions/pagination-plus";
+import { LineHeight } from "@/lib/extensions/line-height";
+import { Margin } from "@/lib/extensions/margin";
 
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -40,6 +47,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuLabel,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
@@ -360,6 +368,8 @@ const TiptapEditor = forwardRef<TiptapEditorRef, TiptapEditorProps>(
         FontFamily,
         Underline,
         BorderBottom,
+        LineHeight,
+        Margin,
 
         PageLimit.configure({
           onOverflow: (overflow: boolean) => {
@@ -589,7 +599,7 @@ const TiptapEditor = forwardRef<TiptapEditorRef, TiptapEditorProps>(
       <div className="flex flex-col h-full  min-w-[794px]">
         {/* Toolbar - Fixed at top */}
         <div className="sticky top-0 z-10 border-b justify-center flex flex-row">
-          <div className="p-[2px] flex flex-wrap gap-1 items-center">
+          <div className="p-[2px] flex flex-wrap gap-[2px] items-center">
             <Separator orientation="vertical" className=" h-6" />
 
             <Toggle
@@ -617,8 +627,65 @@ const TiptapEditor = forwardRef<TiptapEditorRef, TiptapEditorProps>(
             >
               <UnderlineIcon className="h-4 w-4" />
             </Toggle>
+            {/* Color Dropdown */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="sm">
+                  <ColorWheelIcon
+                    className="h-4 w-4"
+                    style={{
+                      color: editor.getAttributes("textStyle").color || "#000",
+                    }}
+                  />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start">
+                <DropdownMenuLabel className="text-xs">
+                  Text Color
+                </DropdownMenuLabel>
+                {[
+                  "#000000",
 
-            <Separator orientation="vertical" className="mx-1 h-6" />
+                  "#404040",
+                  "#4d4d4d",
+                  "#595959",
+                  "#666666",
+                  "#737373",
+                  "#808080",
+                ].map((color) => (
+                  <DropdownMenuItem
+                    key={color}
+                    onClick={() => editor.chain().focus().setColor(color).run()}
+                    className={cn(
+                      editor.getAttributes("textStyle").color === color
+                        ? "bg-accent"
+                        : ""
+                    )}
+                  >
+                    <span
+                      className="inline-block w-4 h-4 rounded-full mr-2"
+                      style={{ backgroundColor: color }}
+                    />
+                    {color}
+                  </DropdownMenuItem>
+                ))}
+                <DropdownMenuItem
+                  onClick={() => editor.chain().focus().unsetColor().run()}
+                >
+                  Remove Color
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+            <Toggle
+              size="sm"
+              pressed={editor.getAttributes("paragraph").borderBottom}
+              onPressedChange={() =>
+                editor.chain().focus().toggleBorderBottom().run()
+              }
+            >
+              <BorderBottomIcon className="h-4 w-4" />
+            </Toggle>
+
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="sm" className="h-8 px-2">
@@ -707,18 +774,6 @@ const TiptapEditor = forwardRef<TiptapEditorRef, TiptapEditorProps>(
 
             <Toggle
               size="sm"
-              pressed={editor.getAttributes("paragraph").borderBottom}
-              onPressedChange={() =>
-                editor.chain().focus().toggleBorderBottom().run()
-              }
-            >
-              <BorderBottomIcon className="h-4 w-4" />
-            </Toggle>
-
-            <Separator orientation="vertical" className="mx-1 h-6" />
-
-            <Toggle
-              size="sm"
               pressed={editor.isActive("link")}
               onPressedChange={setLink}
             >
@@ -794,6 +849,104 @@ const TiptapEditor = forwardRef<TiptapEditorRef, TiptapEditorProps>(
             </Toggle>
 
             <Separator orientation="vertical" className="mx-1 h-6" />
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="sm">
+                  <LineHeightIcon className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start">
+                <DropdownMenuLabel className="text-xs ">
+                  Line Height
+                </DropdownMenuLabel>
+                {["0.25", "0.5", "0.75", "1", "1.25", "1.5", "1.75", "2"].map(
+                  (lh) => (
+                    <DropdownMenuItem
+                      key={lh}
+                      onClick={() =>
+                        editor.chain().focus().setLineHeight(lh).run()
+                      }
+                      className={cn(
+                        editor.getAttributes("paragraph").lineHeight === lh ||
+                          editor.getAttributes("heading").lineHeight === lh
+                          ? "bg-accent"
+                          : ""
+                      )}
+                    >
+                      {lh}
+                    </DropdownMenuItem>
+                  )
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="sm">
+                  <TextAlignTopIcon className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start">
+                <DropdownMenuLabel className="text-xs ">
+                  Margin Top
+                </DropdownMenuLabel>
+                {["0.25", "0.5", "0.75", "1", "1.25", "1.5", "1.75", "2"].map(
+                  (mt) => (
+                    <DropdownMenuItem
+                      key={mt}
+                      onClick={() => {
+                        editor.commands.focus();
+                        (editor.commands as any).setMarginTop(mt + "em");
+                      }}
+                      className={cn(
+                        editor.getAttributes("paragraph").marginTop ===
+                          mt + "em" ||
+                          editor.getAttributes("heading").marginTop ===
+                            mt + "em"
+                          ? "bg-accent"
+                          : ""
+                      )}
+                    >
+                      {mt}
+                    </DropdownMenuItem>
+                  )
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="sm">
+                  <TextAlignBottomIcon className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start">
+                <DropdownMenuLabel className="text-xs ">
+                  Margin Bottom
+                </DropdownMenuLabel>
+                {["0.25", "0.5", "0.75", "1", "1.25", "1.5", "1.75", "2"].map(
+                  (mb) => (
+                    <DropdownMenuItem
+                      key={mb}
+                      onClick={() => {
+                        editor.commands.focus();
+                        (editor.commands as any).setMarginBottom(mb + "em");
+                      }}
+                      className={cn(
+                        editor.getAttributes("paragraph").marginBottom ===
+                          mb + "em" ||
+                          editor.getAttributes("heading").marginBottom ===
+                            mb + "em"
+                          ? "bg-accent"
+                          : ""
+                      )}
+                    >
+                      {mb}
+                    </DropdownMenuItem>
+                  )
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
+
+            <Separator orientation="vertical" className="mx-1 h-6" />
 
             <Button
               variant="ghost"
@@ -819,17 +972,6 @@ const TiptapEditor = forwardRef<TiptapEditorRef, TiptapEditorProps>(
             >
               PDF
               <DownloadIcon className="h-4 w-4 ml-1" />
-            </Button>
-            <Button
-              size="sm"
-              variant="ghost"
-              onClick={() => {
-                saveResume({
-                  content: editor.getHTML(),
-                });
-              }}
-            >
-              Save
             </Button>
           </div>
         </div>
