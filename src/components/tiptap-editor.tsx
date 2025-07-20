@@ -23,7 +23,6 @@ import {
   TextAlignRightIcon,
   UnderlineIcon,
   TextIcon,
-  FontStyleIcon,
   ResetIcon,
   BorderBottomIcon,
 } from "@radix-ui/react-icons";
@@ -63,6 +62,7 @@ interface FloatingButtonProps {
   y: number;
   onAddToChat: () => void;
   onReplaceText: () => void;
+  onAddLink: () => void;
 }
 
 const FloatingButton = ({
@@ -70,6 +70,7 @@ const FloatingButton = ({
   y,
   onAddToChat,
   onReplaceText,
+  onAddLink,
 }: FloatingButtonProps) => (
   <div
     style={{
@@ -126,7 +127,7 @@ const FloatingButton = ({
       className="text-xs rounded-none p-1 h-fit"
       onClick={(e) => {
         e.preventDefault();
-        onReplaceText();
+        onAddLink();
       }}
     >
       <Link2Icon className="h-4 w-4" />
@@ -201,6 +202,11 @@ const TiptapEditor = forwardRef<TiptapEditorRef, TiptapEditorProps>(
       selectedHTML: "",
     });
     const [isOverflowing, setIsOverflowing] = useState(false);
+    const [linkModal, setLinkModal] = useState({
+      isOpen: false,
+      url: "",
+      text: "",
+    });
 
     const editor = useEditor({
       immediatelyRender: false,
@@ -209,7 +215,7 @@ const TiptapEditor = forwardRef<TiptapEditorRef, TiptapEditorProps>(
           class: cn(
             "!outline-none min-h-[150px] max-w-none",
             // Add custom spacing overrides
-            "!focus:outline-none min-h-[200px] px-[42px]",
+            "!focus:outline-none min-h-[200px] px-[44px]",
             // Force remove all outline styles
             "!outline-0 !focus:outline-0 !active:outline-0 !focus-visible:outline-0"
           ),
@@ -223,7 +229,7 @@ const TiptapEditor = forwardRef<TiptapEditorRef, TiptapEditorProps>(
         Paragraph.configure({
           HTMLAttributes: {
             style:
-              "font-size: 12px; margin: 0; padding: 0; line-height: 1; font-family: Calibri, Arial, sans-serif;",
+              "font-size: 16px; margin: 0; padding: 0; line-height: 1; font-family: Calibri, Arial, sans-serif;",
           },
         }),
         Text,
@@ -269,8 +275,77 @@ const TiptapEditor = forwardRef<TiptapEditorRef, TiptapEditorProps>(
           types: ["heading", "paragraph"],
         }),
         Link.configure({
+          openOnClick: false,
+          autolink: true,
+          defaultProtocol: "https",
+          protocols: ["http", "https"],
           HTMLAttributes: {
             class: "text-blue-600 hover:text-blue-800 underline",
+          },
+          isAllowedUri: (url, ctx) => {
+            try {
+              // construct URL
+              const parsedUrl = url.includes(":")
+                ? new URL(url)
+                : new URL(`${ctx.defaultProtocol}://${url}`);
+
+              // use default validation
+              if (!ctx.defaultValidate(parsedUrl.href)) {
+                return false;
+              }
+
+              // disallowed protocols
+              const disallowedProtocols = ["ftp", "file", "mailto"];
+              const protocol = parsedUrl.protocol.replace(":", "");
+
+              if (disallowedProtocols.includes(protocol)) {
+                return false;
+              }
+
+              // only allow protocols specified in ctx.protocols
+              const allowedProtocols = ctx.protocols.map((p) =>
+                typeof p === "string" ? p : p.scheme
+              );
+
+              if (!allowedProtocols.includes(protocol)) {
+                return false;
+              }
+
+              // disallowed domains
+              const disallowedDomains = [
+                "example-phishing.com",
+                "malicious-site.net",
+              ];
+              const domain = parsedUrl.hostname;
+
+              if (disallowedDomains.includes(domain)) {
+                return false;
+              }
+
+              // all checks have passed
+              return true;
+            } catch {
+              return false;
+            }
+          },
+          shouldAutoLink: (url) => {
+            try {
+              // construct URL
+              const parsedUrl = url.includes(":")
+                ? new URL(url)
+                : new URL(`https://${url}`);
+
+              // only auto-link if the domain is not in the disallowed list
+              const disallowedDomains = [
+                "example-no-autolink.com",
+                "another-no-autolink.com",
+              ];
+              const domain = parsedUrl.hostname;
+
+              return !disallowedDomains.includes(domain);
+            } catch {
+              return false;
+            }
           },
         }),
 
@@ -347,6 +422,52 @@ const TiptapEditor = forwardRef<TiptapEditorRef, TiptapEditorProps>(
       },
     });
 
+    const setLink = useCallback(() => {
+      if (!editor) return;
+
+      const previousUrl = editor.getAttributes("link").href || "";
+      const selectedText = editor.state.selection.empty
+        ? ""
+        : editor.state.doc.textBetween(
+            editor.state.selection.from,
+            editor.state.selection.to
+          );
+
+      setLinkModal({
+        isOpen: true,
+        url: previousUrl,
+        text: selectedText,
+      });
+    }, [editor]);
+
+    const handleLinkSubmit = useCallback(() => {
+      if (!editor) return;
+
+      // empty URL means unlink
+      if (linkModal.url.trim() === "") {
+        editor.chain().focus().extendMarkRange("link").unsetLink().run();
+        setLinkModal({ isOpen: false, url: "", text: "" });
+        return;
+      }
+
+      // update link
+      try {
+        editor
+          .chain()
+          .focus()
+          .extendMarkRange("link")
+          .setLink({ href: linkModal.url.trim() })
+          .run();
+        setLinkModal({ isOpen: false, url: "", text: "" });
+      } catch (e: any) {
+        alert(e.message);
+      }
+    }, [editor, linkModal.url]);
+
+    const handleLinkCancel = useCallback(() => {
+      setLinkModal({ isOpen: false, url: "", text: "" });
+    }, []);
+
     const handleAddToChat = useCallback(() => {
       console.log("Adding to chat:", floatingButton.selectedHTML);
       if (setAttachPartOfHTML) {
@@ -357,6 +478,19 @@ const TiptapEditor = forwardRef<TiptapEditorRef, TiptapEditorProps>(
       }
       setFloatingButton((prev) => ({ ...prev, visible: false }));
     }, [floatingButton.selectedHTML]);
+
+    const handleAddLink = useCallback(() => {
+      if (!editor) return;
+
+      const previousUrl = editor.getAttributes("link").href || "";
+
+      setLinkModal({
+        isOpen: true,
+        url: previousUrl,
+        text: floatingButton.text,
+      });
+      setFloatingButton((prev) => ({ ...prev, visible: false }));
+    }, [editor, floatingButton.text]);
 
     const handleReplaceText = useCallback(async () => {
       if (!editor) return;
@@ -480,19 +614,21 @@ const TiptapEditor = forwardRef<TiptapEditorRef, TiptapEditorProps>(
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="sm" className="h-8 px-2">
-                  {editor.isActive("heading", { level: 1 })
-                    ? "30px"
-                    : editor.isActive("heading", { level: 2 })
-                    ? "24px"
-                    : editor.isActive("heading", { level: 3 })
-                    ? "20px"
-                    : editor.isActive("heading", { level: 4 })
-                    ? "16px"
-                    : editor.isActive("heading", { level: 5 })
-                    ? "14px"
-                    : editor.isActive("heading", { level: 6 })
-                    ? "12px"
-                    : "Text"}
+                  {editor.isActive("heading", { level: 1 }) ? (
+                    "9"
+                  ) : editor.isActive("heading", { level: 2 }) ? (
+                    "10"
+                  ) : editor.isActive("heading", { level: 3 }) ? (
+                    "11"
+                  ) : editor.isActive("heading", { level: 4 }) ? (
+                    "12"
+                  ) : editor.isActive("heading", { level: 5 }) ? (
+                    "14"
+                  ) : editor.isActive("heading", { level: 6 }) ? (
+                    "16"
+                  ) : (
+                    <TextIcon className="h-4 w-4" />
+                  )}
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="start">
@@ -504,7 +640,7 @@ const TiptapEditor = forwardRef<TiptapEditorRef, TiptapEditorProps>(
                     editor.isActive("heading", { level: 6 }) && "bg-accent"
                   )}
                 >
-                  12px
+                  9
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   onClick={() =>
@@ -514,7 +650,7 @@ const TiptapEditor = forwardRef<TiptapEditorRef, TiptapEditorProps>(
                     editor.isActive("heading", { level: 5 }) && "bg-accent"
                   )}
                 >
-                  14px
+                  10
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   onClick={() =>
@@ -524,7 +660,7 @@ const TiptapEditor = forwardRef<TiptapEditorRef, TiptapEditorProps>(
                     editor.isActive("heading", { level: 4 }) && "bg-accent"
                   )}
                 >
-                  16px
+                  11
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   onClick={() =>
@@ -534,7 +670,7 @@ const TiptapEditor = forwardRef<TiptapEditorRef, TiptapEditorProps>(
                     editor.isActive("heading", { level: 3 }) && "bg-accent"
                   )}
                 >
-                  20px
+                  12
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   onClick={() =>
@@ -544,7 +680,7 @@ const TiptapEditor = forwardRef<TiptapEditorRef, TiptapEditorProps>(
                     editor.isActive("heading", { level: 2 }) && "bg-accent"
                   )}
                 >
-                  24px
+                  14
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   onClick={() =>
@@ -554,7 +690,7 @@ const TiptapEditor = forwardRef<TiptapEditorRef, TiptapEditorProps>(
                     editor.isActive("heading", { level: 1 }) && "bg-accent"
                   )}
                 >
-                  30px
+                  16
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -569,6 +705,16 @@ const TiptapEditor = forwardRef<TiptapEditorRef, TiptapEditorProps>(
               }
             >
               <BorderBottomIcon className="h-4 w-4" />
+            </Toggle>
+
+            <Separator orientation="vertical" className="mx-1 h-6" />
+
+            <Toggle
+              size="sm"
+              pressed={editor.isActive("link")}
+              onPressedChange={setLink}
+            >
+              <Link2Icon className="h-4 w-4" />
             </Toggle>
 
             <Separator orientation="vertical" className="mx-1 h-6" />
@@ -637,40 +783,6 @@ const TiptapEditor = forwardRef<TiptapEditorRef, TiptapEditorProps>(
             <Button
               variant="ghost"
               size="sm"
-              onClick={() =>
-                editor
-                  .chain()
-                  .focus()
-                  .setFontFamily('"Comic Sans MS", "Comic Sans"')
-                  .run()
-              }
-              className={cn(
-                editor.isActive("textStyle", {
-                  fontFamily: '"Comic Sans MS", "Comic Sans"',
-                }) && "bg-accent"
-              )}
-            >
-              <TextIcon className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() =>
-                editor.chain().focus().setFontFamily("monospace").run()
-              }
-              className={cn(
-                editor.isActive("textStyle", { fontFamily: "monospace" }) &&
-                  "bg-accent"
-              )}
-            >
-              <FontStyleIcon className="h-4 w-4" />
-            </Button>
-
-            <Separator orientation="vertical" className="mx-1 h-6" />
-
-            <Button
-              variant="ghost"
-              size="sm"
               onClick={() => editor.chain().focus().undo().run()}
               disabled={!editor.can().undo()}
             >
@@ -715,6 +827,7 @@ const TiptapEditor = forwardRef<TiptapEditorRef, TiptapEditorProps>(
               y={floatingButton.y}
               onAddToChat={handleAddToChat}
               onReplaceText={handleReplaceText}
+              onAddLink={handleAddLink}
             />
           )}
 
@@ -752,6 +865,97 @@ const TiptapEditor = forwardRef<TiptapEditorRef, TiptapEditorProps>(
             </div>
           </div>
         </div>
+
+        {/* Link Modal */}
+        {linkModal.isOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center">
+            {/* Overlay */}
+            <div
+              className="absolute inset-0 bg-black/50"
+              onClick={handleLinkCancel}
+            />
+
+            {/* Modal Content */}
+            <div className="relative bg-white rounded-lg shadow-lg p-6 w-full max-w-md mx-4">
+              <h3 className="text-lg font-semibold mb-4">
+                {editor?.getAttributes("link").href ? "Edit Link" : "Add Link"}
+              </h3>
+
+              <div className="space-y-4">
+                {linkModal.text && (
+                  <div>
+                    <label className="block text-sm font-medium mb-1">
+                      Selected Text
+                    </label>
+                    <div className="px-3 py-2 bg-gray-50 rounded-md text-sm">
+                      {linkModal.text}
+                    </div>
+                  </div>
+                )}
+
+                <div>
+                  <label className="block text-sm font-medium mb-1">URL</label>
+                  <input
+                    type="url"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="https://example.com"
+                    value={linkModal.url}
+                    onChange={(e) =>
+                      setLinkModal((prev) => ({ ...prev, url: e.target.value }))
+                    }
+                    autoFocus
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        handleLinkSubmit();
+                      } else if (e.key === "Escape") {
+                        e.preventDefault();
+                        handleLinkCancel();
+                      }
+                    }}
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    Leave empty to remove the link
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex justify-between mt-6">
+                <div>
+                  {editor?.getAttributes("link").href && (
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      onClick={() => {
+                        editor
+                          .chain()
+                          .focus()
+                          .extendMarkRange("link")
+                          .unsetLink()
+                          .run();
+                        setLinkModal({ isOpen: false, url: "", text: "" });
+                      }}
+                    >
+                      Remove Link
+                    </Button>
+                  )}
+                </div>
+                <div className="flex space-x-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleLinkCancel}
+                  >
+                    Cancel
+                  </Button>
+                  <Button size="sm" onClick={handleLinkSubmit}>
+                    {editor?.getAttributes("link").href ? "Update" : "Add"} Link
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     );
   }
