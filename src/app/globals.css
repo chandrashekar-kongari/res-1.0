@@ -88,15 +88,16 @@
 
 /* Preserve inline styles */
 .ProseMirror .inline-styles {
-  all: revert;
   display: inline;
 }
 
 .ProseMirror span[style] {
-  all: revert;
   display: inline;
 }
 
+.border-bottom-spacing {
+  margin-bottom: 5px !important;
+}
 /* Pagination Breaks for Tiptap */
 .page-break {
   height: 20px;

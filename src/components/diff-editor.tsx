@@ -30,14 +30,18 @@ const DiffEditor = ({ html }: { html: string }) => {
     const ed = new Editor({
       content: html,
       editable: false,
+      parseOptions: {
+        preserveWhitespace: true,
+      },
       extensions: [
         Document,
         Paragraph.configure({
           HTMLAttributes: {
             style:
-              "font-size: 14px; margin: 0; padding: 0; line-height: 1.15; font-family: Calibri, Arial, sans-serif;",
+              "font-size: 14px; margin: 0; padding: 0; line-height: 1.15; font-family: Calibri, Arial, sans-serif; white-space: pre-wrap;",
           },
         }),
+
         Text,
         StarterKit.configure({
           // Disable these since we're adding them separately
@@ -60,11 +64,6 @@ const DiffEditor = ({ html }: { html: string }) => {
           HTMLAttributes: {
             class: "max-w-full h-auto",
           },
-        }),
-        Placeholder.configure({
-          placeholder: "",
-          emptyEditorClass:
-            "before:content-[attr(data-placeholder)] before:text-gray-500 before:float-left before:pointer-events-none",
         }),
 
         Highlight.configure({

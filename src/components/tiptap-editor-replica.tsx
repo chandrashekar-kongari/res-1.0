@@ -9,106 +9,27 @@ import { Image } from "@tiptap/extension-image";
 import Link from "@tiptap/extension-link";
 import Placeholder from "@tiptap/extension-placeholder";
 import TextAlign from "@tiptap/extension-text-align";
-import { FontSize } from "@/lib/extensions/font-size";
-
-import { LineHeight, TextStyle } from "@tiptap/extension-text-style";
+import { TextStyle } from "@tiptap/extension-text-style";
 import Underline from "@tiptap/extension-underline";
-
-import { PageLimit } from "@/lib/extensions/page-limit";
-import { PaginationPlus } from "@/lib/extensions/pagination-plus";
-
-import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
-import { Toggle } from "@/components/ui/toggle";
-import {
-  forwardRef,
-  useImperativeHandle,
-  useRef,
-  useState,
-  useCallback,
-} from "react";
-import {
-  Bold as BoldIcon,
-  Italic as ItalicIcon,
-  Underline as UnderlineIcon,
-  Heading1,
-  Heading2,
-  Heading3,
-  List,
-  ListOrdered,
-  Undo,
-  Redo,
-  AlignLeft,
-  AlignCenter,
-  AlignRight,
-  AlignJustify,
-  Upload,
-  Download,
-  Type,
-  MessageSquarePlus,
-} from "lucide-react";
-import { cn } from "@/lib/utils";
-import Stream from "stream";
-import { exportToPDF } from "@/lib/pdf-export";
-import Document from "@tiptap/extension-document";
-import Paragraph from "@tiptap/extension-paragraph";
-import Text from "@tiptap/extension-text";
-import { BorderBottom } from "@/lib/extensions/border-bottom";
-import { Margin } from "@/lib/extensions/margin";
-import { CustomHeading } from "@/lib/extensions/custom-heading";
 import { CustomBulletList } from "@/lib/extensions/custom-bullet-list";
 import { CustomOrderedList } from "@/lib/extensions/custom-ordered-list";
 import { CustomListItem } from "@/lib/extensions/custom-list-item";
 
-interface FloatingButtonProps {
-  x: number;
-  y: number;
-  onAddToChat: () => void;
-  onReplaceText: () => void;
-}
+import { PageLimit } from "@/lib/extensions/page-limit";
+import { PaginationPlus } from "@/lib/extensions/pagination-plus";
+import { LineHeight } from "@/lib/extensions/line-height";
+import { Margin } from "@/lib/extensions/margin";
+import { FontSize } from "@/lib/extensions/font-size";
 
-const FloatingButton = ({
-  x,
-  y,
-  onAddToChat,
-  onReplaceText,
-}: FloatingButtonProps) => (
-  <div
-    style={{
-      position: "fixed",
-      left: `${x}px`,
-      top: `${y}px`,
-      transform: "translateY(-100%)",
-      zIndex: 50,
-      padding: "4px",
-      display: "flex",
-      gap: "4px",
-    }}
-  >
-    <Button
-      size="sm"
-      className="bg-primary text-primary-foreground hover:bg-primary/90 shadow-md"
-      onClick={(e) => {
-        e.preventDefault();
-        onAddToChat();
-      }}
-    >
-      <MessageSquarePlus className="h-4 w-4 mr-1" />
-      Add to Chat
-    </Button>
-    <Button
-      size="sm"
-      variant="secondary"
-      className="shadow-md"
-      onClick={(e) => {
-        e.preventDefault();
-        onReplaceText();
-      }}
-    >
-      Replace Text
-    </Button>
-  </div>
-);
+import { forwardRef, useImperativeHandle, useRef, useState } from "react";
+
+import { cn } from "@/lib/utils";
+import Document from "@tiptap/extension-document";
+import Paragraph from "@tiptap/extension-paragraph";
+import Text from "@tiptap/extension-text";
+
+import { BorderBottom } from "@/lib/extensions/border-bottom";
+import { CustomHeading } from "@/lib/extensions/custom-heading";
 
 interface TiptapEditorProps {
   content?: string;
@@ -162,14 +83,18 @@ const TiptapEditorReplica = forwardRef<TiptapEditorRef, TiptapEditorProps>(
           style: "outline: none !important; box-shadow: none !important;",
         },
       },
+      parseOptions: {
+        preserveWhitespace: true,
+      },
       extensions: [
         Document,
         Paragraph.configure({
           HTMLAttributes: {
             style:
-              "font-size: 14px; margin: 0; padding: 0; line-height: 1.15; font-family: Calibri, Arial, sans-serif;",
+              "font-size: 14px; padding: 0; line-height: 1.25; font-family: Calibri, Arial, sans-serif; white-space: pre-wrap; margin: 0;",
           },
         }),
+
         Text,
         StarterKit.configure({
           // Disable these since we're adding them separately
@@ -201,9 +126,6 @@ const TiptapEditorReplica = forwardRef<TiptapEditorRef, TiptapEditorProps>(
 
         Highlight.configure({
           multicolor: true,
-          HTMLAttributes: {
-            class: "bg-yellow-200 dark:bg-yellow-800 px-1 rounded",
-          },
         }),
         TextStyle.configure({
           HTMLAttributes: {
