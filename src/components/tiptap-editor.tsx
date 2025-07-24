@@ -69,6 +69,40 @@ import { DownloadIcon, HeadingIcon } from "lucide-react";
 import { BorderBottom } from "@/lib/extensions/border-bottom";
 import { CustomHeading } from "@/lib/extensions/custom-heading";
 
+// Extend Paragraph to allow id attribute
+const ParagraphWithId = Paragraph.extend({
+  addAttributes() {
+    return {
+      ...this.parent?.(),
+      id: {
+        default: null,
+        parseHTML: (element) => element.getAttribute("id"),
+        renderHTML: (attributes) => {
+          if (!attributes.id) return {};
+          return { id: attributes.id };
+        },
+      },
+    };
+  },
+});
+
+// Extend CustomHeading to allow id attribute
+const CustomHeadingWithId = CustomHeading.extend({
+  addAttributes() {
+    return {
+      ...this.parent?.(),
+      id: {
+        default: null,
+        parseHTML: (element) => element.getAttribute("id"),
+        renderHTML: (attributes) => {
+          if (!attributes.id) return {};
+          return { id: attributes.id };
+        },
+      },
+    };
+  },
+});
+
 interface FloatingButtonProps {
   x: number;
   y: number;
@@ -235,14 +269,18 @@ const TiptapEditor = forwardRef<TiptapEditorRef, TiptapEditorProps>(
           style: "outline: none !important; box-shadow: none !important;",
         },
       },
+      parseOptions: {
+        preserveWhitespace: true,
+      },
       extensions: [
         Document,
-        Paragraph.configure({
+        ParagraphWithId.configure({
           HTMLAttributes: {
             style:
-              "font-size: 14px; margin: 0; padding: 0; line-height: 1.15; font-family: Calibri, Arial, sans-serif;",
+              "font-size: 14px; padding: 0; line-height: 1.25; font-family: Calibri, Arial, sans-serif; white-space: pre-wrap; margin: 0;",
           },
         }),
+
         Text,
         StarterKit.configure({
           // Disable these since we're adding them separately
@@ -254,7 +292,7 @@ const TiptapEditor = forwardRef<TiptapEditorRef, TiptapEditorProps>(
           orderedList: false, // Disable default ordered list to add custom one
           listItem: false, // Disable default list item to add custom one
         }),
-        CustomHeading.configure({
+        CustomHeadingWithId.configure({
           levels: [1, 2, 3, 4, 5, 6],
         }),
         CustomBulletList,
@@ -274,9 +312,6 @@ const TiptapEditor = forwardRef<TiptapEditorRef, TiptapEditorProps>(
 
         Highlight.configure({
           multicolor: true,
-          HTMLAttributes: {
-            class: "bg-yellow-200 dark:bg-yellow-800 px-1 rounded",
-          },
         }),
         TextStyle.configure({
           HTMLAttributes: {
@@ -394,6 +429,8 @@ const TiptapEditor = forwardRef<TiptapEditorRef, TiptapEditorProps>(
       content,
       onUpdate: ({ editor }) => {
         console.log("onUpdate", editor.getHTML());
+
+        console.log("editor.getJSON(): ", editor.getJSON());
 
         onChange?.(editor.getHTML());
       },
@@ -565,7 +602,8 @@ const TiptapEditor = forwardRef<TiptapEditorRef, TiptapEditorProps>(
 
       try {
         const html = editor.getHTML();
-        console.log("html", html);
+        console.log("html: ", html);
+
         const response = await fetch("/api/export-pdf", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -647,7 +685,8 @@ const TiptapEditor = forwardRef<TiptapEditorRef, TiptapEditorProps>(
                 </DropdownMenuLabel>
                 {[
                   "#000000",
-
+                  "rgb(255,0,0)",
+                  "rgb(0,255,0)",
                   "#404040",
                   "#4d4d4d",
                   "#595959",
@@ -657,9 +696,15 @@ const TiptapEditor = forwardRef<TiptapEditorRef, TiptapEditorProps>(
                 ].map((color) => (
                   <DropdownMenuItem
                     key={color}
-                    onClick={() => editor.chain().focus().setColor(color).run()}
+                    onClick={() =>
+                      editor
+                        .chain()
+                        .focus()
+                        .updateAttributes("paragraph", { color })
+                        .run()
+                    }
                     className={cn(
-                      editor.getAttributes("textStyle").color === color
+                      editor.getAttributes("paragraph").color === color
                         ? "bg-accent"
                         : ""
                     )}
@@ -672,7 +717,13 @@ const TiptapEditor = forwardRef<TiptapEditorRef, TiptapEditorProps>(
                   </DropdownMenuItem>
                 ))}
                 <DropdownMenuItem
-                  onClick={() => editor.chain().focus().unsetColor().run()}
+                  onClick={() =>
+                    editor
+                      .chain()
+                      .focus()
+                      .updateAttributes("paragraph", { color: null })
+                      .run()
+                  }
                 >
                   Remove Color
                 </DropdownMenuItem>

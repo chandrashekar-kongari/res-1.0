@@ -68,10 +68,13 @@ const ChatUI = ({
         to: pos + searchTerm.length,
       });
       editor.chain().focus().run();
+    } else {
+      console.log("searchTerm not found");
     }
   };
 
   const handleReplace = (searchTerm: string, replaceWith: string) => {
+    console.log("searchTerm: ", searchTerm);
     const editor = canvasEditor?.current?.getEditor?.();
     if (!editor || !searchTerm) return;
     const { state } = editor;
@@ -108,16 +111,50 @@ const ChatUI = ({
     setExpandedEvents((prev) => ({ ...prev, [callId]: !prev[callId] }));
   };
 
+  // Utility function to replace an element by id with new HTML
+  function replaceElementById(
+    html: string,
+    id: string,
+    newHtml: string
+  ): string {
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(html, "text/html");
+    const oldElem = doc.getElementById(id);
+    if (oldElem) {
+      const temp = doc.createElement("div");
+      temp.innerHTML = newHtml.trim();
+      const newNodes = Array.from(temp.childNodes);
+      if (newNodes.length === 1) {
+        oldElem.replaceWith(newNodes[0]);
+      } else {
+        newNodes.forEach((node) =>
+          oldElem.parentNode?.insertBefore(node, oldElem)
+        );
+        oldElem.remove();
+      }
+      return doc.body.innerHTML;
+    }
+    return html;
+  }
+
   const handleRejectEvent = (
     oldEditorHTML: string,
     diffEditorHTML: string,
-    newEditorHTML: string
+    newEditorHTML: string,
+    diffEditorHTMLId?: string
   ) => {
     const htmlOfEditor = canvasEditor?.current?.getHTML?.();
     console.log("htmlOfEditor: ", htmlOfEditor);
     console.log("diffEditorHTML: ", diffEditorHTML);
     console.log("oldEditorHTML: ", oldEditorHTML);
-    if (htmlOfEditor) {
+    if (htmlOfEditor && diffEditorHTMLId) {
+      const newHtml = replaceElementById(
+        htmlOfEditor,
+        diffEditorHTMLId,
+        oldEditorHTML
+      );
+      canvasEditor?.current?.setHTML?.(newHtml);
+    } else if (htmlOfEditor) {
       if (!htmlOfEditor.includes(diffEditorHTML)) {
         console.warn("diffEditorHTML not found in current editor HTML!");
       }
@@ -128,23 +165,37 @@ const ChatUI = ({
   const handleAcceptEvent = (
     oldEditorHTML: string,
     diffEditorHTML: string,
-    newEditorHTML: string
+    newEditorHTML: string,
+    diffFromAssistant: string,
+    diffEditorHTMLId?: string
   ) => {
     const htmlOfEditor = canvasEditor?.current?.getHTML?.();
+    console.log("Accepted");
     console.log("htmlOfEditor: ", htmlOfEditor);
     console.log("diffEditorHTML: ", diffEditorHTML);
     console.log("newEditorHTML: ", newEditorHTML);
-    console.log("textOfEditor: ", canvasEditor?.current?.getText?.());
-    const textOfEditor = canvasEditor?.current?.getText?.();
-    setSearchTerm(textOfEditor || "");
-    handleReplace(textOfEditor || "", "replaceWith");
+    console.log("textOfEditor: ", diffFromAssistant);
 
-    if (!htmlOfEditor?.includes(diffEditorHTML)) {
-      console.warn("oldEditorHTML not found in current editor HTML!");
-    }
-    if (htmlOfEditor) {
+    if (htmlOfEditor && diffEditorHTMLId) {
+      const newHtml = replaceElementById(
+        htmlOfEditor,
+        diffEditorHTMLId,
+        newEditorHTML
+      );
+      canvasEditor?.current?.setHTML?.(newHtml);
+    } else if (htmlOfEditor) {
+      if (!htmlOfEditor?.includes(diffEditorHTML)) {
+        console.warn("oldEditorHTML not found in current editor HTML!");
+      }
+      if (!htmlOfEditor?.includes(diffFromAssistant)) {
+        console.warn("diffFromAssistant not found in current editor HTML!");
+      }
       const newHtml = htmlOfEditor.replace(diffEditorHTML, newEditorHTML);
       canvasEditor?.current?.setHTML?.(newHtml);
+    } else if (htmlOfEditor?.includes(diffFromAssistant)) {
+      const newHtml = htmlOfEditor.replace(diffFromAssistant, newEditorHTML);
+      canvasEditor?.current?.setHTML?.(newHtml);
+      console.log("diff from assistant: ", newHtml);
     }
   };
 
@@ -220,7 +271,8 @@ const ChatUI = ({
                                     handleRejectEvent(
                                       event.output?.oldEditorHTML,
                                       event.output?.diffEditorHTML,
-                                      event.output?.newEditorHTML
+                                      event.output?.newEditorHTML,
+                                      event.output?.diffEditorHTMLId
                                     )
                                   }
                                 />
@@ -232,7 +284,9 @@ const ChatUI = ({
                                     handleAcceptEvent(
                                       event.output?.oldEditorHTML,
                                       event.output?.diffEditorHTML,
-                                      event.output?.newEditorHTML
+                                      event.output?.newEditorHTML,
+                                      event.output?.diffFromAssistant,
+                                      event.output?.diffEditorHTMLId
                                     )
                                   }
                                 />
