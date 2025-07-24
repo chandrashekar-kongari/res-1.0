@@ -69,6 +69,40 @@ import { DownloadIcon, HeadingIcon } from "lucide-react";
 import { BorderBottom } from "@/lib/extensions/border-bottom";
 import { CustomHeading } from "@/lib/extensions/custom-heading";
 
+// Extend Paragraph to allow id attribute
+const ParagraphWithId = Paragraph.extend({
+  addAttributes() {
+    return {
+      ...this.parent?.(),
+      id: {
+        default: null,
+        parseHTML: (element) => element.getAttribute("id"),
+        renderHTML: (attributes) => {
+          if (!attributes.id) return {};
+          return { id: attributes.id };
+        },
+      },
+    };
+  },
+});
+
+// Extend CustomHeading to allow id attribute
+const CustomHeadingWithId = CustomHeading.extend({
+  addAttributes() {
+    return {
+      ...this.parent?.(),
+      id: {
+        default: null,
+        parseHTML: (element) => element.getAttribute("id"),
+        renderHTML: (attributes) => {
+          if (!attributes.id) return {};
+          return { id: attributes.id };
+        },
+      },
+    };
+  },
+});
+
 interface FloatingButtonProps {
   x: number;
   y: number;
@@ -240,7 +274,7 @@ const TiptapEditor = forwardRef<TiptapEditorRef, TiptapEditorProps>(
       },
       extensions: [
         Document,
-        Paragraph.configure({
+        ParagraphWithId.configure({
           HTMLAttributes: {
             style:
               "font-size: 14px; padding: 0; line-height: 1.25; font-family: Calibri, Arial, sans-serif; white-space: pre-wrap; margin: 0;",
@@ -258,7 +292,7 @@ const TiptapEditor = forwardRef<TiptapEditorRef, TiptapEditorProps>(
           orderedList: false, // Disable default ordered list to add custom one
           listItem: false, // Disable default list item to add custom one
         }),
-        CustomHeading.configure({
+        CustomHeadingWithId.configure({
           levels: [1, 2, 3, 4, 5, 6],
         }),
         CustomBulletList,
@@ -395,6 +429,8 @@ const TiptapEditor = forwardRef<TiptapEditorRef, TiptapEditorProps>(
       content,
       onUpdate: ({ editor }) => {
         console.log("onUpdate", editor.getHTML());
+
+        console.log("editor.getJSON(): ", editor.getJSON());
 
         onChange?.(editor.getHTML());
       },

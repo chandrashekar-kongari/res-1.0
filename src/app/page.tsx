@@ -26,6 +26,7 @@ export interface ChatMessage {
       newEditorHTML?: any;
       oldEditorHTML?: any;
       diffFromAssistant?: any;
+      diffEditorHTMLId?: string;
     };
   }>;
   attachPartOfHTML?: string[]; // <-- Add this line
@@ -47,10 +48,6 @@ export default function Home() {
   const replicaRef = useRef<TiptapEditorRef>(null);
   const [attachPartOfHTML, setAttachPartOfHTML] = useState<string[]>([]);
 
-  // Simplified connection state
-  const [connectionStatus, setConnectionStatus] = useState<
-    "connected" | "connecting" | "disconnected"
-  >("disconnected");
   const abortControllerRef = useRef<AbortController | null>(null);
   const retryTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -105,7 +102,6 @@ export default function Home() {
       }
 
       setIsLoading(true);
-      setConnectionStatus("connecting");
 
       try {
         await fetchEventSource("/api/chat", {
@@ -118,10 +114,6 @@ export default function Home() {
           }),
           signal: abortControllerRef.current.signal,
           openWhenHidden: true, // This single line handles background tabs!
-
-          onopen: async () => {
-            setConnectionStatus("connected");
-          },
 
           onmessage(ev: EventSourceMessage) {
             if (ev.data) {
@@ -225,19 +217,12 @@ export default function Home() {
                               ""
                             );
 
-                          console.log("replicaHtml: ", replicaHtml);
-                          console.log("diffFromAssistant: ", diffFromAssistant);
-
                           const newHtml = htmlOfEditor.replace(
                             res?.oldEditorHTML,
                             replicaHtml ?? ""
                           );
-                          console.log("newHtml: ", newHtml);
+
                           editorRef.current?.setHTML?.(newHtml);
-                          console.log(
-                            "editorRef.current?.getHTML(): ",
-                            editorRef.current?.getHTML()
-                          );
 
                           setMessages((prev) => {
                             const lastIndex = prev.length - 1;
@@ -281,13 +266,17 @@ export default function Home() {
 
                       if (responseObj?.diffEditorHTML) {
                         const htmlOfEditor = editorRef.current?.getHTML?.();
-                        const diffFromAssistant = res?.diffEditorHTML;
+
                         if (htmlOfEditor) {
                           if (!htmlOfEditor.includes(res.oldEditorHTML)) {
                             console.warn(
                               "oldEditorHTML not found in current editor HTML!"
                             );
                           }
+                          const randomId = Math.random()
+                            .toString(36)
+                            .substring(2, 15);
+                          const diffFromAssistant = `<p id="diff-editor-html-${randomId}" style="font-size: 14px; padding: 0px; line-height: 1.25; font-family: Calibri, Arial, sans-serif; white-space: pre-wrap; margin: 0px;">${res?.diffEditorHTML}</p>`;
                           const replicaInitialHTML =
                             replicaRef.current?.getHTML();
 
@@ -342,6 +331,7 @@ export default function Home() {
                                             oldEditorHTML: res?.oldEditorHTML,
                                             diffFromAssistant:
                                               diffFromAssistant,
+                                            diffEditorHTMLId: `diff-editor-html-${randomId}`,
                                           },
                                         }
                                       : e
@@ -364,8 +354,6 @@ export default function Home() {
           },
 
           onerror(err: any) {
-            setConnectionStatus("disconnected");
-
             // Simple retry logic - only retry network errors, max 3 times
             if (err.name !== "AbortError" && retryCount < 3) {
               console.log(`Retrying... (${retryCount + 1}/3)`);
@@ -389,7 +377,6 @@ export default function Home() {
           },
 
           onclose() {
-            setConnectionStatus("disconnected");
             setIsLoading(false);
           },
         });

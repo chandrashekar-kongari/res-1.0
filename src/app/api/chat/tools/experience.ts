@@ -36,11 +36,11 @@ export const updateExperienceTool: FunctionTool<any> = {
       Add enough spaces between the role, company, location and date so that role, company, location(on the left end) and date(on the right end) are in the same line.
       You must also format the experience header to be in the same line.
       Update experince points based on the job description. 
-      use ul and li tags to list the experience points.
+      use ul and li tags to list the experience points. Must create p tag inside li tag. If you create li tag by taking content from span tag then must create a new span tag inside the p tag and keep the text inside the span tag.
 
       STEPS:
       First build NewEditorHTML by updating the OldEditorHTML based on the job description and user question.
-      Then build DiffEditorHTML by comparing the NewEditorHTML and OldEditorHTML. For removed content wrap it <mark style="background-color: red;">REMOVED CONTENT</mark> and for added content wrap it <mark style="background-color: green;">ADDED CONTENT</mark> Do not create new span tags.
+      Then build DiffEditorHTML by comparing the NewEditorHTML and OldEditorHTML. For removed content wrap it mark tag with style="background-color: #fdb8c0;" and for added content wrap it mark tag with style="background-color: #acf2bd;", If you are adding mark tags inside any span tag then must create a new span tag inside the mark tag and keep the text inside the span tag.
 
       IMPORTANT:
       - Do not remove or add any content from the OldEditorHTML.

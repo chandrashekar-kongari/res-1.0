@@ -46,7 +46,9 @@ export async function POST(req: Request) {
       Only call one tool at a time.
 
       ## Before calling a tool
-      Your thinking should be thorough and you can think step by step before and after each function call, and contruct inputs for each tool. DO NOT send overlapping html to the tool, split the html into smaller parts and correctly pass to the tool, strategically split the html of the section that is to be updated and pass it to the tool.
+      Your thinking should be thorough and you can think step by step before and after each function call
+      Contruct inputs for each tool. DO NOT send overlapping html to the tool, strategically split the html of the section, DO NOT REMOVE/ADD/MODIFY any html tag or content or style properties of the html input YOUR JOB is to split the html of the section and pass it to the tool.
+      DOUBLE CHECK the input html(all the tags, content, style properties, line height, font size, font family, etc) before passing it to the tool. Whether you split the html section correctly or not.
 
 
 
