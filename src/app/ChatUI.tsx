@@ -200,8 +200,8 @@ const ChatUI = ({
   };
 
   return (
-    <div className="w-[390px] flex flex-col overflow-hidden">
-      <div className="border rounded-sm flex flex-row justify-between items-center">
+    <div className="w-[400px] flex flex-col overflow-hidden">
+      <div className=" flex flex-row justify-between items-center">
         <div>
           <p className="p-2 text-xs ">New Chat Title</p>
         </div>
@@ -216,7 +216,7 @@ const ChatUI = ({
       </div>
 
       {/* Messages Container */}
-      <div className="flex-1 overflow-y-auto p-1 space-y-4">
+      <div className="flex-1 overflow-y-auto p-3 space-y-4">
         {messages.map((message, index) => {
           // Only render user messages
           if (message.role === "user") {
@@ -332,7 +332,7 @@ const ChatUI = ({
       </div>
 
       {/* Chat Input - Fixed at bottom */}
-      <div className="py-1 bg-gray-50/50">
+      <div className="p-2 bg-gray-50/50">
         {showingDiff && (
           <div className="flex items-center justify-end gap-1 py-1 px-2 ">
             <Button

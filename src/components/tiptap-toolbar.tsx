@@ -47,7 +47,7 @@ export function TiptapToolbar({
   }
 
   return (
-    <div className="sticky top-0 z-10 border-b justify-center flex flex-row">
+    <div className="sticky top-0 z-10  border-b justify-center flex flex-row">
       <div className="p-[2px] flex flex-wrap gap-[2px] items-center">
         <Toggle
           size="sm"

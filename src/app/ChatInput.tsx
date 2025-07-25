@@ -20,7 +20,7 @@ const ChatInput = ({ onSend }: ChatInputProps) => {
     editorProps: {
       attributes: {
         class:
-          "w-full min-h-[50px] rounded-xs px-1 text-black/80 text-sm bg-transparent placeholder:text-black/50 focus-visible:outline-none",
+          "w-full min-h-[50px]  px-1 text-black/80 text-sm  placeholder:text-black/50 focus-visible:outline-none",
       },
       handleKeyDown: (view, event) => {
         // Handle Enter without shift to send
