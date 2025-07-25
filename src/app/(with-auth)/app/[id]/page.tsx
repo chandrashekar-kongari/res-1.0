@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useEffect, useRef, useState, useCallback, use } from "react";
 import TiptapEditor, { TiptapEditorRef } from "@/components/tiptap-editor";
 import { SidebarInset } from "@/components/ui/sidebar";
 import ChatUI from "@/app/ChatUI";
@@ -31,17 +31,23 @@ export interface ChatMessage {
   attachPartOfHTML?: string[]; // <-- Add this line
 }
 
-export default function Home() {
-  const [content, setContent] = useState(``);
+export default function Home({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = use(params);
+  const { data: resume, isLoading: isResumeLoading } = trpc.resume.get.useQuery(
+    { id }
+  );
+  const [content, setContent] = useState(resume?.content || "");
+
+  useEffect(() => {
+    setContent(resume?.content || "");
+  }, [resume]);
+
   const [messages, setMessages] = useState<ChatMessage[]>([]);
 
-  console.log("messages: ");
   const [isLoading, setIsLoading] = useState(false);
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [showingDiff, setShowingDiff] = useState(false);
   const [originalContent, setOriginalContent] = useState<string>("");
   const [updatedContent, setUpdatedContent] = useState<string>("");
-  const [diffContent, setDiffContent] = useState<string>("");
   const [streamingMessage, setStreamingMessage] = useState<string>("");
   const editorRef = useRef<TiptapEditorRef>(null);
   const replicaRef = useRef<TiptapEditorRef>(null);
@@ -75,8 +81,6 @@ export default function Home() {
 
       const editorHTML = editorRef.current?.getHTML?.() || "";
       setOriginalContent(editorHTML);
-
-      console.log("BEFORE: editorHTML: ", editorHTML);
 
       const userMessage: ChatMessage = {
         role: "user",
@@ -298,12 +302,7 @@ export default function Home() {
                             res?.oldEditorHTML,
                             res?.diffEditorHTML
                           );
-                          console.log("newHtml: ", newHtml);
                           editorRef.current?.setHTML?.(newHtml);
-                          console.log(
-                            "editorRef.current?.getHTML(): ",
-                            editorRef.current?.getHTML()
-                          );
 
                           setMessages((prev) => {
                             const lastIndex = prev.length - 1;
@@ -404,8 +403,6 @@ export default function Home() {
     [messages, attachPartOfHTML]
   );
 
-  const { data: resumes } = trpc.resume.list.useQuery();
-
   const handleAcceptChanges = () => {
     if (!editorRef.current) return;
     if (updatedContent) {
@@ -420,9 +417,9 @@ export default function Home() {
     setShowingDiff(false);
   };
 
-  useEffect(() => {
-    console.log(messages);
-  }, [messages]);
+  if (isResumeLoading) {
+    return <div>Loading...</div>;
+  }
 
   return (
     <>
@@ -442,6 +439,7 @@ export default function Home() {
                   className="h-full"
                   enableExport={true}
                   setAttachPartOfHTML={setAttachPartOfHTML}
+                  resumeId={resume?.id || ""}
                 />
                 <TiptapEditorReplica ref={replicaRef} />
               </div>

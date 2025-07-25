@@ -29,17 +29,18 @@ export const createTRPCRouter = t.router;
 
 // Create an authenticated procedure that requires a user
 export const protectedProcedure = t.procedure.use(
-  ({ ctx, next }: { ctx: Context; next: any }) => {
+  async ({ ctx, next }: { ctx: Context; next: any }) => {
     if (!ctx.user) {
       throw new TRPCError({
         code: "UNAUTHORIZED",
         message: "You must be logged in to access this resource",
       });
     }
+    // Refine the context type so that user is non-null after this middleware
     return next({
       ctx: {
         ...ctx,
-        user: ctx.user, // This ensures TypeScript knows user is not null
+        user: ctx.user as NonNullable<typeof ctx.user>,
       },
     });
   }
