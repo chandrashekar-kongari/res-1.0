@@ -1,3 +1,5 @@
+"use client";
+
 import {
   Home,
   Inbox,
@@ -36,6 +38,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "./ui/dropdown-menu";
+import UserSettings from "./user-settings";
 
 const menuItems = [
   { title: "Resume 1", icon: Inbox },
@@ -73,7 +76,7 @@ export function AppSidebar() {
         <SidebarGroup>
           <SidebarGroupContent>
             <SidebarMenu>
-              <div className="flex flex-col h-[100vh] pb-2">
+              <div className="flex flex-col h-[calc(100vh-1rem)] pb-2">
                 <SidebarMenuItem key="app">
                   <SidebarMenuButton asChild>
                     <div className="flex items-center gap-2">
@@ -154,12 +157,8 @@ export function AppSidebar() {
                       <p className="text-xs">Upgrade</p>
                     </div>
                   </SidebarMenuButton>
-                  <SidebarMenuButton asChild>
-                    <div className="flex items-center gap-2">
-                      <PersonIcon className="w-4 h-4" />
-                      <p className="text-xs">Profile</p>
-                    </div>
-                  </SidebarMenuButton>
+
+                  <UserSettings />
                 </div>
               </div>
             </SidebarMenu>

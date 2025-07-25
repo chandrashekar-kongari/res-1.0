@@ -1,6 +1,12 @@
-import { initTRPC } from "@trpc/server";
+import { initTRPC, TRPCError } from "@trpc/server";
+import type { ServerUser } from "@stackframe/stack";
 
-const t = initTRPC.create({
+// Define the context type
+export type Context = {
+  user: ServerUser | null;
+};
+
+const t = initTRPC.context<Context>().create({
   // Add development logging
   isDev: process.env.NODE_ENV === "development",
   errorFormatter({ shape, error }) {
@@ -20,3 +26,21 @@ const t = initTRPC.create({
 export const router = t.router;
 export const publicProcedure = t.procedure;
 export const createTRPCRouter = t.router;
+
+// Create an authenticated procedure that requires a user
+export const protectedProcedure = t.procedure.use(
+  ({ ctx, next }: { ctx: Context; next: any }) => {
+    if (!ctx.user) {
+      throw new TRPCError({
+        code: "UNAUTHORIZED",
+        message: "You must be logged in to access this resource",
+      });
+    }
+    return next({
+      ctx: {
+        ...ctx,
+        user: ctx.user, // This ensures TypeScript knows user is not null
+      },
+    });
+  }
+);
