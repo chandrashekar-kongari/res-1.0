@@ -37,8 +37,9 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "./ui/dropdown-menu";
-import UserSettings from "./user-settings";
+} from "../../../components/ui/dropdown-menu";
+import UserSettings from "../../../components/user-settings";
+import React from "react";
 
 const menuItems = [
   { title: "Resume 1", icon: Inbox },
@@ -68,8 +69,6 @@ const menuItems = [
 ];
 
 export function AppSidebar() {
-  const { open, toggleSidebar } = useSidebar();
-
   return (
     <Sidebar collapsible="none" variant="inset" className="bg-gray-100">
       <SidebarContent className="p-0 m-0">
@@ -158,7 +157,15 @@ export function AppSidebar() {
                     </div>
                   </SidebarMenuButton>
 
-                  <UserSettings />
+                  <React.Suspense
+                    fallback={
+                      <div className="p-2 text-xs text-gray-400">
+                        Loading user...
+                      </div>
+                    }
+                  >
+                    <UserSettings />
+                  </React.Suspense>
                 </div>
               </div>
             </SidebarMenu>

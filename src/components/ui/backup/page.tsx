@@ -2,12 +2,9 @@
 
 import { useEffect, useRef, useState } from "react";
 import TiptapEditor, { TiptapEditorRef } from "@/components/tiptap-editor";
-import ChatInput from "./ChatInput";
-import { AppSidebar } from "@/components/app-sidebar";
+import { AppSidebar } from "@/app/(with-auth)/_components/app-sidebar";
 import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
-import { Button } from "@/components/ui/button";
-import { Check, X } from "lucide-react";
-import ChatUI from "./ChatUI";
+import ChatUI from "@/app/ChatUI";
 import {
   fetchEventSource,
   EventSourceMessage,
@@ -304,27 +301,9 @@ export default function Home() {
                   placeholder=""
                   className="h-full"
                   enableExport={true}
-                  previousState="<p>Hello</p>"
                 />
               </div>
             </div>
-
-            {/* Chat Section - Right side */}
-            <ChatUI
-              messages={
-                streamingMessage !== null
-                  ? [
-                      ...messages,
-                      { role: "assistant", content: streamingMessage },
-                    ]
-                  : messages
-              }
-              isLoading={isLoading}
-              showingDiff={showingDiff}
-              handleRejectChanges={handleRejectChanges}
-              handleAcceptChanges={handleAcceptChanges}
-              handleSendMessage={handleSendMessage}
-            />
           </div>
         </SidebarInset>
       </div>
