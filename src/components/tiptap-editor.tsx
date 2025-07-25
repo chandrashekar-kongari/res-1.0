@@ -57,6 +57,7 @@ import {
   useRef,
   useState,
   useCallback,
+  useEffect,
 } from "react";
 
 import { cn } from "@/lib/utils";
@@ -202,6 +203,7 @@ interface TiptapEditorProps {
   aiAppId?: string;
   aiToken?: string;
   setAttachPartOfHTML?: (content: string[]) => void;
+  resumeId: string;
 }
 
 export interface TiptapEditorRef {
@@ -223,9 +225,16 @@ const TiptapEditor = forwardRef<TiptapEditorRef, TiptapEditorProps>(
       aiAppId = "",
       aiToken = "",
       setAttachPartOfHTML,
+      resumeId,
     },
     ref
   ) => {
+    const utils = trpc.useUtils();
+    const saveResumeMutation = trpc.resume.update.useMutation({
+      onSuccess: (data) => {
+        void utils.resume.invalidate();
+      },
+    });
     const editorContentRef = useRef<HTMLDivElement>(null);
     const importRef = useRef<HTMLInputElement>(null);
     const [isLoading, setIsLoading] = useState(false);
@@ -434,6 +443,10 @@ const TiptapEditor = forwardRef<TiptapEditorRef, TiptapEditorProps>(
         console.log("editor.getJSON(): ", editor.getJSON());
 
         onChange?.(editor.getHTML());
+        saveResumeMutation.mutate({
+          content: editor.getHTML(),
+          id: resumeId,
+        });
       },
       onSelectionUpdate: ({ editor }) => {
         const selection = editor.state.selection;
@@ -479,6 +492,13 @@ const TiptapEditor = forwardRef<TiptapEditorRef, TiptapEditorProps>(
         }
       },
     });
+
+    // Update editor content when content prop changes
+    useEffect(() => {
+      if (editor && content !== editor.getHTML()) {
+        editor.commands.setContent(content, { emitUpdate: false });
+      }
+    }, [editor, content]);
 
     const setLink = useCallback(() => {
       if (!editor) return;

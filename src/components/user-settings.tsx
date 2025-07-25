@@ -30,7 +30,7 @@ const UserSettings = () => {
                   .join("")}
               </AvatarFallback>
             </Avatar>
-            <p className="text-xs">Chandra Sekhar</p>
+            <p className="text-xs truncate">{user?.displayName}</p>
           </div>
         </SidebarMenuButton>
       </DropdownMenuTrigger>
