@@ -38,6 +38,15 @@ export const updateExperienceTool: FunctionTool<any> = {
       Update experince points based on the job description. 
       use ul and li tags to list the experience points. Must create p tag inside li tag. If you create li tag by taking content from span tag then must create a new span tag inside the p tag and keep the text inside the span tag.
 
+      CRITICAL REQUIREMENTS FOR HTML MATCHING:
+      - The oldEditorHTML field MUST be returned EXACTLY as received in the "HTML to Update" section
+      - Do not modify, clean up, normalize whitespace, or reformat the oldEditorHTML in any way
+      - Return it character-for-character identical to ensure proper matching in the client
+      - If this is a retry request (containing "[SYSTEM RETRY]"), use the fresh HTML content provided
+      - Focus on finding a specific, identifiable section to update rather than the entire document
+      - The newEditorHTML should contain your updates based on the job description and user question
+      - The diffEditorHTML should show the differences between old and new content
+
       STEPS:
       First build NewEditorHTML by updating the OldEditorHTML based on the job description and user question.
       Then build DiffEditorHTML by comparing the NewEditorHTML and OldEditorHTML. For removed content wrap it mark tag with style="background-color: #fdb8c0;" and for added content wrap it mark tag with style="background-color: #acf2bd;", If you are adding mark tags inside any span tag then must create a new span tag inside the mark tag and keep the text inside the span tag.

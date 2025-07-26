@@ -58,6 +58,49 @@ export default function Home({ params }: { params: Promise<{ id: string }> }) {
 
   const abortControllerRef = useRef<AbortController | null>(null);
   const retryTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const retryAttemptRef = useRef<number>(0);
+  const maxRetryAttempts = 2;
+
+  // Add retry mechanism that works within current message flow
+  const sendRetryInstruction = useCallback(async () => {
+    if (retryAttemptRef.current >= maxRetryAttempts) {
+      console.log("Max retry attempts reached");
+      return;
+    }
+
+    retryAttemptRef.current += 1;
+    const currentHTML = editorRef.current?.getHTML?.() || "";
+
+    console.log(
+      `Retry attempt ${retryAttemptRef.current}/${maxRetryAttempts} - Sending fresh editor context`
+    );
+
+    // Send a system message to the current stream to retry with fresh context
+    try {
+      const retryResponse = await fetch("/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          messages: [
+            ...messages,
+            {
+              role: "user",
+              content: `[SYSTEM RETRY] The previous tool call failed because the editor content has changed. Please retry the last action with this current editor content: ${currentHTML}. Use the exact current HTML content as the base for your tool calls.`,
+              attachPartOfHTML: [],
+            },
+          ],
+          editorHTML: currentHTML,
+          attachPartOfHTML: [],
+        }),
+      });
+
+      if (retryResponse.ok) {
+        console.log("Retry instruction sent successfully");
+      }
+    } catch (error) {
+      console.error("Failed to send retry instruction:", error);
+    }
+  }, [messages]);
 
   // Simple page visibility tracking
   useEffect(() => {
@@ -95,6 +138,9 @@ export default function Home({ params }: { params: Promise<{ id: string }> }) {
 
       // Only add user message on first attempt
       if (retryCount === 0) {
+        // Reset retry attempts for new user message
+        retryAttemptRef.current = 0;
+
         const updatedMessages = [
           ...messages,
           userMessage,
@@ -202,8 +248,15 @@ export default function Home({ params }: { params: Promise<{ id: string }> }) {
                         if (htmlOfEditor) {
                           if (!htmlOfEditor.includes(res.oldEditorHTML)) {
                             console.warn(
-                              "oldEditorHTML not found in current editor HTML!"
+                              "oldEditorHTML not found in current editor HTML! Attempting automatic retry..."
                             );
+
+                            // Trigger retry within current message flow
+                            setTimeout(() => {
+                              sendRetryInstruction();
+                            }, 1000);
+
+                            return; // Exit early to prevent processing invalid changes
                           }
                           const replicaInitialHTML =
                             replicaRef.current?.getHTML();
@@ -223,9 +276,14 @@ export default function Home({ params }: { params: Promise<{ id: string }> }) {
                               ""
                             );
 
+                          const replicaHtmlId =
+                            "replica-html-" + event?.item?.rawItem?.callId;
+
+                          const completeReplicaHTML = `<p id="${replicaHtmlId}">${replicaHtml}</p>`;
+
                           const newHtml = htmlOfEditor.replace(
                             res?.oldEditorHTML,
-                            replicaHtml ?? ""
+                            completeReplicaHTML ?? ""
                           );
 
                           editorRef.current?.setHTML?.(newHtml);
@@ -255,84 +313,7 @@ export default function Home({ params }: { params: Promise<{ id: string }> }) {
                                             oldEditorHTML: res?.oldEditorHTML,
                                             diffFromAssistant:
                                               diffFromAssistant,
-                                          },
-                                        }
-                                      : e
-                                  ),
-                                };
-                              }
-                              return updated;
-                            }
-                            return prev;
-                          });
-                        }
-                      }
-                    } else {
-                      const res = responseObj;
-
-                      if (responseObj?.diffEditorHTML) {
-                        const htmlOfEditor = editorRef.current?.getHTML?.();
-
-                        if (htmlOfEditor) {
-                          if (!htmlOfEditor.includes(res.oldEditorHTML)) {
-                            console.warn(
-                              "oldEditorHTML not found in current editor HTML!"
-                            );
-                          }
-                          const randomId = Math.random()
-                            .toString(36)
-                            .substring(2, 15);
-                          const diffFromAssistant = `<p id="diff-editor-html-${randomId}" style="font-size: 14px; padding: 0px; line-height: 1.25; font-family: Calibri, Arial, sans-serif; white-space: pre-wrap; margin: 0px;">${res?.diffEditorHTML}</p>`;
-                          const replicaInitialHTML =
-                            replicaRef.current?.getHTML();
-
-                          if (replicaInitialHTML) {
-                            replicaRef.current?.setHTML(
-                              replicaInitialHTML.replace(
-                                replicaInitialHTML,
-                                diffFromAssistant
-                              )
-                            );
-                          }
-                          const replicaHtml = replicaRef.current
-                            ?.getHTML()
-                            ?.replace(
-                              /<p\s+style="font-size:\s*14px;\s*padding:\s*0px;\s*line-height:\s*1\.25;\s*font-family:\s*Calibri,\s*Arial,\s*sans-serif;\s*white-space:\s*pre-wrap;\s*margin:\s*0px;"\s*><\/p>\s*$/g,
-                              ""
-                            );
-
-                          const newHtml = htmlOfEditor.replace(
-                            res?.oldEditorHTML,
-                            res?.diffEditorHTML
-                          );
-                          editorRef.current?.setHTML?.(newHtml);
-
-                          setMessages((prev) => {
-                            const lastIndex = prev.length - 1;
-                            if (
-                              lastIndex >= 0 &&
-                              prev[lastIndex].role === "assistant"
-                            ) {
-                              const updated = [...prev];
-                              const lastMessage = updated[lastIndex];
-                              const exists = (lastMessage.events || []).some(
-                                (e) => e.callId === event?.item?.rawItem?.callId
-                              );
-                              if (exists) {
-                                updated[lastIndex] = {
-                                  ...lastMessage,
-                                  events: (lastMessage.events || []).map((e) =>
-                                    e.callId === event?.item?.rawItem?.callId
-                                      ? {
-                                          ...e,
-                                          status: true,
-                                          output: {
-                                            diffEditorHTML: replicaHtml,
-                                            newEditorHTML: res?.newEditorHTML,
-                                            oldEditorHTML: res?.oldEditorHTML,
-                                            diffFromAssistant:
-                                              diffFromAssistant,
-                                            diffEditorHTMLId: `diff-editor-html-${randomId}`,
+                                            diffEditorHTMLId: replicaHtmlId,
                                           },
                                         }
                                       : e
@@ -403,7 +384,7 @@ export default function Home({ params }: { params: Promise<{ id: string }> }) {
         setIsLoading(false);
       }
     },
-    [messages, attachPartOfHTML]
+    [messages, attachPartOfHTML, sendRetryInstruction]
   );
 
   const handleAcceptChanges = () => {

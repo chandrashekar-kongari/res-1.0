@@ -5,7 +5,7 @@ import { Check } from "lucide-react";
 import ChatInput from "./ChatInput";
 import ReactMarkdown from "react-markdown";
 import { cn } from "@/lib/utils";
-import type { ChatMessage } from "./page";
+import type { ChatMessage } from "@/app/(with-auth)/app/[id]/page";
 
 import React, { RefObject, useEffect, useState } from "react";
 import DiffEditor from "@/components/diff-editor";
@@ -170,11 +170,11 @@ const ChatUI = ({
     diffEditorHTMLId?: string
   ) => {
     const htmlOfEditor = canvasEditor?.current?.getHTML?.();
-    console.log("Accepted");
+    console.log("Accepted", diffEditorHTMLId);
     console.log("htmlOfEditor: ", htmlOfEditor);
-    console.log("diffEditorHTML: ", diffEditorHTML);
-    console.log("newEditorHTML: ", newEditorHTML);
-    console.log("textOfEditor: ", diffFromAssistant);
+    // console.log("diffEditorHTML: ", diffEditorHTML);
+    // console.log("newEditorHTML: ", newEditorHTML);
+    // console.log("textOfEditor: ", diffFromAssistant);
 
     if (htmlOfEditor && diffEditorHTMLId) {
       const newHtml = replaceElementById(
@@ -183,20 +183,23 @@ const ChatUI = ({
         newEditorHTML
       );
       canvasEditor?.current?.setHTML?.(newHtml);
-    } else if (htmlOfEditor) {
-      if (!htmlOfEditor?.includes(diffEditorHTML)) {
-        console.warn("oldEditorHTML not found in current editor HTML!");
-      }
-      if (!htmlOfEditor?.includes(diffFromAssistant)) {
-        console.warn("diffFromAssistant not found in current editor HTML!");
-      }
-      const newHtml = htmlOfEditor.replace(diffEditorHTML, newEditorHTML);
-      canvasEditor?.current?.setHTML?.(newHtml);
-    } else if (htmlOfEditor?.includes(diffFromAssistant)) {
-      const newHtml = htmlOfEditor.replace(diffFromAssistant, newEditorHTML);
-      canvasEditor?.current?.setHTML?.(newHtml);
-      console.log("diff from assistant: ", newHtml);
+    } else {
+      console.log("oldEditorHTML not found in current editor HTML!");
     }
+    // else if (htmlOfEditor) {
+    //   if (!htmlOfEditor?.includes(diffEditorHTML)) {
+    //     console.warn("oldEditorHTML not found in current editor HTML!");
+    //   }
+    //   if (!htmlOfEditor?.includes(diffFromAssistant)) {
+    //     console.warn("diffFromAssistant not found in current editor HTML!");
+    //   }
+    //   const newHtml = htmlOfEditor.replace(diffEditorHTML, newEditorHTML);
+    //   canvasEditor?.current?.setHTML?.(newHtml);
+    // } else if (htmlOfEditor?.includes(diffFromAssistant)) {
+    //   const newHtml = htmlOfEditor.replace(diffFromAssistant, newEditorHTML);
+    //   canvasEditor?.current?.setHTML?.(newHtml);
+    //   console.log("diff from assistant: ", newHtml);
+    // }
   };
 
   return (
