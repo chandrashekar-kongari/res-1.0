@@ -14,14 +14,18 @@ export const resumeRouter = router({
         });
       }
       return prisma.resume.findUnique({
-        where: { id: input.id, user: { email: ctx.user!.primaryEmail } },
+        where: {
+          id: input.id,
+          deleted_at: null,
+          user: { email: ctx.user!.primaryEmail },
+        },
       });
     }),
   create: protectedProcedure
     .input(
       z.object({
-        link: z.string().url().optional(),
         content: z.string().optional(),
+        name: z.string().optional(),
       })
     )
     .mutation(
@@ -30,7 +34,7 @@ export const resumeRouter = router({
         input,
       }: {
         ctx: Context;
-        input: { link?: string; content?: string; name?: string };
+        input: { content?: string; name?: string };
       }) => {
         if (!ctx.user?.primaryEmail) {
           throw new TRPCError({
@@ -38,9 +42,9 @@ export const resumeRouter = router({
             message: "You must be logged in to access this resource",
           });
         }
+
         return prisma.resume.create({
           data: {
-            link: input.link,
             content: input.content,
             name: input.name,
             user: {
@@ -58,6 +62,7 @@ export const resumeRouter = router({
         id: z.string().uuid(),
         link: z.string().url().optional(),
         content: z.string().optional(),
+        name: z.string().optional(),
       })
     )
     .mutation(
@@ -96,12 +101,128 @@ export const resumeRouter = router({
         user: {
           email: ctx.user!.primaryEmail,
         },
+        deleted_at: null,
       },
       orderBy: {
         created_at: "desc",
       },
     });
   }),
+  listPinnedResumeNames: protectedProcedure.query(async ({ ctx }) => {
+    if (!ctx.user?.primaryEmail) {
+      throw new TRPCError({
+        code: "UNAUTHORIZED",
+        message: "You must be logged in to access this resource",
+      });
+    }
+    return prisma.resume.findMany({
+      where: {
+        user: {
+          email: ctx.user!.primaryEmail,
+        },
+        deleted_at: null,
+        pinned: true,
+      },
+      orderBy: {
+        created_at: "desc",
+      },
+    });
+  }),
+  getAllResumeNames: protectedProcedure.query(async ({ ctx }) => {
+    if (!ctx.user?.primaryEmail) {
+      throw new TRPCError({
+        code: "UNAUTHORIZED",
+        message: "You must be logged in to access this resource",
+      });
+    }
+    return prisma.resume.findMany({
+      where: {
+        user: {
+          email: ctx.user!.primaryEmail,
+        },
+        deleted_at: null,
+      },
+      select: {
+        name: true,
+        id: true,
+        pinned: true,
+      },
+      orderBy: [
+        {
+          pinned: "desc", // Pinned items first
+        },
+        {
+          updated_at: "desc",
+        },
+      ],
+    });
+  }),
+  togglePin: protectedProcedure
+    .input(z.object({ id: z.string().uuid() }))
+    .mutation(async ({ ctx, input }) => {
+      if (!ctx.user?.primaryEmail) {
+        throw new TRPCError({
+          code: "UNAUTHORIZED",
+          message: "You must be logged in to access this resource",
+        });
+      }
+
+      // Get current pinned status
+      const resume = await prisma.resume.findUnique({
+        where: {
+          id: input.id,
+          user: { email: ctx.user!.primaryEmail },
+          deleted_at: null,
+        },
+        select: { pinned: true },
+      });
+
+      if (!resume) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Resume not found",
+        });
+      }
+
+      // Toggle the pinned status
+      return prisma.resume.update({
+        where: { id: input.id },
+        data: { pinned: !resume.pinned },
+      });
+    }),
+  delete: protectedProcedure
+    .input(z.object({ id: z.string().uuid() }))
+    .mutation(async ({ ctx, input }) => {
+      if (!ctx.user?.primaryEmail) {
+        throw new TRPCError({
+          code: "UNAUTHORIZED",
+          message: "You must be logged in to access this resource",
+        });
+      }
+
+      // Check if resume exists and belongs to user
+      const resume = await prisma.resume.findUnique({
+        where: {
+          id: input.id,
+          user: { email: ctx.user!.primaryEmail },
+        },
+      });
+
+      if (!resume) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Resume not found",
+        });
+      }
+
+      // Delete the resume
+      return prisma.resume.update({
+        where: { id: input.id },
+        data: {
+          deleted_at: new Date(),
+        },
+      });
+    }),
   getDefaultOrCreate: protectedProcedure.query(async ({ ctx }) => {
     if (!ctx.user?.primaryEmail) {
       throw new TRPCError({
@@ -114,6 +235,7 @@ export const resumeRouter = router({
         user: {
           email: ctx.user!.primaryEmail,
         },
+        deleted_at: null,
       },
       orderBy: {
         created_at: "desc",

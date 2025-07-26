@@ -34,7 +34,7 @@ const UserSettings = () => {
           </div>
         </SidebarMenuButton>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="start" className="w-xs">
+      <DropdownMenuContent align="start" className="w-xs rounded-2xl">
         <DropdownMenuLabel className="flex flex-col gap-1">
           <span className="font-medium flex items-center gap-2">
             <User2 className="w-4 h-4 text-muted-foreground" />{" "}

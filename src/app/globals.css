@@ -66,16 +66,16 @@
     --sidebar-ring: 217.2 91.2% 59.8%;
   }
 }
-
+/* 
 @layer base {
   body {
     @apply bg-background text-foreground;
   }
-  /* Remove default focus outline and add custom styling */
   :focus-visible {
     @apply outline-none ring-1 ring-ring/20 ring-offset-0;
   }
-}
+} 
+*/
 
 .inline-suggestion {
   display: inline-block;

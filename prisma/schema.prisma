@@ -20,6 +20,7 @@ model resume {
   link      String?
   content   String?
   is_default Boolean  @default(false)
+  pinned    Boolean  @default(false)
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
   deleted_at DateTime?
