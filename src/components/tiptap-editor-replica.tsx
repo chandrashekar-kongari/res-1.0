@@ -30,6 +30,7 @@ import Text from "@tiptap/extension-text";
 
 import { BorderBottom } from "@/lib/extensions/border-bottom";
 import { CustomHeading } from "@/lib/extensions/custom-heading";
+import { Node, mergeAttributes } from "@tiptap/core";
 
 // Extend Paragraph to allow id attribute
 const ParagraphWithId = Paragraph.extend({
@@ -62,6 +63,42 @@ const CustomHeadingWithId = CustomHeading.extend({
         },
       },
     };
+  },
+});
+
+// Create a custom Div node with id and style attributes
+const DivWithId = Node.create({
+  name: "divWithId",
+  group: "block",
+  content: "block*",
+
+  addAttributes() {
+    return {
+      id: {
+        default: null,
+        parseHTML: (element) => element.getAttribute("id"),
+        renderHTML: (attributes) => {
+          if (!attributes.id) return {};
+          return { id: attributes.id };
+        },
+      },
+      style: {
+        default: null,
+        parseHTML: (element) => element.getAttribute("style"),
+        renderHTML: (attributes) => {
+          if (!attributes.style) return {};
+          return { style: attributes.style };
+        },
+      },
+    };
+  },
+
+  parseHTML() {
+    return [{ tag: "div" }];
+  },
+
+  renderHTML({ HTMLAttributes }) {
+    return ["div", mergeAttributes(HTMLAttributes), 0];
   },
 });
 
@@ -128,7 +165,7 @@ const TiptapEditorReplica = forwardRef<TiptapEditorRef, TiptapEditorProps>(
               "font-size: 14px; padding: 0; line-height: 1.25; font-family: Calibri, Arial, sans-serif; white-space: pre-wrap; margin: 0;",
           },
         }),
-
+        DivWithId,
         Text,
         StarterKit.configure({
           // Disable these since we're adding them separately

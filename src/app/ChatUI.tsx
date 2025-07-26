@@ -5,7 +5,7 @@ import { Check } from "lucide-react";
 import ChatInput from "./ChatInput";
 import ReactMarkdown from "react-markdown";
 import { cn } from "@/lib/utils";
-import type { ChatMessage } from "./page";
+import type { ChatMessage } from "./(with-auth)/app/[id]/page";
 
 import React, { RefObject, useEffect, useState } from "react";
 import DiffEditor from "@/components/diff-editor";
@@ -177,26 +177,41 @@ const ChatUI = ({
     console.log("textOfEditor: ", diffFromAssistant);
 
     if (htmlOfEditor && diffEditorHTMLId) {
-      const newHtml = replaceElementById(
-        htmlOfEditor,
-        diffEditorHTMLId,
-        newEditorHTML
-      );
-      canvasEditor?.current?.setHTML?.(newHtml);
-    } else if (htmlOfEditor) {
-      if (!htmlOfEditor?.includes(diffEditorHTML)) {
-        console.warn("oldEditorHTML not found in current editor HTML!");
+      // Check if the element with diffEditorHTMLId exists in the HTML
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(htmlOfEditor, "text/html");
+      const targetElement = doc.getElementById(diffEditorHTMLId);
+
+      if (targetElement) {
+        const newHtml = replaceElementById(
+          htmlOfEditor,
+          diffEditorHTMLId,
+          newEditorHTML
+        );
+        canvasEditor?.current?.setHTML?.(newHtml);
+      } else {
+        console.warn(
+          `Element with ID ${diffEditorHTMLId} not found in current editor HTML!`
+        );
       }
-      if (!htmlOfEditor?.includes(diffFromAssistant)) {
-        console.warn("diffFromAssistant not found in current editor HTML!");
-      }
-      const newHtml = htmlOfEditor.replace(diffEditorHTML, newEditorHTML);
-      canvasEditor?.current?.setHTML?.(newHtml);
-    } else if (htmlOfEditor?.includes(diffFromAssistant)) {
-      const newHtml = htmlOfEditor.replace(diffFromAssistant, newEditorHTML);
-      canvasEditor?.current?.setHTML?.(newHtml);
-      console.log("diff from assistant: ", newHtml);
+    } else {
+      console.log("something else: ", htmlOfEditor);
     }
+
+    // else if (htmlOfEditor) {
+    //   if (!htmlOfEditor?.includes(diffEditorHTML)) {
+    //     console.warn("oldEditorHTML not found in current editor HTML!");
+    //   }
+    //   if (!htmlOfEditor?.includes(diffFromAssistant)) {
+    //     console.warn("diffFromAssistant not found in current editor HTML!");
+    //   }
+    //   const newHtml = htmlOfEditor.replace(diffEditorHTML, newEditorHTML);
+    //   canvasEditor?.current?.setHTML?.(newHtml);
+    // } else if (htmlOfEditor?.includes(diffFromAssistant)) {
+    //   const newHtml = htmlOfEditor.replace(diffFromAssistant, newEditorHTML);
+    //   canvasEditor?.current?.setHTML?.(newHtml);
+    //   console.log("diff from assistant: ", newHtml);
+    // }
   };
 
   return (

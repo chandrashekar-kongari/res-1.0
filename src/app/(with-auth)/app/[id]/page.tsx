@@ -198,24 +198,35 @@ export default function Home({ params }: { params: Promise<{ id: string }> }) {
                       const res = JSON.parse(responseObj[0]?.content[0]?.text);
                       if (res?.diffEditorHTML) {
                         const htmlOfEditor = editorRef.current?.getHTML?.();
-                        const diffFromAssistant = res?.diffEditorHTML;
+
                         if (htmlOfEditor) {
                           if (!htmlOfEditor.includes(res.oldEditorHTML)) {
                             console.warn(
                               "oldEditorHTML not found in current editor HTML!"
                             );
-                          }
-                          const replicaInitialHTML =
-                            replicaRef.current?.getHTML();
 
-                          if (replicaInitialHTML) {
-                            replicaRef.current?.setHTML(
-                              replicaInitialHTML.replace(
-                                replicaInitialHTML,
-                                diffFromAssistant
-                              )
-                            );
+                            return;
                           }
+                          const randomId = Math.random()
+                            .toString(36)
+                            .substring(2, 15);
+                          const diffFromAssistant = `<div id="diff-editor-html-${randomId}" style="font-size: 14px; padding: 0px; line-height: 1.25; font-family: Calibri, Arial, sans-serif; white-space: pre-wrap; margin: 0px;">${res?.diffEditorHTML}</div>`;
+                          const replicaInitialHTML =
+                            replicaRef.current?.setHTML(diffFromAssistant);
+
+                          // if (replicaInitialHTML) {
+                          //   replicaRef.current?.setHTML(
+                          //     replicaInitialHTML.replace(
+                          //       replicaInitialHTML,
+                          //       diffFromAssistant
+                          //     )
+                          //   );
+                          // }
+
+                          console.log(
+                            "replicaInitialHTML",
+                            replicaRef.current?.getHTML()
+                          );
                           const replicaHtml = replicaRef.current
                             ?.getHTML()
                             ?.replace(
@@ -227,7 +238,6 @@ export default function Home({ params }: { params: Promise<{ id: string }> }) {
                             res?.oldEditorHTML,
                             replicaHtml ?? ""
                           );
-
                           editorRef.current?.setHTML?.(newHtml);
 
                           setMessages((prev) => {
@@ -254,84 +264,7 @@ export default function Home({ params }: { params: Promise<{ id: string }> }) {
                                             newEditorHTML: res?.newEditorHTML,
                                             oldEditorHTML: res?.oldEditorHTML,
                                             diffFromAssistant:
-                                              diffFromAssistant,
-                                          },
-                                        }
-                                      : e
-                                  ),
-                                };
-                              }
-                              return updated;
-                            }
-                            return prev;
-                          });
-                        }
-                      }
-                    } else {
-                      const res = responseObj;
-
-                      if (responseObj?.diffEditorHTML) {
-                        const htmlOfEditor = editorRef.current?.getHTML?.();
-
-                        if (htmlOfEditor) {
-                          if (!htmlOfEditor.includes(res.oldEditorHTML)) {
-                            console.warn(
-                              "oldEditorHTML not found in current editor HTML!"
-                            );
-                          }
-                          const randomId = Math.random()
-                            .toString(36)
-                            .substring(2, 15);
-                          const diffFromAssistant = `<p id="diff-editor-html-${randomId}" style="font-size: 14px; padding: 0px; line-height: 1.25; font-family: Calibri, Arial, sans-serif; white-space: pre-wrap; margin: 0px;">${res?.diffEditorHTML}</p>`;
-                          const replicaInitialHTML =
-                            replicaRef.current?.getHTML();
-
-                          if (replicaInitialHTML) {
-                            replicaRef.current?.setHTML(
-                              replicaInitialHTML.replace(
-                                replicaInitialHTML,
-                                diffFromAssistant
-                              )
-                            );
-                          }
-                          const replicaHtml = replicaRef.current
-                            ?.getHTML()
-                            ?.replace(
-                              /<p\s+style="font-size:\s*14px;\s*padding:\s*0px;\s*line-height:\s*1\.25;\s*font-family:\s*Calibri,\s*Arial,\s*sans-serif;\s*white-space:\s*pre-wrap;\s*margin:\s*0px;"\s*><\/p>\s*$/g,
-                              ""
-                            );
-
-                          const newHtml = htmlOfEditor.replace(
-                            res?.oldEditorHTML,
-                            res?.diffEditorHTML
-                          );
-                          editorRef.current?.setHTML?.(newHtml);
-
-                          setMessages((prev) => {
-                            const lastIndex = prev.length - 1;
-                            if (
-                              lastIndex >= 0 &&
-                              prev[lastIndex].role === "assistant"
-                            ) {
-                              const updated = [...prev];
-                              const lastMessage = updated[lastIndex];
-                              const exists = (lastMessage.events || []).some(
-                                (e) => e.callId === event?.item?.rawItem?.callId
-                              );
-                              if (exists) {
-                                updated[lastIndex] = {
-                                  ...lastMessage,
-                                  events: (lastMessage.events || []).map((e) =>
-                                    e.callId === event?.item?.rawItem?.callId
-                                      ? {
-                                          ...e,
-                                          status: true,
-                                          output: {
-                                            diffEditorHTML: replicaHtml,
-                                            newEditorHTML: res?.newEditorHTML,
-                                            oldEditorHTML: res?.oldEditorHTML,
-                                            diffFromAssistant:
-                                              diffFromAssistant,
+                                              res?.diffEditorHTML,
                                             diffEditorHTMLId: `diff-editor-html-${randomId}`,
                                           },
                                         }
@@ -345,6 +278,86 @@ export default function Home({ params }: { params: Promise<{ id: string }> }) {
                           });
                         }
                       }
+                    } else {
+                      // const res = responseObj;
+
+                      // if (responseObj?.diffEditorHTML) {
+                      //   const htmlOfEditor = editorRef.current?.getHTML?.();
+
+                      //   if (htmlOfEditor) {
+                      //     if (!htmlOfEditor.includes(res.oldEditorHTML)) {
+                      //       console.warn(
+                      //         "oldEditorHTML not found in current editor HTML!"
+                      //       );
+                      //     }
+                      //     const randomId = Math.random()
+                      //       .toString(36)
+                      //       .substring(2, 15);
+                      //     const diffFromAssistant = `<p id="diff-editor-html-${randomId}" style="font-size: 14px; padding: 0px; line-height: 1.25; font-family: Calibri, Arial, sans-serif; white-space: pre-wrap; margin: 0px;">${res?.diffEditorHTML}</p>`;
+                      //     const replicaInitialHTML =
+                      //       replicaRef.current?.getHTML();
+
+                      //     if (replicaInitialHTML) {
+                      //       replicaRef.current?.setHTML(
+                      //         replicaInitialHTML.replace(
+                      //           replicaInitialHTML,
+                      //           diffFromAssistant
+                      //         )
+                      //       );
+                      //     }
+                      //     const replicaHtml = replicaRef.current
+                      //       ?.getHTML()
+                      //       ?.replace(
+                      //         /<p\s+style="font-size:\s*14px;\s*padding:\s*0px;\s*line-height:\s*1\.25;\s*font-family:\s*Calibri,\s*Arial,\s*sans-serif;\s*white-space:\s*pre-wrap;\s*margin:\s*0px;"\s*><\/p>\s*$/g,
+                      //         ""
+                      //       );
+
+                      //     const newHtml = htmlOfEditor.replace(
+                      //       res?.oldEditorHTML,
+                      //       res?.diffEditorHTML
+                      //     );
+                      //     editorRef.current?.setHTML?.(newHtml);
+
+                      //     setMessages((prev) => {
+                      //       const lastIndex = prev.length - 1;
+                      //       if (
+                      //         lastIndex >= 0 &&
+                      //         prev[lastIndex].role === "assistant"
+                      //       ) {
+                      //         const updated = [...prev];
+                      //         const lastMessage = updated[lastIndex];
+                      //         const exists = (lastMessage.events || []).some(
+                      //           (e) => e.callId === event?.item?.rawItem?.callId
+                      //         );
+                      //         if (exists) {
+                      //           updated[lastIndex] = {
+                      //             ...lastMessage,
+                      //             events: (lastMessage.events || []).map((e) =>
+                      //               e.callId === event?.item?.rawItem?.callId
+                      //                 ? {
+                      //                     ...e,
+                      //                     status: true,
+                      //                     output: {
+                      //                       diffEditorHTML: replicaHtml,
+                      //                       newEditorHTML: res?.newEditorHTML,
+                      //                       oldEditorHTML: res?.oldEditorHTML,
+                      //                       diffFromAssistant:
+                      //                         diffFromAssistant,
+                      //                       diffEditorHTMLId: `diff-editor-html-${randomId}`,
+                      //                     },
+                      //                   }
+                      //                 : e
+                      //             ),
+                      //           };
+                      //         }
+                      //         return updated;
+                      //       }
+                      //       return prev;
+                      //     });
+                      //   }
+                      // }
+
+                      console.log("else");
                     }
                   }
                 }
