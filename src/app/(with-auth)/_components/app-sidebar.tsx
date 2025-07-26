@@ -41,6 +41,25 @@ import DeleteConfirmationDialog from "./DeleteConfirmationDialog";
 import { cn } from "@/lib/utils";
 import DuplicateFromPinnedResumeModal from "./DuplicateFromPinnedResumeModal";
 
+// Loading skeleton component for resume items
+function ResumeItemSkeleton({ width = "w-3/4" }: { width?: string }) {
+  return (
+    <SidebarMenuItem>
+      <SidebarMenuButton className="rounded-lg">
+        <div className="flex items-center gap-2 w-full animate-pulse">
+          {/* File icon skeleton */}
+          <div className="w-4 h-4 bg-black/15 rounded-sm"></div>
+
+          {/* Resume name skeleton - varies in width for realism */}
+          <div className="flex-1 min-w-0">
+            <div className={`h-4 bg-black/15 rounded-full ${width}`}></div>
+          </div>
+        </div>
+      </SidebarMenuButton>
+    </SidebarMenuItem>
+  );
+}
+
 export function AppSidebar() {
   const params = useParams();
   const currentResumeId = params?.id as string;
@@ -175,104 +194,114 @@ export function AppSidebar() {
                   <Separator className="my-2" />
                   <p className="text-xs text-gray-500 p-2">All resumes</p>
                   <div className="flex flex-col gap-2 flex-grow overflow-y-auto">
-                    {resumes?.map((item) => (
-                      <SidebarMenuItem key={item.id}>
-                        <div
-                          className={`transition-all duration-200 ${
-                            item.id === currentResumeId
-                              ? " relative before:content-[''] before:absolute before:left-0 before:top-1/3 rounded-full before:w-[2px] before:h-1/3 before:bg-black before:transition-all before:duration-200"
-                              : ""
-                          }`}
-                          onMouseEnter={() => setHoveredResumeId(item.id)}
-                          onMouseLeave={() => setHoveredResumeId(null)}
-                        >
-                          <SidebarMenuButton
-                            asChild
-                            className="rounded-lg hover:bg-gray-300 transition-colors duration-200"
+                    {isResumesLoading ? (
+                      // Show loading skeletons
+                      Array.from({ length: 3 }).map((_, index) => (
+                        <ResumeItemSkeleton key={`skeleton-${index}`} />
+                      ))
+                    ) : resumes && resumes.length > 0 ? (
+                      // Show actual resumes
+                      resumes.map((item) => (
+                        <SidebarMenuItem key={item.id}>
+                          <div
+                            className={`transition-all duration-200 ${
+                              item.id === currentResumeId
+                                ? " relative before:content-[''] before:absolute before:left-0 before:top-1/3 rounded-full before:w-[2px] before:h-1/3 before:bg-black before:transition-all before:duration-200"
+                                : ""
+                            }`}
+                            onMouseEnter={() => setHoveredResumeId(item.id)}
+                            onMouseLeave={() => setHoveredResumeId(null)}
                           >
-                            <Link
-                              href={`/app/${item.id}`}
-                              className="flex items-center gap-0"
+                            <SidebarMenuButton
+                              asChild
+                              className="rounded-lg hover:bg-gray-300 transition-colors duration-200"
                             >
-                              <FileTextIcon className="w-4 h-4" />
-                              <span className="text-xs truncate">
-                                {item.name}
-                              </span>
-                              <div className="flex items-center gap-1 ml-auto">
-                                {/* Pin/Unpin button - shows on hover or if pinned */}
-                                {(hoveredResumeId === item.id ||
-                                  item.pinned) && (
-                                  <button
-                                    onClick={(e) => handleTogglePin(e, item.id)}
-                                    className="p-1 hover:bg-gray-400 rounded transition-colors duration-200"
-                                  >
-                                    {item.pinned ? (
-                                      hoveredResumeId === item.id ? (
-                                        <DrawingPinIcon className="w-[14px] h-[14px] text-gray-700" />
-                                      ) : (
-                                        <DrawingPinFilledIcon className="w-[14px] h-[14px] text-[#46A758]" />
-                                      )
-                                    ) : (
-                                      <DrawingPinFilledIcon className="w-[14px] h-[14px] text-gray-700" />
-                                    )}
-                                  </button>
-                                )}
-                                <DropdownMenu
-                                  onOpenChange={(open) =>
-                                    setOpenDropdownId(open ? item.id : null)
-                                  }
-                                >
-                                  <DropdownMenuTrigger asChild>
+                              <Link
+                                href={`/app/${item.id}`}
+                                className="flex items-center gap-0"
+                              >
+                                <FileTextIcon className="w-4 h-4" />
+                                <span className="text-xs truncate">
+                                  {item.name}
+                                </span>
+                                <div className="flex items-center gap-1 ml-auto">
+                                  {/* Pin/Unpin button - shows on hover or if pinned */}
+                                  {(hoveredResumeId === item.id ||
+                                    item.pinned) && (
                                     <button
-                                      className={cn(
-                                        "p-1 hover:bg-gray-400 rounded transition-colors duration-200 opacity-0",
-                                        (item.id === hoveredResumeId ||
-                                          item.id === openDropdownId) &&
-                                          "opacity-100"
+                                      onClick={(e) =>
+                                        handleTogglePin(e, item.id)
+                                      }
+                                      className="p-1 hover:bg-gray-400 rounded transition-colors duration-200"
+                                    >
+                                      {item.pinned ? (
+                                        hoveredResumeId === item.id ? (
+                                          <DrawingPinIcon className="w-[14px] h-[14px] text-gray-700" />
+                                        ) : (
+                                          <DrawingPinFilledIcon className="w-[14px] h-[14px] text-[#46A758]" />
+                                        )
+                                      ) : (
+                                        <DrawingPinFilledIcon className="w-[14px] h-[14px] text-gray-700" />
                                       )}
-                                    >
-                                      <DotsVerticalIcon className="w-3 h-3" />
                                     </button>
-                                  </DropdownMenuTrigger>
-                                  <DropdownMenuContent
-                                    align="start"
-                                    className="rounded-2xl w-xs p-2"
+                                  )}
+                                  <DropdownMenu
+                                    onOpenChange={(open) =>
+                                      setOpenDropdownId(open ? item.id : null)
+                                    }
                                   >
-                                    <DropdownMenuItem
-                                      className="px-2 rounded-lg"
-                                      onClick={(e) =>
-                                        handleRename(
-                                          e,
-                                          item.id,
-                                          item.name || "Untitled"
-                                        )
-                                      }
+                                    <DropdownMenuTrigger asChild>
+                                      <button
+                                        className={cn(
+                                          "p-1 hover:bg-gray-400 rounded transition-colors duration-200 opacity-0",
+                                          (item.id === hoveredResumeId ||
+                                            item.id === openDropdownId) &&
+                                            "opacity-100"
+                                        )}
+                                      >
+                                        <DotsVerticalIcon className="w-3 h-3" />
+                                      </button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent
+                                      align="start"
+                                      className="rounded-2xl w-xs p-2"
                                     >
-                                      <Pencil1Icon className="w-[14px] h-[14px]" />
-                                      <p className="text-xs">Rename</p>
-                                    </DropdownMenuItem>
-                                    <DropdownMenuItem
-                                      className="px-2 rounded-lg"
-                                      onClick={(e) =>
-                                        handleDelete(
-                                          e,
-                                          item.id,
-                                          item.name || "Untitled"
-                                        )
-                                      }
-                                    >
-                                      <Trash2Icon className="w-[14px] h-[14px]" />
-                                      <p className="text-xs">Delete</p>
-                                    </DropdownMenuItem>
-                                  </DropdownMenuContent>
-                                </DropdownMenu>
-                              </div>
-                            </Link>
-                          </SidebarMenuButton>
-                        </div>
-                      </SidebarMenuItem>
-                    ))}
-                    {resumes?.length === 0 && !isResumesLoading && (
+                                      <DropdownMenuItem
+                                        className="px-2 rounded-lg"
+                                        onClick={(e) =>
+                                          handleRename(
+                                            e,
+                                            item.id,
+                                            item.name || "Untitled"
+                                          )
+                                        }
+                                      >
+                                        <Pencil1Icon className="w-[14px] h-[14px]" />
+                                        <p className="text-xs">Rename</p>
+                                      </DropdownMenuItem>
+                                      <DropdownMenuItem
+                                        className="px-2 rounded-lg"
+                                        onClick={(e) =>
+                                          handleDelete(
+                                            e,
+                                            item.id,
+                                            item.name || "Untitled"
+                                          )
+                                        }
+                                      >
+                                        <Trash2Icon className="w-[14px] h-[14px]" />
+                                        <p className="text-xs">Delete</p>
+                                      </DropdownMenuItem>
+                                    </DropdownMenuContent>
+                                  </DropdownMenu>
+                                </div>
+                              </Link>
+                            </SidebarMenuButton>
+                          </div>
+                        </SidebarMenuItem>
+                      ))
+                    ) : (
+                      // Show empty state
                       <div className="flex flex-col gap-2">
                         <p className="text-xs text-gray-500 p-2">
                           No resumes found
