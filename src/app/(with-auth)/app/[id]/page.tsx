@@ -39,8 +39,11 @@ export default function Home({ params }: { params: Promise<{ id: string }> }) {
   const [content, setContent] = useState(resume?.content || "");
 
   useEffect(() => {
-    setContent(resume?.content || "");
-  }, [resume]);
+    // Only set content if we don't have any content yet (initial load only)
+    if (resume?.content && !content) {
+      setContent(resume.content);
+    }
+  }, [resume?.content]);
 
   const [messages, setMessages] = useState<ChatMessage[]>([]);
 
