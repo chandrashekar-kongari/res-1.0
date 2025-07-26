@@ -32,35 +32,34 @@ export const updateSkillsTool: FunctionTool<any> = {
     const subAgent = new Agent({
       name: "SkillsUpdater",
       instructions: `
-      
-      You are an agent - please keep going until the user’s query is completely resolved, before ending your turn and yielding back to the user. Only terminate your turn when you are sure that the problem is solved.
+      # Role and Objective
+      You are HTML, CSS and Resume building expert for tiptap editor, your task is to correctly construct the NewEditorHTML and DiffEditorHTML by updating the OldEditorHTML based on the skills description and user question.
 
-      INSTRUCTIONS:
-      - Analyze the current skills text and make requested modifications and based on job description and user question
-      - Return both the old content and the new content
-      - Return a diff view if there are changes
-      - Just ADD skills DO NOT ADD unnecessary info
+      # Instructions:
+      Analyze the current skills text and make requested modifications based on job description and user question.
+      Just ADD skills DO NOT ADD unnecessary info.
+      Organize skills into appropriate categories (Programming Languages, Backend Technologies, Frontend Technologies, Database Technologies, Cloud Technologies, etc.).
+
+      STEPS:
+      First build NewEditorHTML by updating the OldEditorHTML based on the skills description and user question.
+      Then build DiffEditorHTML by comparing the NewEditorHTML and OldEditorHTML. For removed content wrap it mark tag with style="background-color: #fdb8c0;" and for added content wrap it mark tag with style="background-color: #acf2bd;". If you are adding mark tags inside any span tag then must create a new span tag inside the mark tag and keep the text inside the span tag.
+
+      IMPORTANT:
+      - Do not remove or add any content from the OldEditorHTML.
+      - Create NewEditorHTML by updating the OldEditorHTML based on the skills description and user question.
+      - Create DiffEditorHTML by comparing the NewEditorHTML and OldEditorHTML.
+      - Do not remove or add any content from the NewEditorHTML.
+      - Do not remove or add any content from the DiffEditorHTML.
+      - Return the FULL HTML content, not just the changed part.
 
       OUTPUT FORMAT:    
       OldEditorHTML: The original HTML content you received (before any changes) (MUST be returned exactly as received, with no changes)
       NewEditorHTML: The modified HTML content (after changes, without diff styling) (MUST be the full HTML, not just the changed part)
-      DiffEditorHTML: Is the diff view of the old and new HTML content (MUST be the full HTML, not just the changed part) and it should be in the same format as the old HTML. Append to inline style for removed color: rgb(255, 0, 0) and for added color: rgb(0, 255, 0).
+      DiffEditorHTML: Generate a diff view of the OldEditorHTML and NewEditorHTML.
 
-      EXAMPLE:
-      INPUT:
-      Job Description: Experience with acquiring client requirements and resolving workflow problems through automation optimization, Experience with Java, Python, C#, C, C++, .NET, JavaScript, React, NodeJS, PHP, or Drupal, Ability to work with automated testing tools to perform testing and maintenance, Master’s degree 
-      User Question: Update the skills section according to job description
-      HTML to Update: <p style="font-size: 14px; margin: 0px 0px 5px; padding: 0px; line-height: 1.15; font-family: Calibri, Arial, sans-serif; white-space: pre-wrap; border-bottom: 1px solid rgb(183, 183, 183); display: block; width: 100%;"><strong>SKILLS</strong></p><p style="font-size: 14px; margin: 0px; padding: 0px; line-height: 1.25; font-family: Calibri, Arial, sans-serif; white-space: pre-wrap;"><strong>Programming Languages</strong>: Java, C++</p><p style="font-size: 14px; margin: 0px; padding: 0px; line-height: 1.25; font-family: Calibri, Arial, sans-serif; white-space: pre-wrap;"><strong>Backend Technologies</strong>: Springboot, Flask, Django</p><p style="font-size: 14px; margin: 0px; padding: 0px; line-height: 1.25; font-family: Calibri, Arial, sans-serif; white-space: pre-wrap;"><strong>Database Technologies</strong>: MySQL, Planetscale</p><p style="font-size: 14px; margin: 0px; padding: 0px; line-height: 1.25; font-family: Calibri, Arial, sans-serif; white-space: pre-wrap;"><strong>Cloud Technologies</strong>: AWS, GCP, Azure</p><p style="font-size: 14px; margin: 0px; padding: 0px; line-height: 1.15; font-family: Calibri, Arial, sans-serif; white-space: pre-wrap;"></p><p style="font-size: 14px; margin: 0px; padding: 0px; line-height: 1.15; font-family: Calibri, Arial, sans-serif; white-space: pre-wrap;"></p><p style="font-size: 14px; margin: 0px; padding: 0px; line-height: 1.15; font-family: Calibri, Arial, sans-serif; white-space: pre-wrap;"></p>
-      
-      OUTPUT:
-      OldEditorHTML: <p style="font-size: 14px; margin: 0px 0px 5px; padding: 0px; line-height: 1.15; font-family: Calibri, Arial, sans-serif; white-space: pre-wrap; border-bottom: 1px solid rgb(183, 183, 183); display: block; width: 100%;"><strong>SKILLS</strong></p><p style="font-size: 14px; margin: 0px; padding: 0px; line-height: 1.25; font-family: Calibri, Arial, sans-serif; white-space: pre-wrap;"><strong>Programming Languages</strong>: Java, C++</p><p style="font-size: 14px; margin: 0px; padding: 0px; line-height: 1.25; font-family: Calibri, Arial, sans-serif; white-space: pre-wrap;"><strong>Backend Technologies</strong>: Springboot, Flask, Django</p><p style="font-size: 14px; margin: 0px; padding: 0px; line-height: 1.25; font-family: Calibri, Arial, sans-serif; white-space: pre-wrap;"><strong>Database Technologies</strong>: MySQL, Planetscale</p><p style="font-size: 14px; margin: 0px; padding: 0px; line-height: 1.25; font-family: Calibri, Arial, sans-serif; white-space: pre-wrap;"><strong>Cloud Technologies</strong>: AWS, GCP, Azure</p><p style="font-size: 14px; margin: 0px; padding: 0px; line-height: 1.15; font-family: Calibri, Arial, sans-serif; white-space: pre-wrap;"></p><p style="font-size: 14px; margin: 0px; padding: 0px; line-height: 1.15; font-family: Calibri, Arial, sans-serif; white-space: pre-wrap;"></p><p style="font-size: 14px; margin: 0px; padding: 0px; line-height: 1.15; font-family: Calibri, Arial, sans-serif; white-space: pre-wrap;"></p>
-      NewEditorHTML: <p style="font-size: 14px; margin: 0px 0px 5px; padding: 0px; line-height: 1.15; font-family: Calibri, Arial, sans-serif; white-space: pre-wrap; border-bottom: 1px solid rgb(183, 183, 183); display: block; width: 100%;"><strong>SKILLS</strong></p><p style="font-size: 14px; margin: 0px; padding: 0px; line-height: 1.25; font-family: Calibri, Arial, sans-serif; white-space: pre-wrap;"><strong>Programming Languages</strong>: Java, C, C++, C#, Python, Javascript</p><p style="font-size: 14px; margin: 0px; padding: 0px; line-height: 1.25; font-family: Calibri, Arial, sans-serif; white-space: pre-wrap;"><strong>Backend Technologies</strong>: Node JS, PHP, Drupal, .NET, Springboot, Flask, Django</p><p style="font-size: 14px; margin: 0px; padding: 0px; line-height: 1.25; font-family: Calibri, Arial, sans-serif; white-space: pre-wrap;"><strong>Frontend Technologies:</strong> React JS, HTML, CSS</p><p style="font-size: 14px; margin: 0px; padding: 0px; line-height: 1.25; font-family: Calibri, Arial, sans-serif; white-space: pre-wrap;"><strong>Database Technologies</strong>: MySQL, Planetscale</p><p style="font-size: 14px; margin: 0px; padding: 0px; line-height: 1.25; font-family: Calibri, Arial, sans-serif; white-space: pre-wrap;"><strong>Cloud Technologies</strong>: AWS, GCP, Azure</p>
-      DiffEditorHTML: <p style="font-size: 14px; margin: 0px 0px 5px; padding: 0px; line-height: 1.15; font-family: Calibri, Arial, sans-serif; white-space: pre-wrap; border-bottom: 1px solid rgb(183, 183, 183); display: block; width: 100%;"><strong>SKILLS</strong></p><p style="font-size: 14px; margin: 0px; padding: 0px; line-height: 1.25; font-family: Calibri, Arial, sans-serif; white-space: pre-wrap;"><strong>Programming Languages</strong>: Java,<span class="inline-styles" style="color: rgb(0, 255, 0);"> C</span>, C++, <span class="inline-styles" style="color: rgb(0, 255, 0);">C#</span>, <span class="inline-styles" style="color: rgb(0, 255, 0);">Python</span>, <span class="inline-styles" style="color: rgb(0, 255, 0);">Javascript</span></p><p style="font-size: 14px; margin: 0px; padding: 0px; line-height: 1.25; font-family: Calibri, Arial, sans-serif; white-space: pre-wrap;"><strong>Backend Technologies</strong>: <span class="inline-styles" style="color: rgb(0, 255, 0);">Node JS</span>, <span class="inline-styles" style="color: rgb(0, 255, 0);">PHP</span>, <span class="inline-styles" style="color: rgb(0, 255, 0);">Drupal</span>, <span class="inline-styles" style="color: rgb(0, 255, 0);">.NET</span>, Springboot, Flask, Django</p><p style="font-size: 14px; margin: 0px; padding: 0px; line-height: 1.25; font-family: Calibri, Arial, sans-serif; white-space: pre-wrap;"><span class="inline-styles" style="color: rgb(0, 255, 0);"><strong>Frontend Technologies:</strong> React JS, HTML, CSS</span></p><p style="font-size: 14px; margin: 0px; padding: 0px; line-height: 1.25; font-family: Calibri, Arial, sans-serif; white-space: pre-wrap;"><strong>Database Technologies</strong>: MySQL, Planetscale</p><p style="font-size: 14px; margin: 0px; padding: 0px; line-height: 1.25; font-family: Calibri, Arial, sans-serif; white-space: pre-wrap;"><strong>Cloud Technologies</strong>: AWS, GCP, Azure</p>
-      
-      
-      
-      
-      \n\nWhen returning oldEditorHTML, you must return it EXACTLY as you received it in the input, with no changes, reformatting, or normalization.\n\nWhen returning newEditorHTML and diffEditorHTML, you must return the entire HTML content you received as input, with the requested updates applied. Do not return only the changed part. All original HTML content must be preserved, except for the specific changes requested.\n\nFor example, if you receive <div>hello<p>good</p><p>morning</p></div> and you are asked to update only <p>morning</p>, your newEditorHTML must be <div>hello<p>good</p><p>[updated morning]</p></div>, not just <p>[updated morning]</p>.\n\nReturning Response (Must Follow this format):\n- Analyze the current skills/knowledge text\n- Make requested modifications\n- Return both the old content and the new content\n- Return a diff view if there are changes\n\nAlways return a structured response as a JSON object with:\n- response: Your explanation\n- oldEditorHTML: The original skills/knowledge text you received (before any changes) (MUST be returned exactly as received, with no changes)\n- newEditorHTML: (optional) The modified skills/knowledge text (after changes, without diff styling) (MUST be the full HTML, not just the changed part)\n- diffEditorHTML: (optional) If there are any changes, return a diff view (use style=\"color: rgb(255, 0, 0); font-family: Inter, sans-serif;\" for removed, style=\"color: rgb(0, 255, 0); font-family: Inter, sans-serif;\" for added) (MUST be the full HTML, not just the changed part)\n\nIMPORTANT: When adding color styling in HTML, always use rgb() format (e.g., color: rgb(0, 255, 0)) for color values and set font-family: Inter, sans-serif; in the style attribute. Do not use hex codes or named colors for color.\n\nWhen generating or updating HTML, always use inline styles for color in rgb() format and set font-family: Inter, sans-serif;. Do not use hex codes or named colors for color. Ensure all color styles are in rgb() format and font-family is set for compatibility with ProseMirror (Tiptap).\n\nIf there are no changes, return both oldEditorHTML and newEditorHTML as identical, and diffEditorHTML as null or empty.\n\nOutput must be a valid JSON object.`,
+      Before returning the output, think step by step and make sure you have followed the steps correctly.
+
+`,
       outputType: z.object({
         oldEditorHTML: z.string(),
         newEditorHTML: z.string(),
@@ -69,22 +68,59 @@ export const updateSkillsTool: FunctionTool<any> = {
     });
     const subRunner = new Runner({ model: "gpt-4.1" });
     const prompt = `Skills Description: ${parsedInput.skillsDescription}\nUser Question: ${parsedInput.userQuestion}\nHTML to Update: ${parsedInput.htmlToUpdate}`;
-    const result: any = await subRunner.run(subAgent, prompt);
-    let outputText = "";
-    if (result && typeof result === "object" && "output" in result) {
-      outputText = result.output;
-    } else if (typeof result === "string") {
-      outputText = result;
-    } else if (
-      Array.isArray(result) &&
-      result.length > 0 &&
-      typeof result[0] === "string"
-    ) {
-      outputText = result[0];
-    } else {
-      outputText = JSON.stringify(result);
+    try {
+      const result: any = await subRunner.run(subAgent, prompt);
+      let outputText = "";
+      if (result && typeof result === "object" && "output" in result) {
+        outputText = result.output;
+      } else if (typeof result === "string") {
+        outputText = result;
+      } else if (
+        Array.isArray(result) &&
+        result.length > 0 &&
+        typeof result[0] === "string"
+      ) {
+        outputText = result[0];
+      } else {
+        outputText = JSON.stringify(result);
+      }
+      // Parse the result to validate oldEditorHTML
+      try {
+        const parsedResult = JSON.parse(outputText);
+        if (
+          parsedResult.oldEditorHTML &&
+          !parsedInput.htmlToUpdate
+            .trim()
+            .includes(parsedResult.oldEditorHTML.trim()) &&
+          !parsedResult.oldEditorHTML
+            .trim()
+            .includes(parsedInput.htmlToUpdate.trim())
+        ) {
+          throw new Error(
+            `TOOL_VALIDATION_FAILED: The HTML section to be updated was not found in the current editor. This likely means the editor content has changed since the tool was called. Please retry with the updated editor content. \n\nOriginal HTML to update: ${parsedInput.htmlToUpdate}\nTool returned oldEditorHTML: ${parsedResult.oldEditorHTML}`
+          );
+        }
+        return outputText;
+      } catch (parseError: any) {
+        if (
+          parseError.message &&
+          parseError.message.startsWith("TOOL_VALIDATION_FAILED:")
+        ) {
+          throw parseError; // Re-throw validation errors
+        }
+        // If parsing fails, return the original output
+        return outputText;
+      }
+    } catch (error: any) {
+      if (
+        error.message &&
+        error.message.startsWith("TOOL_VALIDATION_FAILED:")
+      ) {
+        throw error;
+      }
+      throw new Error(
+        `Skills update tool failed: ${error.message || "Unknown error"}`
+      );
     }
-
-    return outputText;
   },
 };

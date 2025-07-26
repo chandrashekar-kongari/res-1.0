@@ -200,17 +200,45 @@ export default function Home({ params }: { params: Promise<{ id: string }> }) {
                         const htmlOfEditor = editorRef.current?.getHTML?.();
 
                         if (htmlOfEditor) {
-                          if (!htmlOfEditor.includes(res.oldEditorHTML)) {
-                            console.warn(
-                              "oldEditorHTML not found in current editor HTML!"
-                            );
+                          // Check if res?.diffEditorHTML already has a root div with id
+                          const tempDiv = document.createElement("div");
+                          tempDiv.innerHTML = res.diffEditorHTML;
+                          const rootElement = tempDiv.firstElementChild;
 
-                            return;
+                          let finalId: string;
+                          let diffFromAssistant: string;
+
+                          if (
+                            rootElement &&
+                            rootElement.tagName === "DIV" &&
+                            rootElement.id
+                          ) {
+                            // Root div has an id
+                            if (rootElement.id.startsWith("diff-editor-html")) {
+                              // Keep existing id as it starts with "diff-editor-html"
+                              finalId = rootElement.id;
+                              diffFromAssistant = res.diffEditorHTML;
+                            } else {
+                              // Replace existing id with new one
+                              const randomId = Math.random()
+                                .toString(36)
+                                .substring(2, 15);
+                              finalId = `diff-editor-html-${randomId}`;
+                              const updatedHTML = res.diffEditorHTML.replace(
+                                `id="${rootElement.id}"`,
+                                `id="${finalId}"`
+                              );
+                              diffFromAssistant = updatedHTML;
+                            }
+                          } else {
+                            // No root div with id, use current approach
+                            const randomId = Math.random()
+                              .toString(36)
+                              .substring(2, 15);
+                            finalId = `diff-editor-html-${randomId}`;
+                            diffFromAssistant = `<div id="${finalId}" style="font-size: 14px; padding: 0px; line-height: 1.25; font-family: Calibri, Arial, sans-serif; white-space: pre-wrap; margin: 0px;">${res?.diffEditorHTML}</div>`;
                           }
-                          const randomId = Math.random()
-                            .toString(36)
-                            .substring(2, 15);
-                          const diffFromAssistant = `<div id="diff-editor-html-${randomId}" style="font-size: 14px; padding: 0px; line-height: 1.25; font-family: Calibri, Arial, sans-serif; white-space: pre-wrap; margin: 0px;">${res?.diffEditorHTML}</div>`;
+
                           const replicaInitialHTML =
                             replicaRef.current?.setHTML(diffFromAssistant);
 
@@ -265,7 +293,7 @@ export default function Home({ params }: { params: Promise<{ id: string }> }) {
                                             oldEditorHTML: res?.oldEditorHTML,
                                             diffFromAssistant:
                                               res?.diffEditorHTML,
-                                            diffEditorHTMLId: `diff-editor-html-${randomId}`,
+                                            diffEditorHTMLId: finalId,
                                           },
                                         }
                                       : e
