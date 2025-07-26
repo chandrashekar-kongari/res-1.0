@@ -32,24 +32,34 @@ export const updateEducationTool: FunctionTool<any> = {
     const subAgent = new Agent({
       name: "EducationUpdater",
       instructions: `
-            You are an agent - please keep going until the user’s query is completely resolved, before ending your turn and yielding back to the user. Only terminate your turn when you are sure that the problem is solved.
+      # Role and Objective
+      You are HTML, CSS and Resume building expert for tiptap editor, your task is to correctly construct the NewEditorHTML and DiffEditorHTML by updating the OldEditorHTML based on the education description and user question.
 
-      INSTRUCTIONS:
-      You are an expert resume education section editor.
+      # Instructions:
       You must format the education header to be in the following format:
       University Name [spaces] Location 
       Degree [spaces] Graduation Date
       You must also format the university name and location to be in the same line, University name on the left and location on the right and must be in the same line and add enough space between the university name and location so that university name will be left aligned and location will be right aligned.
       You must also format the Degree and Graduation Date to be in the same line, Degree on the left and Graduation Date on the right and must be in the same line and add enough space between the Degree and Graduation Date so that Degree will be left aligned and Graduation Date will be right aligned.
 
+      STEPS:
+      First build NewEditorHTML by updating the OldEditorHTML based on the education description and user question.
+      Then build DiffEditorHTML by comparing the NewEditorHTML and OldEditorHTML. For removed content wrap it mark tag with style="background-color: #fdb8c0;" and for added content wrap it mark tag with style="background-color: #acf2bd;". If you are adding mark tags inside any span tag then must create a new span tag inside the mark tag and keep the text inside the span tag.
 
-    OUTPUT FORMAT:    
+      IMPORTANT:
+      - Do not remove or add any content from the OldEditorHTML.
+      - Create NewEditorHTML by updating the OldEditorHTML based on the education description and user question.
+      - Create DiffEditorHTML by comparing the NewEditorHTML and OldEditorHTML.
+      - Do not remove or add any content from the NewEditorHTML.
+      - Do not remove or add any content from the DiffEditorHTML.
+      - Return the FULL HTML content, not just the changed part.
+
+      OUTPUT FORMAT:    
       OldEditorHTML: The original HTML content you received (before any changes) (MUST be returned exactly as received, with no changes)
       NewEditorHTML: The modified HTML content (after changes, without diff styling) (MUST be the full HTML, not just the changed part)
-      DiffEditorHTML: Is the diff view of the old and new HTML content (MUST be the full HTML, not just the changed part) and it should be in the same format as the old HTML. Append to inline style for removed color: rgb(255, 0, 0) and for added color: rgb(0, 255, 0).
+      DiffEditorHTML: Generate a diff view of the OldEditorHTML and NewEditorHTML.
 
-
-      
+      Before returning the output, think step by step and make sure you have followed the steps correctly.
       `,
       outputType: z.object({
         oldEditorHTML: z.string(),
@@ -59,21 +69,59 @@ export const updateEducationTool: FunctionTool<any> = {
     });
     const subRunner = new Runner({ model: "gpt-4.1" });
     const prompt = `Education Description: ${parsedInput.educationDescription}\nUser Question: ${parsedInput.userQuestion}\nHTML to Update: ${parsedInput.htmlToUpdate}`;
-    const result: any = await subRunner.run(subAgent, prompt);
-    let outputText = "";
-    if (result && typeof result === "object" && "output" in result) {
-      outputText = result.output;
-    } else if (typeof result === "string") {
-      outputText = result;
-    } else if (
-      Array.isArray(result) &&
-      result.length > 0 &&
-      typeof result[0] === "string"
-    ) {
-      outputText = result[0];
-    } else {
-      outputText = JSON.stringify(result);
+    try {
+      const result: any = await subRunner.run(subAgent, prompt);
+      let outputText = "";
+      if (result && typeof result === "object" && "output" in result) {
+        outputText = result.output;
+      } else if (typeof result === "string") {
+        outputText = result;
+      } else if (
+        Array.isArray(result) &&
+        result.length > 0 &&
+        typeof result[0] === "string"
+      ) {
+        outputText = result[0];
+      } else {
+        outputText = JSON.stringify(result);
+      }
+      // Parse the result to validate oldEditorHTML
+      try {
+        const parsedResult = JSON.parse(outputText);
+        if (
+          parsedResult.oldEditorHTML &&
+          !parsedInput.htmlToUpdate
+            .trim()
+            .includes(parsedResult.oldEditorHTML.trim()) &&
+          !parsedResult.oldEditorHTML
+            .trim()
+            .includes(parsedInput.htmlToUpdate.trim())
+        ) {
+          throw new Error(
+            `TOOL_VALIDATION_FAILED: The HTML section to be updated was not found in the current editor. This likely means the editor content has changed since the tool was called. Please retry with the updated editor content. \n\nOriginal HTML to update: ${parsedInput.htmlToUpdate}\nTool returned oldEditorHTML: ${parsedResult.oldEditorHTML}`
+          );
+        }
+        return outputText;
+      } catch (parseError: any) {
+        if (
+          parseError.message &&
+          parseError.message.startsWith("TOOL_VALIDATION_FAILED:")
+        ) {
+          throw parseError; // Re-throw validation errors
+        }
+        // If parsing fails, return the original output
+        return outputText;
+      }
+    } catch (error: any) {
+      if (
+        error.message &&
+        error.message.startsWith("TOOL_VALIDATION_FAILED:")
+      ) {
+        throw error;
+      }
+      throw new Error(
+        `Education update tool failed: ${error.message || "Unknown error"}`
+      );
     }
-    return outputText;
   },
 };

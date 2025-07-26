@@ -11,8 +11,17 @@ export const updateExperienceTool: FunctionTool<any> = {
       htmlToUpdate: { type: "string", description: "The html to be updated" },
       jobDescription: { type: "string", description: "The job description" },
       userQuestion: { type: "string", description: "The user question" },
+      currentEditorHTML: {
+        type: "string",
+        description: "The current full editor HTML content for validation",
+      },
     },
-    required: ["htmlToUpdate", "jobDescription", "userQuestion"],
+    required: [
+      "htmlToUpdate",
+      "jobDescription",
+      "userQuestion",
+      "currentEditorHTML",
+    ],
     additionalProperties: false,
   },
   strict: true,
@@ -22,6 +31,7 @@ export const updateExperienceTool: FunctionTool<any> = {
       htmlToUpdate: string;
       jobDescription: string;
       userQuestion: string;
+      currentEditorHTML: string;
     };
 
     // Create a sub-agent for this tool
@@ -49,16 +59,12 @@ export const updateExperienceTool: FunctionTool<any> = {
       - Do not remove or add any content from the NewEditorHTML.
       - Do not remove or add any content from the DiffEditorHTML.
 
-
-
-
       OUTPUT FORMAT:    
       OldEditorHTML: The original HTML content you received (before any changes) (MUST be returned exactly as received, with no changes)
       NewEditorHTML: The modified HTML content (after changes, without diff styling) (MUST be the full HTML, not just the changed part)
       DiffEditorHTML: Generate a diff view of the OldEditorHTML and NewEditorHTML. 
 
       Before returning the output, think step by step and make sure you have followed the steps correctly.
-
 
 `,
       outputType: z.object({
@@ -67,24 +73,71 @@ export const updateExperienceTool: FunctionTool<any> = {
         diffEditorHTML: z.string(),
       }),
     });
+
     const subRunner = new Runner({ model: "gpt-4.1" });
     const prompt = `Job Description: ${parsedInput.jobDescription}\nUser Question: ${parsedInput.userQuestion}\nHTML to Update: ${parsedInput.htmlToUpdate}`;
-    const result: any = await subRunner.run(subAgent, prompt);
-    let outputText = "";
-    if (result && typeof result === "object" && "output" in result) {
-      outputText = result.output;
-    } else if (typeof result === "string") {
-      outputText = result;
-    } else if (
-      Array.isArray(result) &&
-      result.length > 0 &&
-      typeof result[0] === "string"
-    ) {
-      outputText = result[0];
-    } else {
-      outputText = JSON.stringify(result);
-    }
 
-    return outputText;
+    try {
+      const result: any = await subRunner.run(subAgent, prompt);
+      let outputText = "";
+
+      if (result && typeof result === "object" && "output" in result) {
+        outputText = result.output;
+      } else if (typeof result === "string") {
+        outputText = result;
+      } else if (
+        Array.isArray(result) &&
+        result.length > 0 &&
+        typeof result[0] === "string"
+      ) {
+        outputText = result[0];
+      } else {
+        outputText = JSON.stringify(result);
+      }
+
+      // Parse the result to validate oldEditorHTML
+      try {
+        const parsedResult = JSON.parse(outputText);
+
+        // Validate that the oldEditorHTML from the tool matches what's in the current editor
+        if (
+          parsedResult.oldEditorHTML &&
+          !parsedInput.currentEditorHTML.includes(
+            parsedResult.oldEditorHTML.trim()
+          )
+        ) {
+          // Tool failed - oldEditorHTML doesn't match current editor state
+          throw new Error(`TOOL_VALIDATION_FAILED: The HTML section to be updated was not found in the current editor. This likely means the editor content has changed since the tool was called. Please retry with the updated editor content. 
+
+Original HTML to update: ${parsedInput.htmlToUpdate}
+Tool returned oldEditorHTML: ${parsedResult.oldEditorHTML}
+Current editor content: ${parsedInput.currentEditorHTML}`);
+        }
+
+        return outputText;
+      } catch (parseError: any) {
+        if (
+          parseError.message &&
+          parseError.message.startsWith("TOOL_VALIDATION_FAILED:")
+        ) {
+          throw parseError; // Re-throw validation errors
+        }
+        // If parsing fails, return the original output
+        return outputText;
+      }
+    } catch (error: any) {
+      // If it's our validation error, throw it to the agent
+      if (
+        error.message &&
+        error.message.startsWith("TOOL_VALIDATION_FAILED:")
+      ) {
+        throw error;
+      }
+
+      // For other errors, also throw them so the agent knows the tool failed
+      throw new Error(
+        `Experience update tool failed: ${error.message || "Unknown error"}`
+      );
+    }
   },
 };
