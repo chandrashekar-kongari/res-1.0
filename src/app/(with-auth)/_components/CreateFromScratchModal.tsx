@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 
 interface CreateFromScratchModalProps {
   open: boolean;
@@ -21,16 +22,22 @@ const CreateFromScratchModal = ({
   setOpen,
 }: CreateFromScratchModalProps) => {
   const [name, setName] = useState("");
-  const createResumeMutation = trpc.resume.create.useMutation();
+  const router = useRouter();
   const utils = trpc.useUtils();
+  const createResumeMutation = trpc.resume.create.useMutation({
+    onSuccess: (data) => {
+      utils.resume.getAllResumeNames.invalidate();
+      utils.resume.list.invalidate();
+      router.push(`/app/${data.id}`);
+      setOpen(false);
+    },
+  });
 
   const handleCreateResume = () => {
     if (!name) {
       return;
     }
     createResumeMutation.mutate({ content: "", name });
-    void utils.resume.invalidate();
-    setOpen(false);
   };
 
   return (

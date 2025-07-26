@@ -89,45 +89,35 @@ export const resumeRouter = router({
         });
       }
     ),
-  list: protectedProcedure.query(async ({ ctx }) => {
-    if (!ctx.user?.primaryEmail) {
-      throw new TRPCError({
-        code: "UNAUTHORIZED",
-        message: "You must be logged in to access this resource",
-      });
-    }
-    return prisma.resume.findMany({
-      where: {
-        user: {
-          email: ctx.user!.primaryEmail,
+  list: protectedProcedure
+    .input(
+      z.object({
+        where: z.object({
+          pinned: z.boolean().optional(),
+        }),
+      })
+    )
+    .query(async ({ ctx, input }) => {
+      if (!ctx.user?.primaryEmail) {
+        throw new TRPCError({
+          code: "UNAUTHORIZED",
+          message: "You must be logged in to access this resource",
+        });
+      }
+      return prisma.resume.findMany({
+        where: {
+          user: {
+            email: ctx.user!.primaryEmail,
+          },
+          deleted_at: null,
+          ...input.where,
         },
-        deleted_at: null,
-      },
-      orderBy: {
-        created_at: "desc",
-      },
-    });
-  }),
-  listPinnedResumeNames: protectedProcedure.query(async ({ ctx }) => {
-    if (!ctx.user?.primaryEmail) {
-      throw new TRPCError({
-        code: "UNAUTHORIZED",
-        message: "You must be logged in to access this resource",
-      });
-    }
-    return prisma.resume.findMany({
-      where: {
-        user: {
-          email: ctx.user!.primaryEmail,
+        orderBy: {
+          created_at: "desc",
         },
-        deleted_at: null,
-        pinned: true,
-      },
-      orderBy: {
-        created_at: "desc",
-      },
-    });
-  }),
+      });
+    }),
+
   getAllResumeNames: protectedProcedure.query(async ({ ctx }) => {
     if (!ctx.user?.primaryEmail) {
       throw new TRPCError({

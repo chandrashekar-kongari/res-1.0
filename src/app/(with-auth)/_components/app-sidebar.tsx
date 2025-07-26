@@ -1,16 +1,6 @@
 "use client";
 
-import {
-  Home,
-  Inbox,
-  Calendar,
-  Search,
-  Settings,
-  PanelLeftClose,
-  PanelLeft,
-  TrashIcon,
-  Trash2Icon,
-} from "lucide-react";
+import { Home, Trash2Icon } from "lucide-react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 
