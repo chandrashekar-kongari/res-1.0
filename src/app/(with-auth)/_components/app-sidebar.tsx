@@ -159,11 +159,11 @@ export function AppSidebar() {
                     <SidebarMenuButton asChild>
                       <div className="flex items-center ">
                         <div className="w-6 h-6 rounded-lg bg-[#AD46FF]  flex items-center justify-center">
-                          <span className="text-white font-bold text-lg">
-                            S
+                          <span className="text-white font-bold text-sm">
+                            M
                           </span>
                         </div>
-                        <p className="text-sm font-semibold">SolidD</p>
+                        <p className="text-sm font-semibold">Memic</p>
                       </div>
                     </SidebarMenuButton>
                     <Separator className="my-2" />
@@ -172,7 +172,7 @@ export function AppSidebar() {
                       <DropdownMenuTrigger asChild>
                         <SidebarMenuButton
                           asChild
-                          className="rounded-xl bg-[#F3EBFD] text-[#AD46FF] border-[#AD46FF] hover:bg-[#E6D6FF] cursor-pointer"
+                          className="rounded-xl bg-[#F3EBFD] text-[#AD46FF] border-[#AD46FF]  hover:bg-[#E6D6FF] cursor-pointer"
                         >
                           <div className="flex items-center gap-2 text-xs font-semibold">
                             <PlusIcon
