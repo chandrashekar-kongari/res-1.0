@@ -5,7 +5,7 @@ import { updateProjectsTool } from "./tools/projects";
 import { nameAndContactInfoFormatTool } from "./tools/nameAndContact";
 import { updateEducationTool } from "./tools/education";
 import { updateExperienceTool } from "./tools/experience";
-const runner = new Runner({ model: "gpt-4.1" });
+const runner = new Runner({ model: "gpt-4.1-nano" });
 
 export async function POST(req: Request) {
   try {
