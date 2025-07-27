@@ -20,6 +20,8 @@ export interface ChatMessage {
     callId: string;
     name: string;
     status: boolean;
+    type?: string; // Add type field for different event types
+    data?: any; // Add data field for event data
     output?: {
       diffEditorHTML?: any;
       newEditorHTML?: any;
@@ -27,8 +29,12 @@ export interface ChatMessage {
       diffFromAssistant?: any;
       diffEditorHTMLId?: string;
     };
+    accepted?: boolean;
+    rejected?: boolean;
+    notFound?: boolean;
   }>;
-  attachPartOfHTML?: string[]; // <-- Add this line
+  attachPartOfHTML?: string[];
+  isStreaming?: boolean; // Add streaming flag
 }
 
 export default function Home({ params }: { params: Promise<{ id: string }> }) {
@@ -48,10 +54,6 @@ export default function Home({ params }: { params: Promise<{ id: string }> }) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
 
   const [isLoading, setIsLoading] = useState(false);
-  const [showingDiff, setShowingDiff] = useState(false);
-  const [originalContent, setOriginalContent] = useState<string>("");
-  const [updatedContent, setUpdatedContent] = useState<string>("");
-  const [streamingMessage, setStreamingMessage] = useState<string>("");
   const editorRef = useRef<TiptapEditorRef>(null);
   const replicaRef = useRef<TiptapEditorRef>(null);
   const [attachPartOfHTML, setAttachPartOfHTML] = useState<string[]>([]);
@@ -59,21 +61,13 @@ export default function Home({ params }: { params: Promise<{ id: string }> }) {
   const abortControllerRef = useRef<AbortController | null>(null);
   const retryTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Simple page visibility tracking
-  useEffect(() => {
-    const handleVisibilityChange = () => {
-      console.log(document.hidden ? "Tab hidden" : "Tab visible");
-    };
-    document.addEventListener("visibilitychange", handleVisibilityChange);
-    return () => {
-      document.removeEventListener("visibilitychange", handleVisibilityChange);
-      if (retryTimeoutRef.current) clearTimeout(retryTimeoutRef.current);
-    };
-  }, []);
-
   // Simplified message sending with built-in retry
   const handleSendMessage = useCallback(
-    async (message: string, retryCount: number = 0) => {
+    async (
+      message: string,
+      shouldSendEditorHTML: boolean = true,
+      retryCount: number = 0
+    ) => {
       if (!message.trim()) return;
 
       // Cancel existing request
@@ -83,14 +77,14 @@ export default function Home({ params }: { params: Promise<{ id: string }> }) {
       abortControllerRef.current = new AbortController();
 
       const editorHTML = editorRef.current?.getHTML?.() || "";
-      setOriginalContent(editorHTML);
 
       const userMessage: ChatMessage = {
         role: "user",
         content: message.trim(),
         events: [],
         newEditorHTML: editorHTML,
-        attachPartOfHTML,
+        attachPartOfHTML:
+          attachPartOfHTML.length > 0 ? attachPartOfHTML : undefined,
       };
 
       // Only add user message on first attempt
@@ -102,6 +96,7 @@ export default function Home({ params }: { params: Promise<{ id: string }> }) {
             role: "assistant" as const,
             content: "",
             events: [],
+            isStreaming: true,
           } as ChatMessage,
         ];
         setMessages(updatedMessages);
@@ -116,7 +111,9 @@ export default function Home({ params }: { params: Promise<{ id: string }> }) {
           body: JSON.stringify({
             messages: [...messages, userMessage],
             editorHTML,
-            attachPartOfHTML,
+            attachPartOfHTML:
+              attachPartOfHTML.length > 0 ? attachPartOfHTML : undefined,
+            shouldModifyFullResume: shouldSendEditorHTML,
           }),
           signal: abortControllerRef.current.signal,
           openWhenHidden: true, // This single line handles background tabs!
@@ -141,9 +138,19 @@ export default function Home({ params }: { params: Promise<{ id: string }> }) {
                       prev[lastIndex].role === "assistant"
                     ) {
                       const updated = [...prev];
+                      const lastMessage = updated[lastIndex];
                       updated[lastIndex] = {
-                        ...updated[lastIndex],
-                        content: updated[lastIndex].content + text,
+                        ...lastMessage,
+                        events: [
+                          ...(lastMessage.events || []),
+                          {
+                            callId: `text-delta-${Date.now()}-${Math.random()}`,
+                            name: "text_delta",
+                            status: true,
+                            type: "output_text_delta",
+                            data: { delta: text },
+                          },
+                        ],
                       };
                       return updated;
                     }
@@ -177,6 +184,8 @@ export default function Home({ params }: { params: Promise<{ id: string }> }) {
                               callId: event?.data?.event?.item?.call_id,
                               name: event?.data?.event?.item?.name,
                               status: false,
+                              type: "function_call",
+                              data: event?.data?.event?.item,
                             },
                           ],
                         };
@@ -200,7 +209,49 @@ export default function Home({ params }: { params: Promise<{ id: string }> }) {
                         const htmlOfEditor = editorRef.current?.getHTML?.();
 
                         if (htmlOfEditor) {
+                          if (
+                            res.oldEditorHTML &&
+                            !htmlOfEditor.includes(res.oldEditorHTML.trim())
+                          ) {
+                            //Retry the tool call with the updated HTML
+                            setMessages((prev) => {
+                              const lastIndex = prev.length - 1;
+                              if (
+                                lastIndex >= 0 &&
+                                prev[lastIndex].role === "assistant"
+                              ) {
+                                const updated = [...prev];
+                                const lastMessage = updated[lastIndex];
+                                const exists = (lastMessage.events || []).some(
+                                  (e) =>
+                                    e.callId === event?.item?.rawItem?.callId
+                                );
+                                if (exists) {
+                                  updated[lastIndex] = {
+                                    ...lastMessage,
+                                    events: (lastMessage.events || []).map(
+                                      (e) =>
+                                        e.callId ===
+                                        event?.item?.rawItem?.callId
+                                          ? {
+                                              ...e,
+                                              status: true,
+                                              notFound: true,
+                                            }
+                                          : e
+                                    ),
+                                  };
+                                }
+                                return updated;
+                              }
+                              return prev;
+                            });
+                            console.log("Should retry the tool call");
+                            return;
+                          }
+
                           // Check if res?.diffEditorHTML already has a root div with id
+
                           const tempDiv = document.createElement("div");
                           tempDiv.innerHTML = res.diffEditorHTML;
                           const rootElement = tempDiv.firstElementChild;
@@ -307,84 +358,6 @@ export default function Home({ params }: { params: Promise<{ id: string }> }) {
                         }
                       }
                     } else {
-                      // const res = responseObj;
-
-                      // if (responseObj?.diffEditorHTML) {
-                      //   const htmlOfEditor = editorRef.current?.getHTML?.();
-
-                      //   if (htmlOfEditor) {
-                      //     if (!htmlOfEditor.includes(res.oldEditorHTML)) {
-                      //       console.warn(
-                      //         "oldEditorHTML not found in current editor HTML!"
-                      //       );
-                      //     }
-                      //     const randomId = Math.random()
-                      //       .toString(36)
-                      //       .substring(2, 15);
-                      //     const diffFromAssistant = `<p id="diff-editor-html-${randomId}" style="font-size: 14px; padding: 0px; line-height: 1.25; font-family: Calibri, Arial, sans-serif; white-space: pre-wrap; margin: 0px;">${res?.diffEditorHTML}</p>`;
-                      //     const replicaInitialHTML =
-                      //       replicaRef.current?.getHTML();
-
-                      //     if (replicaInitialHTML) {
-                      //       replicaRef.current?.setHTML(
-                      //         replicaInitialHTML.replace(
-                      //           replicaInitialHTML,
-                      //           diffFromAssistant
-                      //         )
-                      //       );
-                      //     }
-                      //     const replicaHtml = replicaRef.current
-                      //       ?.getHTML()
-                      //       ?.replace(
-                      //         /<p\s+style="font-size:\s*14px;\s*padding:\s*0px;\s*line-height:\s*1\.25;\s*font-family:\s*Calibri,\s*Arial,\s*sans-serif;\s*white-space:\s*pre-wrap;\s*margin:\s*0px;"\s*><\/p>\s*$/g,
-                      //         ""
-                      //       );
-
-                      //     const newHtml = htmlOfEditor.replace(
-                      //       res?.oldEditorHTML,
-                      //       res?.diffEditorHTML
-                      //     );
-                      //     editorRef.current?.setHTML?.(newHtml);
-
-                      //     setMessages((prev) => {
-                      //       const lastIndex = prev.length - 1;
-                      //       if (
-                      //         lastIndex >= 0 &&
-                      //         prev[lastIndex].role === "assistant"
-                      //       ) {
-                      //         const updated = [...prev];
-                      //         const lastMessage = updated[lastIndex];
-                      //         const exists = (lastMessage.events || []).some(
-                      //           (e) => e.callId === event?.item?.rawItem?.callId
-                      //         );
-                      //         if (exists) {
-                      //           updated[lastIndex] = {
-                      //             ...lastMessage,
-                      //             events: (lastMessage.events || []).map((e) =>
-                      //               e.callId === event?.item?.rawItem?.callId
-                      //                 ? {
-                      //                     ...e,
-                      //                     status: true,
-                      //                     output: {
-                      //                       diffEditorHTML: replicaHtml,
-                      //                       newEditorHTML: res?.newEditorHTML,
-                      //                       oldEditorHTML: res?.oldEditorHTML,
-                      //                       diffFromAssistant:
-                      //                         diffFromAssistant,
-                      //                       diffEditorHTMLId: `diff-editor-html-${randomId}`,
-                      //                     },
-                      //                   }
-                      //                 : e
-                      //             ),
-                      //           };
-                      //         }
-                      //         return updated;
-                      //       }
-                      //       return prev;
-                      //     });
-                      //   }
-                      // }
-
                       console.log("else");
                     }
                   }
@@ -400,66 +373,136 @@ export default function Home({ params }: { params: Promise<{ id: string }> }) {
             if (err.name !== "AbortError" && retryCount < 3) {
               console.log(`Retrying... (${retryCount + 1}/3)`);
               retryTimeoutRef.current = setTimeout(() => {
-                handleSendMessage(message, retryCount + 1);
+                handleSendMessage(
+                  message,
+                  shouldSendEditorHTML,
+                  retryCount + 1
+                );
               }, (retryCount + 1) * 2000); // 2s, 4s, 6s delays
               return;
             }
 
             if (err.name !== "AbortError") {
-              setMessages((prev) => [
-                ...prev,
-                {
-                  role: "assistant",
-                  content: "Connection failed. Please try again.",
-                  events: [],
-                },
-              ]);
+              setMessages((prev) => {
+                const updated = [...prev];
+                const lastIndex = updated.length - 1;
+                if (
+                  lastIndex >= 0 &&
+                  updated[lastIndex].role === "assistant" &&
+                  updated[lastIndex].isStreaming
+                ) {
+                  // Update existing streaming message with error
+                  updated[lastIndex] = {
+                    ...updated[lastIndex],
+                    isStreaming: false,
+                    events: [
+                      ...(updated[lastIndex].events || []),
+                      {
+                        callId: `error-${Date.now()}`,
+                        name: "error",
+                        status: true,
+                        type: "output_text_delta",
+                        data: { delta: "Connection failed. Please try again." },
+                      },
+                    ],
+                  };
+                } else {
+                  // Add new error message
+                  updated.push({
+                    role: "assistant",
+                    content: "",
+                    events: [
+                      {
+                        callId: `error-${Date.now()}`,
+                        name: "error",
+                        status: true,
+                        type: "output_text_delta",
+                        data: { delta: "Connection failed. Please try again." },
+                      },
+                    ],
+                    isStreaming: false,
+                  });
+                }
+                return updated;
+              });
             }
             setIsLoading(false);
           },
 
           onclose() {
             setIsLoading(false);
+            // Mark streaming as finished
+            setMessages((prev) => {
+              const updated = [...prev];
+              const lastIndex = updated.length - 1;
+              if (lastIndex >= 0 && updated[lastIndex].role === "assistant") {
+                updated[lastIndex] = {
+                  ...updated[lastIndex],
+                  isStreaming: false,
+                };
+              }
+              return updated;
+            });
           },
         });
       } catch (err: any) {
         if (err.name !== "AbortError" && retryCount < 3) {
           console.log(`Request failed, retrying... (${retryCount + 1}/3)`);
           retryTimeoutRef.current = setTimeout(() => {
-            handleSendMessage(message, retryCount + 1);
+            handleSendMessage(message, shouldSendEditorHTML, retryCount + 1);
           }, (retryCount + 1) * 2000);
           return;
         }
 
         if (err.name !== "AbortError") {
-          setMessages((prev) => [
-            ...prev,
-            {
-              role: "assistant",
-              content: "Error: Could not get response.",
-              events: [],
-            },
-          ]);
+          setMessages((prev) => {
+            const updated = [...prev];
+            const lastIndex = updated.length - 1;
+            if (
+              lastIndex >= 0 &&
+              updated[lastIndex].role === "assistant" &&
+              updated[lastIndex].isStreaming
+            ) {
+              // Update existing streaming message with error
+              updated[lastIndex] = {
+                ...updated[lastIndex],
+                isStreaming: false,
+                events: [
+                  ...(updated[lastIndex].events || []),
+                  {
+                    callId: `error-${Date.now()}`,
+                    name: "error",
+                    status: true,
+                    type: "output_text_delta",
+                    data: { delta: "Error: Could not get response." },
+                  },
+                ],
+              };
+            } else {
+              // Add new error message
+              updated.push({
+                role: "assistant",
+                content: "",
+                events: [
+                  {
+                    callId: `error-${Date.now()}`,
+                    name: "error",
+                    status: true,
+                    type: "output_text_delta",
+                    data: { delta: "Error: Could not get response." },
+                  },
+                ],
+                isStreaming: false,
+              });
+            }
+            return updated;
+          });
         }
         setIsLoading(false);
       }
     },
     [messages, attachPartOfHTML]
   );
-
-  const handleAcceptChanges = () => {
-    if (!editorRef.current) return;
-    if (updatedContent) {
-      editorRef.current.setHTML(updatedContent);
-      setShowingDiff(false);
-    }
-  };
-
-  const handleRejectChanges = () => {
-    if (!editorRef.current || !originalContent) return;
-    editorRef.current.setHTML(originalContent);
-    setShowingDiff(false);
-  };
 
   if (isResumeLoading) {
     return <div>Loading...</div>;
@@ -491,20 +534,13 @@ export default function Home({ params }: { params: Promise<{ id: string }> }) {
 
             {/* Chat Section - Right side */}
             <ChatUI
-              messages={
-                streamingMessage !== null
-                  ? [
-                      ...messages,
-                      { role: "assistant", content: streamingMessage },
-                    ]
-                  : messages
-              }
+              messages={messages}
               isLoading={isLoading}
-              showingDiff={showingDiff}
-              handleRejectChanges={handleRejectChanges}
-              handleAcceptChanges={handleAcceptChanges}
               handleSendMessage={handleSendMessage}
               canvasEditor={editorRef}
+              attachPartOfHTML={attachPartOfHTML}
+              setAttachPartOfHTML={setAttachPartOfHTML}
+              setMessages={setMessages}
             />
           </div>
         </SidebarInset>
