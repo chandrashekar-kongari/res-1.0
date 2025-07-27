@@ -1,7 +1,7 @@
 "use client";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { X } from "lucide-react";
+import { Loader2, X } from "lucide-react";
 import { Check } from "lucide-react";
 import ChatInput from "./ChatInput";
 import ReactMarkdown from "react-markdown";
@@ -18,6 +18,7 @@ import {
   PlusIcon,
   UpdateIcon,
 } from "@radix-ui/react-icons";
+import { trpc } from "@/lib/trpc";
 
 interface ChatInputProps {
   messages: ChatMessage[];
@@ -44,6 +45,20 @@ const ChatUI = ({
   const [expandedEvents, setExpandedEvents] = useState<{
     [callId: string]: boolean;
   }>({});
+
+  const utils = trpc.useUtils();
+
+  const [creatingNewThread, setCreatingNewThread] = useState<boolean>(false);
+
+  const createNewThread = trpc.thread.create.useMutation({
+    onSuccess: (data) => {
+      void utils.thread.getLatest.invalidate(undefined, {
+        refetchType: "all",
+      });
+      // setMessages([]);
+      setCreatingNewThread(false);
+    },
+  });
 
   // Animated dots for streaming indicator
   const [dots, setDots] = useState(".");
@@ -307,9 +322,9 @@ const ChatUI = ({
             !event.accepted
           ) {
             handleRejectEvent(
-              event.output.oldEditorHTML,
-              event.output.diffEditorHTML,
-              event.output.newEditorHTML,
+              event.output.oldEditorHTML || "",
+              event.output.diffEditorHTML || "",
+              event.output.newEditorHTML || "",
               event.output.diffEditorHTMLId,
               event.callId
             );
@@ -340,10 +355,10 @@ const ChatUI = ({
             !event.rejected
           ) {
             handleAcceptEvent(
-              event.output.oldEditorHTML,
-              event.output.diffEditorHTML,
-              event.output.newEditorHTML,
-              event.output.diffFromAssistant,
+              event.output.oldEditorHTML || "",
+              event.output.diffEditorHTML || "",
+              event.output.newEditorHTML || "",
+              event.output.diffFromAssistant || "",
               event.output.diffEditorHTMLId,
               event.callId
             );
@@ -375,6 +390,11 @@ const ChatUI = ({
     }
   }, [messages]);
 
+  const createNewChat = () => {
+    setCreatingNewThread(true);
+    createNewThread.mutate();
+  };
+
   return (
     <div className="w-[400px] flex flex-col overflow-hidden ">
       <div className=" flex flex-row justify-between items-center">
@@ -382,8 +402,16 @@ const ChatUI = ({
           <p className="p-2 text-xs ">New Chat Title</p>
         </div>
         <div className="flex flex-row items-center ">
-          <Button variant="ghost">
-            <PlusIcon className="w-4 h-4 text-black/80" />
+          <Button
+            variant="ghost"
+            onClick={createNewChat}
+            disabled={creatingNewThread}
+          >
+            {creatingNewThread ? (
+              <Loader2 className="w-4 h-4 text-black/80 animate-spin" />
+            ) : (
+              <PlusIcon className="w-4 h-4 text-black/80" />
+            )}
           </Button>
           <Button variant="ghost">
             <CounterClockwiseClockIcon className="w-4 h-4 text-black/80" />
@@ -514,11 +542,11 @@ const ChatUI = ({
                                                   onClick={() =>
                                                     handleRejectEvent(
                                                       event.output
-                                                        ?.oldEditorHTML,
+                                                        ?.oldEditorHTML || "",
                                                       event.output
-                                                        ?.diffEditorHTML,
+                                                        ?.diffEditorHTML || "",
                                                       event.output
-                                                        ?.newEditorHTML,
+                                                        ?.newEditorHTML || "",
                                                       event.output
                                                         ?.diffEditorHTMLId,
                                                       event.callId
@@ -534,13 +562,14 @@ const ChatUI = ({
                                                   onClick={() =>
                                                     handleAcceptEvent(
                                                       event.output
-                                                        ?.oldEditorHTML,
+                                                        ?.oldEditorHTML || "",
                                                       event.output
-                                                        ?.diffEditorHTML,
+                                                        ?.diffEditorHTML || "",
                                                       event.output
-                                                        ?.newEditorHTML,
+                                                        ?.newEditorHTML || "",
                                                       event.output
-                                                        ?.diffFromAssistant,
+                                                        ?.diffFromAssistant ||
+                                                        "",
                                                       event.output
                                                         ?.diffEditorHTMLId,
                                                       event.callId
