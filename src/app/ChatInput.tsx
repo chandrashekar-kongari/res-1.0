@@ -4,9 +4,10 @@ import { EditorContent, useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import { Button } from "@/components/ui/button";
 import { useCallback, useRef } from "react";
-import { ArrowUp, Loader2, X } from "lucide-react";
+import { ArrowUp, FileTextIcon, Loader2, X } from "lucide-react";
 import { Placeholder } from "@tiptap/extensions";
 import { Badge } from "@/components/ui/badge";
+import { PaperPlaneIcon } from "@radix-ui/react-icons";
 
 interface ChatInputProps {
   onSend?: (message: string) => void;
@@ -91,20 +92,21 @@ const ChatInput = ({
   }, [editor, onSend]);
 
   return (
-    <div className="relative flex flex-col w-full rounded-lg bg-white p-2 gap-1 border">
+    <div className="relative flex flex-col w-full rounded-xl shadow-none bg-white p-2 gap-1 border">
       <div className="flex flex-wrap gap-1">
         {isResumeSelected ? (
           <Badge
             variant="outline"
-            className="text-[10px] cursor-pointer"
+            className="text-[10px] cursor-pointer rounded-xl"
             onClick={() => handleToggleResume(false)}
           >
+            <FileTextIcon className="w-3 h-3 mr-1 text-[#00C950]" /> Active
             Active Resume <X className="w-3 h-3 ml-1" />
           </Badge>
         ) : (
           <Badge
             variant="outline"
-            className="text-[10px] cursor-pointer"
+            className="text-[10px] cursor-pointer rounded-xl"
             onClick={() => handleToggleResume(true)}
           >
             Add Context
@@ -116,10 +118,11 @@ const ChatInput = ({
               <Badge
                 key={index}
                 variant="outline"
-                className="text-[10px] cursor-pointer max-w-[150px] truncate"
+                className="text-[10px] cursor-pointer rounded-xl max-w-[150px] truncate"
                 title={part}
                 onClick={() => handleRemovePart(index)}
               >
+                <FileTextIcon className="w-3 h-3 mr-1 text-[#00C950]" />{" "}
                 Selected Part {index + 1} <X className="w-3 h-3 ml-1" />
               </Badge>
             ))}
@@ -148,9 +151,10 @@ const ChatInput = ({
           ) : (
             <Button
               onClick={handleSend}
-              className="shrink-0 bg-white text-black/80 hover:bg-gray-50 hover:text-black/90 rounded-full border border-black/20 w-6 h-6 p-0 flex items-center justify-center"
+              variant="outline"
+              className="shrink-0 bg-[#AD46FF] text-white border-[#AD46FF] hover:bg-[#ca92f7] rounded-full w-6 h-6 p-0 flex items-center justify-center"
             >
-              <ArrowUp className="w-3 h-3" />
+              <ArrowUp rotate={45} className="w-[10px] h-[10px] text-white" />
             </Button>
           )}
         </div>

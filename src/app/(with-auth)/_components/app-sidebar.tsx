@@ -24,6 +24,7 @@ import {
   SketchLogoIcon,
   DrawingPinFilledIcon,
   DrawingPinIcon,
+  CubeIcon,
 } from "@radix-ui/react-icons";
 import { Separator } from "@radix-ui/react-separator";
 import {
@@ -148,7 +149,7 @@ export function AppSidebar() {
         </>
       )}
 
-      <Sidebar collapsible="none" variant="inset" className="bg-gray-100">
+      <Sidebar collapsible="none" variant="inset" className="bg-[#F5F5F5]">
         <SidebarContent className="p-0 m-0">
           <SidebarGroup>
             <SidebarGroupContent>
@@ -156,9 +157,13 @@ export function AppSidebar() {
                 <div className="flex flex-col h-[calc(100vh-1rem)] pb-2">
                   <SidebarMenuItem key="app">
                     <SidebarMenuButton asChild>
-                      <div className="flex items-center gap-2">
-                        <Home />
-                        <p>Point</p>
+                      <div className="flex items-center ">
+                        <div className="w-6 h-6 rounded-lg bg-[#AD46FF]  flex items-center justify-center">
+                          <span className="text-white font-bold text-lg">
+                            S
+                          </span>
+                        </div>
+                        <p className="text-sm font-semibold">SolidD</p>
                       </div>
                     </SidebarMenuButton>
                     <Separator className="my-2" />
@@ -167,11 +172,18 @@ export function AppSidebar() {
                       <DropdownMenuTrigger asChild>
                         <SidebarMenuButton
                           asChild
-                          className="rounded-xl bg-gray-200 hover:bg-gray-300 cursor-pointer"
+                          className="rounded-xl bg-[#F3EBFD] text-[#AD46FF] border-[#AD46FF] hover:bg-[#E6D6FF] cursor-pointer"
                         >
-                          <div className="flex items-center gap-2 text-xs">
-                            <PlusIcon />
-                            <p className="text-xs">Create</p>
+                          <div className="flex items-center gap-2 text-xs font-semibold">
+                            <PlusIcon
+                              strokeWidth={2}
+                              className=" text-[#AD46FF]"
+                            />
+                            <p className="text-xs">
+                              <span className="text-[#AD46FF]">
+                                Create or Upload
+                              </span>
+                            </p>
                           </div>
                         </SidebarMenuButton>
                       </DropdownMenuTrigger>
@@ -206,7 +218,7 @@ export function AppSidebar() {
                           <div
                             className={`transition-all duration-200 ${
                               item.id === currentResumeId
-                                ? " relative before:content-[''] before:absolute before:left-0 before:top-1/3 rounded-full before:w-[2px] before:h-1/3 before:bg-black before:transition-all before:duration-200"
+                                ? "  bg-black/10 rounded-xl"
                                 : ""
                             }`}
                             onMouseEnter={() => setHoveredResumeId(item.id)}
@@ -214,13 +226,13 @@ export function AppSidebar() {
                           >
                             <SidebarMenuButton
                               asChild
-                              className="rounded-lg hover:bg-gray-300 transition-colors duration-200"
+                              className="rounded-lg hover:bg-black/15 transition-colors duration-200"
                             >
                               <Link
                                 href={`/app/${item.id}`}
                                 className="flex items-center gap-0"
                               >
-                                <FileTextIcon className="w-4 h-4" />
+                                <FileTextIcon className="w-4 h-4 text-[#00C950]" />
                                 <span className="text-xs truncate">
                                   {item.name}
                                 </span>
@@ -238,7 +250,7 @@ export function AppSidebar() {
                                         hoveredResumeId === item.id ? (
                                           <DrawingPinIcon className="w-[14px] h-[14px] text-gray-700" />
                                         ) : (
-                                          <DrawingPinFilledIcon className="w-[14px] h-[14px] text-[#46A758]" />
+                                          <DrawingPinFilledIcon className="w-[14px] h-[14px] text-[#FA2C37]" />
                                         )
                                       ) : (
                                         <DrawingPinFilledIcon className="w-[14px] h-[14px] text-gray-700" />
