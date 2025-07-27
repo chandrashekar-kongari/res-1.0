@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, useCallback, use } from "react";
+import { useEffect, useRef, useState, useCallback, use, useMemo } from "react";
 import TiptapEditor, { TiptapEditorRef } from "@/components/tiptap-editor";
 import { SidebarInset } from "@/components/ui/sidebar";
 import ChatUI from "@/app/ChatUI";
@@ -10,8 +10,11 @@ import {
 } from "@microsoft/fetch-event-source";
 import TiptapEditorReplica from "@/components/tiptap-editor-replica";
 import { trpc } from "@/lib/trpc";
+import { v4 as uuidv4 } from "uuid";
+import { Loader2 } from "lucide-react";
 
 export interface ChatMessage {
+  id: string;
   role: "user" | "assistant";
   content: string;
   newEditorHTML?: string;
@@ -39,10 +42,21 @@ export interface ChatMessage {
 
 export default function Home({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
+  const { data: user } = trpc.user.get.useQuery();
+  const { data: threadIntial, isLoading: isThreadLoading } =
+    trpc.thread.getLatest.useQuery();
+  const thread = useMemo(() => threadIntial, [threadIntial]); // Only update when thread ID changes
+  const { data: messagesData, isLoading: isMessagesLoading } =
+    trpc.message.listByThread.useQuery(
+      { threadId: thread?.id || "" },
+      { enabled: !!thread?.id }
+    );
+  const upsertMessage = trpc.message.upsert.useMutation();
   const { data: resume, isLoading: isResumeLoading } = trpc.resume.get.useQuery(
     { id }
   );
   const [content, setContent] = useState(resume?.content || "");
+  const [isAgentRunning, setIsAgentRunning] = useState(false);
 
   useEffect(() => {
     // Only set content if we don't have any content yet (initial load only)
@@ -53,6 +67,12 @@ export default function Home({ params }: { params: Promise<{ id: string }> }) {
 
   const [messages, setMessages] = useState<ChatMessage[]>([]);
 
+  useEffect(() => {
+    if (messagesData !== undefined) {
+      setMessages(messagesData as unknown as ChatMessage[]);
+    }
+  }, [messagesData]);
+
   const [isLoading, setIsLoading] = useState(false);
   const editorRef = useRef<TiptapEditorRef>(null);
   const replicaRef = useRef<TiptapEditorRef>(null);
@@ -60,6 +80,13 @@ export default function Home({ params }: { params: Promise<{ id: string }> }) {
 
   const abortControllerRef = useRef<AbortController | null>(null);
   const retryTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  const handleStopAssistant = () => {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+      setIsAgentRunning(false);
+    }
+  };
 
   // Simplified message sending with built-in retry
   const handleSendMessage = useCallback(
@@ -76,9 +103,11 @@ export default function Home({ params }: { params: Promise<{ id: string }> }) {
       }
       abortControllerRef.current = new AbortController();
 
+      setIsAgentRunning(true);
       const editorHTML = editorRef.current?.getHTML?.() || "";
 
       const userMessage: ChatMessage = {
+        id: uuidv4(),
         role: "user",
         content: message.trim(),
         events: [],
@@ -86,6 +115,25 @@ export default function Home({ params }: { params: Promise<{ id: string }> }) {
         attachPartOfHTML:
           attachPartOfHTML.length > 0 ? attachPartOfHTML : undefined,
       };
+
+      if (thread?.id && user?.id) {
+        upsertMessage.mutate({
+          message: {
+            ...userMessage,
+            user_id: user.id,
+            threadId: thread.id,
+            created_at: new Date(),
+            updated_at: new Date(),
+            deleted_at: null,
+            newEditorHTML: userMessage.newEditorHTML || null,
+            diffEditorHTML: userMessage.diffEditorHTML || null,
+            attachPartOfHTML: userMessage.attachPartOfHTML || [],
+            isStreaming: userMessage.isStreaming || false,
+            events: userMessage.events || [],
+          },
+          threadId: thread.id,
+        });
+      }
 
       // Only add user message on first attempt
       if (retryCount === 0) {
@@ -95,6 +143,7 @@ export default function Home({ params }: { params: Promise<{ id: string }> }) {
           {
             role: "assistant" as const,
             content: "",
+            id: uuidv4(),
             events: [],
             isStreaming: true,
           } as ChatMessage,
@@ -369,6 +418,7 @@ export default function Home({ params }: { params: Promise<{ id: string }> }) {
           },
 
           onerror(err: any) {
+            setIsAgentRunning(false);
             // Simple retry logic - only retry network errors, max 3 times
             if (err.name !== "AbortError" && retryCount < 3) {
               console.log(`Retrying... (${retryCount + 1}/3)`);
@@ -409,6 +459,7 @@ export default function Home({ params }: { params: Promise<{ id: string }> }) {
                 } else {
                   // Add new error message
                   updated.push({
+                    id: uuidv4(),
                     role: "assistant",
                     content: "",
                     events: [
@@ -430,6 +481,7 @@ export default function Home({ params }: { params: Promise<{ id: string }> }) {
           },
 
           onclose() {
+            setIsAgentRunning(false);
             setIsLoading(false);
             // Mark streaming as finished
             setMessages((prev) => {
@@ -440,12 +492,35 @@ export default function Home({ params }: { params: Promise<{ id: string }> }) {
                   ...updated[lastIndex],
                   isStreaming: false,
                 };
+                if (thread?.id && user?.id) {
+                  upsertMessage.mutate({
+                    message: {
+                      id: updated[lastIndex].id,
+                      content: updated[lastIndex].content,
+                      role: updated[lastIndex].role,
+                      newEditorHTML: updated[lastIndex].newEditorHTML || null,
+                      diffEditorHTML: updated[lastIndex].diffEditorHTML || null,
+                      events: updated[lastIndex].events || [],
+                      attachPartOfHTML:
+                        updated[lastIndex].attachPartOfHTML || [],
+                      isStreaming: updated[lastIndex].isStreaming || false,
+                      user_id: user.id,
+                      threadId: thread.id,
+                      created_at: new Date(),
+                      updated_at: new Date(),
+                      deleted_at: null,
+                    },
+                    threadId: thread.id,
+                  });
+                }
               }
+
               return updated;
             });
           },
         });
       } catch (err: any) {
+        setIsAgentRunning(false);
         if (err.name !== "AbortError" && retryCount < 3) {
           console.log(`Request failed, retrying... (${retryCount + 1}/3)`);
           retryTimeoutRef.current = setTimeout(() => {
@@ -481,6 +556,7 @@ export default function Home({ params }: { params: Promise<{ id: string }> }) {
             } else {
               // Add new error message
               updated.push({
+                id: uuidv4(),
                 role: "assistant",
                 content: "",
                 events: [
@@ -512,7 +588,7 @@ export default function Home({ params }: { params: Promise<{ id: string }> }) {
     <>
       <div className="flex min-h-screen w-full gap-0">
         <SidebarInset className="flex-1 w-full">
-          <div className="h-screen w-full flex flex-row rounded-none bg-gray-100">
+          <div className="h-screen w-full flex flex-row rounded-none bg-[#F5F5F5]">
             {/* Editor Section - Left side */}
             <div className="flex-1 flex flex-col overflow-hidden">
               <div className="flex-1 overflow-hidden">
@@ -533,15 +609,35 @@ export default function Home({ params }: { params: Promise<{ id: string }> }) {
             </div>
 
             {/* Chat Section - Right side */}
-            <ChatUI
-              messages={messages}
-              isLoading={isLoading}
-              handleSendMessage={handleSendMessage}
-              canvasEditor={editorRef}
-              attachPartOfHTML={attachPartOfHTML}
-              setAttachPartOfHTML={setAttachPartOfHTML}
-              setMessages={setMessages}
-            />
+            {isMessagesLoading || isThreadLoading ? (
+              <div className="w-[410px] flex flex-col overflow-hidden  ">
+                <div className="flex flex-row justify-between items-center p-2">
+                  <div className="flex flex-row items-center gap-2">
+                    <p className="text-xs text-[#AD46FF]/70">Chat window</p>
+                  </div>
+                </div>
+                <div className="flex-1 flex items-center justify-center">
+                  <div className="flex flex-col items-center gap-2">
+                    <Loader2 className="w-8 h-8 text-[#AD46FF]/70 animate-spin" />
+                    <p className="text-sm text-[#AD46FF]/70">
+                      Loading chat history...
+                    </p>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <ChatUI
+                messages={messages}
+                isLoading={isLoading}
+                isAgentRunning={isAgentRunning}
+                handleSendMessage={handleSendMessage}
+                canvasEditor={editorRef}
+                attachPartOfHTML={attachPartOfHTML}
+                setAttachPartOfHTML={setAttachPartOfHTML}
+                setMessages={setMessages}
+                handleStopAssistant={handleStopAssistant}
+              />
+            )}
           </div>
         </SidebarInset>
       </div>

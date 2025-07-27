@@ -1,7 +1,7 @@
 "use client";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { X } from "lucide-react";
+import { ChevronRight, Circle, Loader2, X } from "lucide-react";
 import { Check } from "lucide-react";
 import ChatInput from "./ChatInput";
 import ReactMarkdown from "react-markdown";
@@ -11,18 +11,19 @@ import React, { RefObject, useEffect, useState, useRef } from "react";
 import ScrollToBottom from "react-scroll-to-bottom";
 import DiffEditor from "@/components/diff-editor";
 import { TiptapEditorRef } from "@/components/tiptap-editor-replica";
-import { Node as ProseMirrorNode } from "prosemirror-model";
 import {
   CheckCircledIcon,
   CounterClockwiseClockIcon,
   PlusIcon,
+  StopIcon,
   UpdateIcon,
 } from "@radix-ui/react-icons";
+import { trpc } from "@/lib/trpc";
 
 interface ChatInputProps {
   messages: ChatMessage[];
   isLoading: boolean;
-
+  isAgentRunning: boolean;
   handleSendMessage: (message: string, shouldSendEditorHTML?: boolean) => void;
   canvasEditor: RefObject<TiptapEditorRef | null>;
   attachPartOfHTML?: string[];
@@ -30,16 +31,20 @@ interface ChatInputProps {
   setMessages: (
     messages: ChatMessage[] | ((prev: ChatMessage[]) => ChatMessage[])
   ) => void;
+  handleStopAssistant: () => void;
 }
 const ChatUI = ({
   messages,
   isLoading,
+  isAgentRunning,
   handleSendMessage,
   canvasEditor,
   attachPartOfHTML,
   setAttachPartOfHTML,
   setMessages,
+  handleStopAssistant,
 }: ChatInputProps) => {
+  const updateMessage = trpc.message.update.useMutation();
   // Expanded state for event accordions
   const [expandedEvents, setExpandedEvents] = useState<{
     [callId: string]: boolean;
@@ -48,6 +53,20 @@ const ChatUI = ({
   // Animated dots for streaming indicator
   const [dots, setDots] = useState(".");
   const [showingDiff, setShowingDiff] = useState<boolean>(false);
+
+  const [creatingNewThread, setCreatingNewThread] = useState<boolean>(false);
+  const utils = trpc.useUtils();
+
+  const createNewThread = trpc.thread.create.useMutation({
+    onSuccess: (data) => {
+      void utils.thread.getLatest.invalidate(undefined, {
+        refetchType: "all",
+      });
+
+      // setMessages([]);
+      setCreatingNewThread(false);
+    },
+  });
 
   // Add selection state
   const [isResumeSelected, setIsResumeSelected] = useState<boolean>(true);
@@ -101,21 +120,10 @@ const ChatUI = ({
     }
   }, [messages.length]);
 
-  // Check if assistant is currently streaming
-  const isAssistantStreaming = () => {
-    if (messages.length === 0) return false;
-    const lastMessage = messages[messages.length - 1];
-    if (lastMessage.role !== "assistant") return false;
-
-    // Check if there are any incomplete events (no status means still running)
-    const hasRunningEvents = lastMessage.events?.some((event) => !event.status);
-    return hasRunningEvents || isLoading;
-  };
-
   // Animate dots when streaming
   useEffect(() => {
     let interval: NodeJS.Timeout;
-    if (isAssistantStreaming()) {
+    if (isAgentRunning) {
       interval = setInterval(() => {
         setDots((prev) => {
           if (prev === ".") return "..";
@@ -130,7 +138,7 @@ const ChatUI = ({
     return () => {
       if (interval) clearInterval(interval);
     };
-  }, [isAssistantStreaming()]);
+  }, [isAgentRunning]);
 
   // Utility function to replace an element by id with new HTML
   function replaceElementById(
@@ -179,7 +187,7 @@ const ChatUI = ({
         console.warn("diffEditorHTML not found in current editor HTML!");
         // Update message state to mark as notFound
         setMessages((prev: ChatMessage[]) => {
-          return prev.map((message: ChatMessage) => {
+          const newMessages = prev.map((message: ChatMessage) => {
             if (message.role === "assistant" && message.events) {
               return {
                 ...message,
@@ -193,6 +201,21 @@ const ChatUI = ({
             }
             return message;
           });
+
+          // Update message in database
+          const targetMessage = newMessages.find(
+            (msg) =>
+              msg.role === "assistant" &&
+              msg.events?.some((e) => e.callId === eventCallId)
+          );
+          if (targetMessage?.id) {
+            updateMessage.mutate({
+              id: targetMessage.id,
+              events: targetMessage.events || [],
+            });
+          }
+
+          return newMessages;
         });
 
         return;
@@ -203,7 +226,7 @@ const ChatUI = ({
 
     // Update message state to mark as rejected
     setMessages((prev: ChatMessage[]) => {
-      return prev.map((message: ChatMessage) => {
+      const newMessages = prev.map((message: ChatMessage) => {
         if (message.role === "assistant" && message.events) {
           return {
             ...message,
@@ -217,6 +240,21 @@ const ChatUI = ({
         }
         return message;
       });
+
+      // Update message in database
+      const targetMessage = newMessages.find(
+        (msg) =>
+          msg.role === "assistant" &&
+          msg.events?.some((e) => e.callId === eventCallId)
+      );
+      if (targetMessage?.id) {
+        updateMessage.mutate({
+          id: targetMessage.id,
+          events: targetMessage.events || [],
+        });
+      }
+
+      return newMessages;
     });
   };
 
@@ -248,7 +286,7 @@ const ChatUI = ({
         );
         // Update message state to mark as notFound
         setMessages((prev: ChatMessage[]) => {
-          return prev.map((message: ChatMessage) => {
+          const newMessages = prev.map((message: ChatMessage) => {
             if (message.role === "assistant" && message.events) {
               return {
                 ...message,
@@ -262,6 +300,21 @@ const ChatUI = ({
             }
             return message;
           });
+
+          // Update message in database
+          const targetMessage = newMessages.find(
+            (msg) =>
+              msg.role === "assistant" &&
+              msg.events?.some((e) => e.callId === eventCallId)
+          );
+          if (targetMessage?.id) {
+            updateMessage.mutate({
+              id: targetMessage.id,
+              events: targetMessage.events || [],
+            });
+          }
+
+          return newMessages;
         });
 
         return;
@@ -272,7 +325,7 @@ const ChatUI = ({
 
     // Update message state to mark as accepted
     setMessages((prev: ChatMessage[]) => {
-      return prev.map((message: ChatMessage) => {
+      const newMessages = prev.map((message: ChatMessage) => {
         if (message.role === "assistant" && message.events) {
           return {
             ...message,
@@ -286,6 +339,21 @@ const ChatUI = ({
         }
         return message;
       });
+
+      // Update message in database
+      const targetMessage = newMessages.find(
+        (msg) =>
+          msg.role === "assistant" &&
+          msg.events?.some((e) => e.callId === eventCallId)
+      );
+      if (targetMessage?.id) {
+        updateMessage.mutate({
+          id: targetMessage.id,
+          events: targetMessage.events || [],
+        });
+      }
+
+      return newMessages;
     });
   };
 
@@ -375,16 +443,30 @@ const ChatUI = ({
     }
   }, [messages]);
 
+  const createNewChat = () => {
+    setCreatingNewThread(true);
+    createNewThread.mutate();
+  };
+
   return (
-    <div className="w-[400px] flex flex-col overflow-hidden ">
+    <div className="w-[410px] flex flex-col overflow-hidden ">
       <div className=" flex flex-row justify-between items-center">
-        <div>
-          <p className="p-2 text-xs ">New Chat Title</p>
+        <div className="pl-2 flex flex-row items-center gap-1">
+          <p className="p-2 text-xs ">Chat Window</p>
+          <Button
+            variant="outline"
+            onClick={createNewChat}
+            className="flex text-[10px] bg-[#E0E5EB] border-[#8FA1B9] hover:bg-[#E0E5EB]/80 hover:border-[#8FA1B9]/80 rounded-xl items-center gap-0.5  h-6 min-h-0 px-2"
+          >
+            {creatingNewThread ? (
+              <Loader2 className="w-[10px] h-[10px] text-black/80 animate-spin" />
+            ) : (
+              <PlusIcon className="w-[10px] h-[10px] text-black/80" />
+            )}
+            New Chat
+          </Button>
         </div>
         <div className="flex flex-row items-center ">
-          <Button variant="ghost">
-            <PlusIcon className="w-4 h-4 text-black/80" />
-          </Button>
           <Button variant="ghost">
             <CounterClockwiseClockIcon className="w-4 h-4 text-black/80" />
           </Button>
@@ -395,7 +477,7 @@ const ChatUI = ({
         // Render ChatInput at the top when no messages
         <div className="p-2 pt-0 ">
           <ChatInput
-            isStreaming={isAssistantStreaming()}
+            isStreaming={isAgentRunning}
             onSend={(message) => handleSendMessage(message, isResumeSelected)}
             isResumeSelected={isResumeSelected}
             setIsResumeSelected={setIsResumeSelected}
@@ -412,16 +494,34 @@ const ChatUI = ({
             followButtonClassName="hidden"
             mode="bottom"
           >
-            <div ref={scrollContainerRef} className="p-3 space-y-4">
+            <div ref={scrollContainerRef} className="p-3 pt-0">
               {messages.map((message, index) => {
                 // Only render user messages
                 if (message.role === "user") {
                   return (
                     <div key={index} className="flex justify-end">
-                      <div className="w-full rounded-xl bg-black/5  px-3 py-2 ">
-                        <div className="text-sm leading-relaxed whitespace-pre-wrap">
+                      <div className="w-full rounded-xl bg-black/5   ">
+                        <div className="text-sm px-4 py-2 leading-relaxed whitespace-pre-wrap">
                           {message.content}
                         </div>
+                        {index == messages.length - 2 && isAgentRunning && (
+                          <div className="flex border-t justify-between border-[#AD46FF]/10 items-center gap-2 py-[5px] px-4 mx-auto text-sm">
+                            <div className="flex items-center gap-2">
+                              <span className="text-xs text-black">
+                                Generating{dots}
+                              </span>
+                            </div>
+                            <Button
+                              onClick={() => {
+                                handleStopAssistant();
+                              }}
+                              variant="ghost"
+                              className="rounded-full bg-[#FA2C37]/10 hover:text-[#FA2C37]/70 border-[#FA2C37] text-[#FA2C37] w-5 h-5 p-0.5 min-h-0 flex items-center justify-center"
+                            >
+                              <Circle className="w-3 h-3" />
+                            </Button>
+                          </div>
+                        )}
                       </div>
                     </div>
                   );
@@ -429,7 +529,7 @@ const ChatUI = ({
                 if (message.role === "assistant") {
                   return (
                     <div key={index} className="flex justify-start w-full">
-                      <div className="w-full rounded-2xl text-black/80 py-1 rounded-bl-md">
+                      <div className="w-full rounded-2xl text-black/80 p-1 rounded-bl-md">
                         <div className="text-sm leading-relaxed whitespace-pre-wrap">
                           {(() => {
                             // Build output chunks: buffer markdown, interleave tool components
@@ -462,16 +562,16 @@ const ChatUI = ({
                                     <div key={eventIdx} className="mt-2 mb-2">
                                       {/* Tool status indicator */}
                                       <div
-                                        className={`flex flex-row justify-between items-center gap-2 px-2 py-1 w-full rounded text-xs border  rounded-b-none ${
+                                        className={`flex flex-row justify-between items-center gap-2 px-2 py-1 w-full rounded-md text-xs border ${
                                           event.status
                                             ? event.accepted
-                                              ? "bg-green-100 text-green-900"
+                                              ? "bg-[#CEEDD5] border-[#00C950] rounded-b-none"
                                               : event.rejected
-                                              ? "bg-red-100 text-red-900"
+                                              ? "bg-[#FEE4E2] border-[#FA2C37] rounded-b-none"
                                               : event.notFound
-                                              ? "bg-gray-100 text-gray-900"
-                                              : "bg-yellow-100 text-yellow-900"
-                                            : "bg-yellow-100 text-yellow-900"
+                                              ? "bg-[#FEF0C7] border-[#FE9900] "
+                                              : "bg-[#E0E5EB] border-[#8FA1B9] rounded-b-none"
+                                            : "bg-[#F3EBFD] border-[#AD46FF] "
                                         }`}
                                       >
                                         <div className="flex flex-row items-center gap-2">
@@ -488,7 +588,7 @@ const ChatUI = ({
                                           ) : (
                                             <UpdateIcon className="w-3 h-3 animate-spin" />
                                           )}
-                                          <span className="text-xs italic">
+                                          <span className="text-xs">
                                             {event.status
                                               ? event.accepted
                                                 ? `${event.name} accepted`
@@ -506,11 +606,12 @@ const ChatUI = ({
                                           {event.status &&
                                             event.output?.diffEditorHTML &&
                                             !event.accepted &&
-                                            !event.rejected && (
+                                            !event.rejected &&
+                                            !event.notFound && (
                                               <div className="flex items-center gap-1">
                                                 <Badge
                                                   variant="outline"
-                                                  className="cursor-pointer"
+                                                  className="cursor-pointer rounded-xl text-[10px]"
                                                   onClick={() =>
                                                     handleRejectEvent(
                                                       event.output
@@ -530,7 +631,7 @@ const ChatUI = ({
                                                 </Badge>
                                                 <Badge
                                                   variant="default"
-                                                  className="cursor-pointer"
+                                                  className="cursor-pointer rounded-xl text-[10px]"
                                                   onClick={() =>
                                                     handleAcceptEvent(
                                                       event.output
@@ -558,7 +659,7 @@ const ChatUI = ({
                                       {/* Diff editor for completed tools */}
                                       {event.status &&
                                         event.output?.diffEditorHTML && (
-                                          <div className="border rounded border-t-0 rounded-t-none border-gray-200 bg-gray-50 p-2 max-h-40 overflow-y-auto">
+                                          <div className="border rounded-md border-t-0 rounded-t-none border-gray-200 bg-gray-50 p-2 max-h-40 overflow-y-auto">
                                             <DiffEditor
                                               html={event.output.diffEditorHTML}
                                             />
@@ -606,11 +707,16 @@ const ChatUI = ({
           {/* Chat Input - Fixed at bottom */}
           <div className="p-2 ">
             {/* Streaming status indicator */}
-            {(isAssistantStreaming() || showingDiff) && (
-              <div className="flex items-center gap-2 py-2 px-3 w-[95%] mx-auto border-b-0 rounded-b-none border  rounded-lg text-sm">
-                {isAssistantStreaming() && (
+            {(isAgentRunning || showingDiff) && (
+              <div className="flex items-center gap-2 py-[5px] px-1 w-[95%] mx-auto border-b-0 rounded-b-none border rounded-xl text-sm">
+                {isAgentRunning ? (
                   <div className="flex items-center gap-2">
+                    <Loader2 className="w-3 h-3 animate-spin" />
                     <span className="text-xs text-black">Generating{dots}</span>
+                  </div>
+                ) : (
+                  <div className="flex items-center flex-row gap-2 pl-1">
+                    <span className="text-xs text-black">Resume edited</span>
                   </div>
                 )}
                 {showingDiff && (
@@ -618,20 +724,21 @@ const ChatUI = ({
                     <Button
                       size="sm"
                       variant="outline"
-                      disabled={isAssistantStreaming()}
-                      className="flex items-center gap-0.5 text-xs h-6 min-h-0 px-2"
+                      disabled={isAgentRunning}
+                      className="flex text-[10px] items-center rounded-xl gap-0.5  h-6 min-h-0 px-2"
                       onClick={handleRejectAllChanges}
                     >
-                      <X className="w-3 h-3" />
+                      <X className="w-[10px] h-[10px]" />
                       Reject all
                     </Button>
                     <Button
-                      disabled={isAssistantStreaming()}
+                      disabled={isAgentRunning}
                       size="sm"
-                      className="flex items-center gap-0.5 text-xs h-6 min-h-0 px-2"
+                      variant="outline"
+                      className="flex text-[10px] bg-black rounded-xl text-white hover:bg-black/80 hover:text-white items-center gap-0.5  h-6 min-h-0 px-2"
                       onClick={handleAcceptAllChanges}
                     >
-                      <Check className="w-3 h-3" />
+                      <Check className="w-[10px] h-[10px]" />
                       Accept all
                     </Button>
                   </div>
@@ -640,7 +747,7 @@ const ChatUI = ({
             )}
 
             <ChatInput
-              isStreaming={isAssistantStreaming()}
+              isStreaming={isAgentRunning}
               onSend={(message) => handleSendMessage(message, isResumeSelected)}
               isResumeSelected={isResumeSelected}
               setIsResumeSelected={setIsResumeSelected}

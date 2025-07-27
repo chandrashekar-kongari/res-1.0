@@ -47,7 +47,7 @@ export function TiptapToolbar({
   }
 
   return (
-    <div className="sticky top-0 z-10  border-b justify-center flex flex-row">
+    <div className="sticky top-0 z-10   justify-center flex flex-row">
       <div className="p-[2px] flex flex-wrap gap-[2px] items-center">
         <Toggle
           size="sm"
@@ -377,10 +377,10 @@ export function TiptapToolbar({
           className="disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <Badge
-            variant="secondary"
-            className="cursor-pointer bg-gray-200 py-[3px] flex items-center gap-1"
+            variant="outline"
+            className="cursor-pointer bg-[#F3EBFD] text-[#AD46FF] border-[#AD46FF] py-[3px] flex items-center gap-1"
           >
-            <DownloadIcon className="h-4 w-4" /> pdf
+            <DownloadIcon className="h-4 w-4 text-[#AD46FF]" /> pdf
           </Badge>
         </button>
       </div>

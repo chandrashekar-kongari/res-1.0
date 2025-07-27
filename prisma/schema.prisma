@@ -38,7 +38,48 @@ model User {
   created_at DateTime @default(now())
   // Add any other fields you want
   resumes   resume[]
+  threads   thread[]
+  messages  message[]
 
   @@index([email])
+  @@index([id])
+
+}
+
+model thread {
+  id        String   @id @default(uuid())
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+  deleted_at DateTime?
+  title      String?
+  user_id    String
+  user      User     @relation(fields: [user_id], references: [id])
+  messages  message[]
+  last_accessed_at DateTime @default(now())
+
+  @@index([user_id])
+  @@index([id])
+  @@index([last_accessed_at])
+}
+
+model message {
+  id        String   @id
+  role      String   // "user" | "assistant"
+  content   String   @db.Text
+  newEditorHTML String? @db.Text
+  diffEditorHTML String? @db.Text
+  events    Json?    // Array of event objects
+  attachPartOfHTML String[]
+  isStreaming Boolean @default(false)
+  threadId   String?
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+  deleted_at DateTime?
+  user_id    String
+  user      User     @relation(fields: [user_id], references: [id])
+  thread     thread?  @relation(fields: [threadId], references: [id])
+
+  @@index([user_id])
+  @@index([threadId])
   @@index([id])
 }

@@ -60,10 +60,6 @@ export const nameAndContactInfoFormatTool: FunctionTool<any> = {
 
       Before returning the output, think step by step and make sure you have followed the steps correctly.
 
-      EXAMPLE:
-      HTML: <p style="font-size: 14px; margin: 0px; padding: 0px; line-height: 1.15; font-family: Calibri, Arial, sans-serif; white-space: pre-wrap; text-align: center;"><strong><span style="font-size: 18px;">Chandra shekar</span></strong></p><p style="font-size: 14px; margin: 0px; padding: 0px; line-height: 1.15; font-family: Calibri, Arial, sans-serif; white-space: pre-wrap; text-align: center;"><a target="_blank" rel="noopener noreferrer nofollow" class="text-blue-600 hover:text-blue-800 underline" href=""><span style="font-size: 12px;">chandra@school.edu</span></a><span style="font-size: 12px;"> | </span><a target="_blank" rel="noopener noreferrer nofollow" class="text-blue-600 hover:text-blue-800 underline" href="linkedin/chandra"><span style="font-size: 12px;">linkedin/chandra</span></a><span style="font-size: 12px;"> | </span><a target="_blank" rel="noopener noreferrer nofollow" class="text-blue-600 hover:text-blue-800 underline" href="https://chandra.github.io"><span style="font-size: 12px;">chandra.github.io</span></a><span style="font-size: 12px;"> | </span><a target="_blank" rel="noopener noreferrer nofollow" class="text-blue-600 hover:text-blue-800 underline" href="leetcode/chandra"><span style="font-size: 12px;">leetcode/chandra</span></a><span style="font-size: 12px;"> | New York</span></p>
-      
-      In the above example white space is also important. Do not remove it. You must calculate the white space based on the font size, font weight, font family and line height.
         `,
       outputType: z.object({
         oldEditorHTML: z.string(),

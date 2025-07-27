@@ -694,7 +694,7 @@ const TiptapEditor = forwardRef<TiptapEditorRef, TiptapEditorProps>(
     }
 
     return (
-      <div className="flex flex-col bg-gray-100 h-full min-w-[794px]">
+      <div className="flex flex-col bg-[#F5F5F5] h-full min-w-[794px]">
         {/* Toolbar */}
         <TiptapToolbar
           editor={editor}
@@ -704,7 +704,12 @@ const TiptapEditor = forwardRef<TiptapEditorRef, TiptapEditorProps>(
         />
 
         {/* Editor Container - Scrollable */}
-        <div className={cn("flex-1 overflow-auto bg-black/10 p-3", className)}>
+        <div
+          className={cn(
+            "flex-1 overflow-auto bg-[#f6f1fc] border  shadow-none rounded-lg p-3",
+            className
+          )}
+        >
           {floatingButton.visible && (
             <FloatingButton
               x={floatingButton.x}
@@ -716,7 +721,7 @@ const TiptapEditor = forwardRef<TiptapEditorRef, TiptapEditorProps>(
           )}
 
           <div className="flex justify-center items-center">
-            <div className="bg-white w-[794px]">
+            <div className="bg-white shadow-md w-[794px]">
               <EditorContent
                 editor={editor}
                 className="w-full !outline-none !focus:outline-none !focus-visible:outline-none"
