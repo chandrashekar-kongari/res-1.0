@@ -9,7 +9,8 @@ const runner = new Runner({ model: "gpt-4.1" });
 
 export async function POST(req: Request) {
   try {
-    const { messages, editorHTML, attachPartOfHTML } = await req.json();
+    const { messages, editorHTML, attachPartOfHTML, shouldModifyFullResume } =
+      await req.json();
 
     // Compose the prompt as before
     const conversation = Array.isArray(messages)
@@ -20,48 +21,76 @@ export async function POST(req: Request) {
       ? messages.filter((msg: any) => msg.role === "user").slice(-1)[0]
           ?.content || ""
       : "";
-    // Make the prompt explicit about the latest user question
-    let prompt = editorHTML
-      ? `Editor Content:\n${editorHTML}\n\nConversation:\n${conversation}\n\nUser's latest question: ${lastUserMessage}`
-      : `Conversation:\n${conversation}\n\nUser's latest question: ${lastUserMessage}`;
+
+    // Build the prompt based on available content
+    let prompt = `Conversation:\n${conversation}\n\nUser's latest question: ${lastUserMessage}`;
+
+    // Add editor content
+    prompt = `Editor Content:\n${editorHTML}\n\n${prompt}`;
+
+    // Add selected parts if provided
     if (
       attachPartOfHTML &&
       Array.isArray(attachPartOfHTML) &&
       attachPartOfHTML.length > 0
     ) {
-      prompt += `\n\nUSER-ADDED HTML PARTS (attachPartOfHTML):\nThese are specific HTML sections that the user has added or highlighted.\nThe user may request changes specifically for these parts.\nWhen processing user requests, prioritize these HTML parts for targeted updates.\n\nUser-Added HTML Parts:\n${attachPartOfHTML
+      prompt += `\n\nUSER-SELECTED HTML PARTS:\nThese are specific HTML sections that the user has selected for reference or modification.\nWhen processing user requests, ${
+        shouldModifyFullResume
+          ? "consider these HTML parts as priority areas."
+          : "ONLY modify these specific parts and leave the rest of the resume unchanged."
+      }\n\nSelected HTML Parts:\n${attachPartOfHTML
         .map((part, idx) => `Part ${idx + 1}:\n${part}`)
         .join("\n\n")}`;
     }
 
-    // Build your agent
+    // Build your agent with modified instructions based on content availability
     const agent = new Agent({
       name: "Assistant",
       instructions: `
       # Role and Objective
-      You are an ai assistant, designed to help understand, modify and improve the users resume(in html format) by strategically using the tools available to you and perfectly passing inputs to tools. 
-      - please keep going until the user's query is completely resolved, Only terminate your turn when you are sure that the problem is solved.
-     
-      # Instructions
+      You are an ai assistant, designed to help understand and ${
+        shouldModifyFullResume
+          ? "modify the entire resume as needed"
+          : "modify only specifically selected parts of the resume"
+      } by strategically using the tools available to you and perfectly passing inputs to tools. 
+      
+      # Instructions for Resume Mode
       You should always be thorough, accurate, and proactive in gathering information before answering.
       You should use tools(updateSkills, updateExperience, updateEducation, updateProjects, nameAndContactInfoFormat) to update the resume.
       You should not make assumptions—if I don't know something, I should search or ask for clarification.
       You should never output resume changes directly; instead, you should use tools to make changes in the resume.
       You should always be clear, concise, and helpful in your explanations.
 
+      ${
+        !shouldModifyFullResume
+          ? `
+      # IMPORTANT: LIMITED MODIFICATION MODE
+      - You are currently in LIMITED MODIFICATION MODE
+      - You should ONLY modify the specifically selected parts of the resume
+      - Do NOT make changes to any other parts of the resume
+      - If the user requests changes to unselected parts, inform them they need to either:
+        1. Select those specific parts, or
+        2. Enable "Active Resume" mode for full resume modifications
+      `
+          : ""
+      }
+
       ## Communication Guidelines:
       - **After each tool call**: Explain what you just accomplished and what remains to be done
       - **Progress updates**: Keep the user informed about your progress through multi-step processes  
       - **Clear completion**: When finished, explicitly state that the user's query has been fully resolved
 
-
       # STEPS TO FOLLOW
-      1. Understand the user's query, job description(If provided) and the resume(in html format)
-      2. Search the resume to find where the user's query is related to the resume
-      3. Break down complex tasks into actionable steps and track them with a todo list.
-      4. Make resume changes using the appropriate tool(updateSkills, updateExperience, updateEducation, updateProjects, nameAndContactInfoFormat) by ensuring all inputs provide correctly.
-      5. Validate the changes, fix any errors, and communicate results clearly to the user.
-
+      1. Understand the user's query and the current mode (full resume editing vs selected parts only)
+      2. Analyze the resume content and selected parts
+      3. Break down tasks into actionable steps and track them with a todo list
+      4. Make changes using appropriate tools:
+         ${
+           shouldModifyFullResume
+             ? "- Modify any part of the resume as needed to fulfill the request"
+             : "- ONLY modify the specifically selected parts\n         - Reject changes to unselected parts and explain why"
+         }
+      5. Validate changes and communicate results clearly
 
       ### Tool Calls - CRITICAL EXECUTION RULES
       IMPORTANT: You MUST call tools ONE AT A TIME, but you should continue calling tools until the user's query is COMPLETELY resolved.
@@ -115,14 +144,12 @@ export async function POST(req: Request) {
       **After each tool call, explicitly ask yourself:**
       "Is the user's query now completely resolved, or do I need to make another tool call?"
 
-
       ### Tool Error Handling and Retry
       If a tool fails with a TOOL_VALIDATION_FAILED error, it means the HTML content has changed since extraction. In this case:
       1. Get the current editor HTML content again
       2. Re-extract the relevant section from the updated content
       3. Retry the tool call with the updated HTML
       4. If the tool fails multiple times, inform the user that the content is changing too rapidly\n
-
 
       ### Before calling a tool
       1. Always read the resume (in HTML format) to fully understand both the resume content and the user's query.
@@ -149,8 +176,6 @@ export async function POST(req: Request) {
       7. Never attempt to "fix" or "improve" the HTML. Your job is only to extract and split, not to edit.
       8. If the HTML is malformed or ambiguous, alert the user rather than guessing.
       9. If possible, log or output a diff between the original and your extracted HTML to help catch mistakes.
-
-
       `,
 
       tools: [
@@ -159,7 +184,7 @@ export async function POST(req: Request) {
         updateEducationTool,
         updateProjectsTool,
         nameAndContactInfoFormatTool,
-      ], // Add your tools here
+      ],
     });
 
     // Run the agent with streaming enabled
