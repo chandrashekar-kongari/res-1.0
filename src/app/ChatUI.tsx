@@ -541,7 +541,7 @@ const ChatUI = ({
 
                             message.events?.forEach((event, eventIdx) => {
                               if (
-                                event.type === "output_text_delta" &&
+                                event.type === "response.output_text.delta" &&
                                 event.data?.delta
                               ) {
                                 currentMarkdown += event.data.delta;

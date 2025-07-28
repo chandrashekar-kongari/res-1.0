@@ -154,7 +154,7 @@ export default function Home({ params }: { params: Promise<{ id: string }> }) {
       setIsLoading(true);
 
       try {
-        await fetchEventSource("/api/chat", {
+        await fetchEventSource("http://localhost:8000/resume/chat", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -171,6 +171,7 @@ export default function Home({ params }: { params: Promise<{ id: string }> }) {
             if (ev.data) {
               try {
                 const event = JSON.parse(ev.data);
+                console.log("event", event);
 
                 // Skip any meta messages
                 if (event?.type === "error") {
@@ -178,7 +179,10 @@ export default function Home({ params }: { params: Promise<{ id: string }> }) {
                   return;
                 }
 
-                if (event?.data?.type == "output_text_delta") {
+                if (
+                  event?.type === "raw_response_event" &&
+                  event?.data?.type === "response.output_text.delta"
+                ) {
                   const text = event?.data?.delta;
                   setMessages((prev) => {
                     const lastIndex = prev.length - 1;
@@ -196,7 +200,7 @@ export default function Home({ params }: { params: Promise<{ id: string }> }) {
                             callId: `text-delta-${Date.now()}-${Math.random()}`,
                             name: "text_delta",
                             status: true,
-                            type: "output_text_delta",
+                            type: "response.output_text.delta",
                             data: { delta: text },
                           },
                         ],
