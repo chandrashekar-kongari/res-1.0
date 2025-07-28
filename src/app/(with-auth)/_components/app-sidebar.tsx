@@ -3,6 +3,7 @@
 import { Home, Trash2Icon } from "lucide-react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
+import { loadStripe } from "@stripe/stripe-js";
 
 import {
   Sidebar,
@@ -78,6 +79,7 @@ export function AppSidebar() {
     id: string;
     name: string;
   } | null>(null);
+  const [isLoadingCheckout, setIsLoadingCheckout] = useState(false);
 
   const { data: resumes, isLoading: isResumesLoading } =
     trpc.resume.getAllResumeNames.useQuery();
@@ -119,6 +121,46 @@ export function AppSidebar() {
     setSelectedResume({ id: resumeId, name: resumeName });
     setDeleteDialogOpen(true);
     setOpenDropdownId(null);
+  };
+
+  // Initialize Stripe
+  const stripePromise = loadStripe(
+    process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!
+  );
+
+  const handleUpgradeClick = async () => {
+    try {
+      setIsLoadingCheckout(true);
+      const stripe = await stripePromise;
+
+      if (!stripe) {
+        throw new Error("Stripe failed to initialize");
+      }
+
+      // Create a checkout session
+      const response = await fetch("/api/create-checkout-session", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+
+      const { sessionId } = await response.json();
+
+      // Redirect to checkout
+      const result = await stripe.redirectToCheckout({
+        sessionId,
+      });
+
+      if (result.error) {
+        throw new Error(result.error.message);
+      }
+    } catch (error) {
+      console.error("Error:", error);
+      // You might want to show an error message to the user here
+    } finally {
+      setIsLoadingCheckout(false);
+    }
   };
 
   return (
@@ -323,10 +365,16 @@ export function AppSidebar() {
                   </div>
                   <Separator className="my-2" />
                   <div className="mt-auto">
-                    <SidebarMenuButton asChild>
+                    <SidebarMenuButton
+                      asChild
+                      onClick={handleUpgradeClick}
+                      disabled={isLoadingCheckout}
+                    >
                       <div className="flex items-center gap-2">
                         <SketchLogoIcon className="w-4 h-4" />
-                        <p className="text-xs">Upgrade</p>
+                        <p className="text-xs">
+                          {isLoadingCheckout ? "Loading..." : "Upgrade"}
+                        </p>
                       </div>
                     </SidebarMenuButton>
 
