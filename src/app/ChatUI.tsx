@@ -456,19 +456,21 @@ const ChatUI = ({
           <Button
             variant="outline"
             onClick={createNewChat}
-            className="flex text-[10px] bg-[#E0E5EB] border-[#8FA1B9] hover:bg-[#E0E5EB]/80 hover:border-[#8FA1B9]/80 rounded-xl items-center gap-0.5  h-6 min-h-0 px-2"
+            className="flex text-[10px] bg-gray-50 border-gray-200 hover:bg-gray-100 hover:border-gray-300 rounded-lg px-1 items-center gap-0.5  h-6 min-h-0"
           >
-            {creatingNewThread ? (
-              <Loader2 className="w-[10px] h-[10px] text-black/80 animate-spin" />
-            ) : (
-              <PlusIcon className="w-[10px] h-[10px] text-black/80" />
-            )}
+            <div className="p-0.5 rounded-md bg-gray-200/50">
+              {creatingNewThread ? (
+                <Loader2 className="w-2.5 h-2.5 text-gray-600 animate-spin" />
+              ) : (
+                <PlusIcon className="w-2.5 h-2.5 text-gray-700" />
+              )}
+            </div>
             New Chat
           </Button>
         </div>
         <div className="flex flex-row items-center ">
-          <Button variant="ghost">
-            <CounterClockwiseClockIcon className="w-4 h-4 text-black/80" />
+          <Button variant="ghost" className="hover:bg-gray-100">
+            <CounterClockwiseClockIcon className="w-4 h-4 text-gray-600" />
           </Button>
         </div>
       </div>
@@ -499,15 +501,15 @@ const ChatUI = ({
                 // Only render user messages
                 if (message.role === "user") {
                   return (
-                    <div key={index} className="flex justify-end">
-                      <div className="w-full rounded-xl bg-black/5   ">
-                        <div className="text-sm px-4 py-2 leading-relaxed whitespace-pre-wrap">
+                    <div key={index} className="flex justify-end mb-3">
+                      <div className="w-full rounded-2xl bg-gradient-to-br from-gray-50 to-gray-100 border border-gray-200 shadow-sm">
+                        <div className="text-sm px-4 py-3 leading-relaxed whitespace-pre-wrap text-gray-800">
                           {message.content}
                         </div>
                         {index == messages.length - 2 && isAgentRunning && (
-                          <div className="flex border-t justify-between border-[#AD46FF]/10 items-center gap-2 py-[5px] px-4 mx-auto text-sm">
+                          <div className="flex border-t border-gray-200 justify-between items-center gap-2 py-2 px-4 mx-auto text-sm bg-white rounded-b-2xl">
                             <div className="flex items-center gap-2">
-                              <span className="text-xs text-black">
+                              <span className="text-xs text-gray-600 font-medium">
                                 Generating{dots}
                               </span>
                             </div>
@@ -516,7 +518,7 @@ const ChatUI = ({
                                 handleStopAssistant();
                               }}
                               variant="ghost"
-                              className="rounded-full bg-[#FA2C37]/10 hover:text-[#FA2C37]/70 border-[#FA2C37] text-[#FA2C37] w-5 h-5 p-0.5 min-h-0 flex items-center justify-center"
+                              className="rounded-full bg-red-50 hover:bg-red-100 border border-red-200 text-red-600 w-5 h-5 p-0.5 min-h-0 flex items-center justify-center"
                             >
                               <Circle className="w-3 h-3" />
                             </Button>
@@ -528,8 +530,8 @@ const ChatUI = ({
                 }
                 if (message.role === "assistant") {
                   return (
-                    <div key={index} className="flex justify-start w-full">
-                      <div className="w-full rounded-2xl text-black/80 p-1 rounded-bl-md">
+                    <div key={index} className="flex justify-start w-full mb-3">
+                      <div className="w-full rounded-2xl text-gray-700 p-1">
                         <div className="text-sm leading-relaxed whitespace-pre-wrap">
                           {(() => {
                             // Build output chunks: buffer markdown, interleave tool components
@@ -559,43 +561,57 @@ const ChatUI = ({
                                 outputChunks.push({
                                   type: "tool",
                                   element: (
-                                    <div key={eventIdx} className="mt-2 mb-2">
+                                    <div key={eventIdx} className="my-3">
                                       {/* Tool status indicator */}
                                       <div
-                                        className={`flex flex-row justify-between items-center gap-2 px-2 py-1 w-full rounded-md text-xs border ${
+                                        className={`flex flex-row justify-between items-center gap-2 px-3 py-2.5 w-full rounded-xl text-xs border shadow-sm ${
                                           event.status
                                             ? event.accepted
-                                              ? "bg-[#CEEDD5] border-[#00C950] rounded-b-none"
+                                              ? "bg-gradient-to-br from-emerald-50 to-green-50 border-emerald-200 text-emerald-800 rounded-b-none"
                                               : event.rejected
-                                              ? "bg-[#FEE4E2] border-[#FA2C37] rounded-b-none"
+                                              ? "bg-gradient-to-br from-red-50 to-rose-50 border-red-200 text-red-800 rounded-b-none"
                                               : event.notFound
-                                              ? "bg-[#FEF0C7] border-[#FE9900] "
-                                              : "bg-[#E0E5EB] border-[#8FA1B9] rounded-b-none"
-                                            : "bg-[#F3EBFD] border-[#AD46FF] "
+                                              ? "bg-gradient-to-br from-amber-50 to-yellow-50 border-amber-200 text-amber-800"
+                                              : "bg-gradient-to-br from-blue-50 to-sky-50 border-blue-200 text-blue-800 rounded-b-none"
+                                            : "bg-gradient-to-br from-purple-50 to-violet-50 border-purple-200 text-purple-800"
                                         }`}
                                       >
                                         <div className="flex flex-row items-center gap-2">
-                                          {event.status ? (
-                                            event.accepted ? (
-                                              <Check className="w-3 h-3" />
-                                            ) : event.rejected ? (
-                                              <X className="w-3 h-3" />
-                                            ) : event.notFound ? (
-                                              <X className="w-3 h-3" />
+                                          <div
+                                            className={`p-1 rounded-lg ${
+                                              event.status
+                                                ? event.accepted
+                                                  ? "bg-emerald-100"
+                                                  : event.rejected
+                                                  ? "bg-red-100"
+                                                  : event.notFound
+                                                  ? "bg-amber-100"
+                                                  : "bg-blue-100"
+                                                : "bg-purple-100"
+                                            }`}
+                                          >
+                                            {event.status ? (
+                                              event.accepted ? (
+                                                <Check className="w-3 h-3 text-emerald-600" />
+                                              ) : event.rejected ? (
+                                                <X className="w-3 h-3 text-red-600" />
+                                              ) : event.notFound ? (
+                                                <X className="w-3 h-3 text-amber-600" />
+                                              ) : (
+                                                <CheckCircledIcon className="w-3 h-3 text-blue-600" />
+                                              )
                                             ) : (
-                                              <CheckCircledIcon className="w-3 h-3" />
-                                            )
-                                          ) : (
-                                            <UpdateIcon className="w-3 h-3 animate-spin" />
-                                          )}
-                                          <span className="text-xs">
+                                              <UpdateIcon className="w-3 h-3 text-purple-600 animate-spin" />
+                                            )}
+                                          </div>
+                                          <span className="text-xs font-medium">
                                             {event.status
                                               ? event.accepted
                                                 ? `${event.name} accepted`
                                                 : event.rejected
                                                 ? `${event.name} rejected`
                                                 : event.notFound
-                                                ? `${event.name}, resume part not found in resume`
+                                                ? `${event.name}, resume part not found`
                                                 : `${event.name} completed`
                                               : `${event.name} running...`}
                                           </span>
@@ -608,10 +624,11 @@ const ChatUI = ({
                                             !event.accepted &&
                                             !event.rejected &&
                                             !event.notFound && (
-                                              <div className="flex items-center gap-1">
-                                                <Badge
+                                              <div className="flex items-center gap-1.5">
+                                                <Button
                                                   variant="outline"
-                                                  className="cursor-pointer rounded-xl text-[10px]"
+                                                  size="sm"
+                                                  className="cursor-pointer rounded-lg text-[10px] h-6 px-2 border-red-200 text-red-600 hover:bg-red-50 hover:border-red-300"
                                                   onClick={() =>
                                                     handleRejectEvent(
                                                       event.output
@@ -626,12 +643,12 @@ const ChatUI = ({
                                                     )
                                                   }
                                                 >
-                                                  <X className="w-3 h-3 mr-1" />{" "}
+                                                  <X className="w-3 h-3 mr-1" />
                                                   Reject
-                                                </Badge>
-                                                <Badge
-                                                  variant="default"
-                                                  className="cursor-pointer rounded-xl text-[10px]"
+                                                </Button>
+                                                <Button
+                                                  size="sm"
+                                                  className="cursor-pointer rounded-lg text-[10px] h-6 px-2 bg-emerald-600 hover:bg-emerald-700 text-white border-0"
                                                   onClick={() =>
                                                     handleAcceptEvent(
                                                       event.output
@@ -648,9 +665,9 @@ const ChatUI = ({
                                                     )
                                                   }
                                                 >
-                                                  <Check className="w-3 h-3 mr-1" />{" "}
+                                                  <Check className="w-3 h-3 mr-1" />
                                                   Accept
-                                                </Badge>
+                                                </Button>
                                               </div>
                                             )}
                                         </div>
@@ -659,7 +676,7 @@ const ChatUI = ({
                                       {/* Diff editor for completed tools */}
                                       {event.status &&
                                         event.output?.diffEditorHTML && (
-                                          <div className="border rounded-md border-t-0 rounded-t-none border-gray-200 bg-gray-50 p-2 max-h-40 overflow-y-auto">
+                                          <div className="border border-gray-200 rounded-xl border-t-0 rounded-t-none bg-gradient-to-br from-gray-50 to-white p-3 max-h-40 overflow-y-auto shadow-sm">
                                             <DiffEditor
                                               html={event.output.diffEditorHTML}
                                             />
@@ -708,24 +725,33 @@ const ChatUI = ({
           <div className="p-2 ">
             {/* Streaming status indicator */}
             {(isAgentRunning || showingDiff) && (
-              <div className="flex items-center gap-2 py-[5px] px-1 w-[95%] mx-auto border-b-0 rounded-b-none border rounded-xl text-sm">
+              <div className="flex items-center gap-2 py-2.5 px-3 w-[95%] mx-auto border-b-0 rounded-b-none border rounded-xl text-sm bg-gradient-to-br from-gray-50 to-white border-gray-200 shadow-sm">
                 {isAgentRunning ? (
                   <div className="flex items-center gap-2">
-                    <Loader2 className="w-3 h-3 animate-spin" />
-                    <span className="text-xs text-black">Generating{dots}</span>
+                    <div className="p-1 rounded-lg bg-purple-100">
+                      <Loader2 className="w-3 h-3 animate-spin text-purple-600" />
+                    </div>
+                    <span className="text-xs text-gray-700 font-medium">
+                      Generating{dots}
+                    </span>
                   </div>
                 ) : (
                   <div className="flex items-center flex-row gap-2 pl-1">
-                    <span className="text-xs text-black">Resume edited</span>
+                    <div className="p-1 rounded-lg bg-blue-100">
+                      <Check className="w-3 h-3 text-blue-600" />
+                    </div>
+                    <span className="text-xs text-gray-700 font-medium">
+                      Resume edited
+                    </span>
                   </div>
                 )}
                 {showingDiff && (
-                  <div className="flex items-center ml-auto justify-end gap-1">
+                  <div className="flex items-center ml-auto justify-end gap-1.5">
                     <Button
                       size="sm"
                       variant="outline"
                       disabled={isAgentRunning}
-                      className="flex text-[10px] items-center rounded-xl gap-0.5  h-6 min-h-0 px-2"
+                      className="flex text-[10px] items-center rounded-lg gap-1 h-6 min-h-0 px-2 border-red-200 text-red-600 hover:bg-red-50"
                       onClick={handleRejectAllChanges}
                     >
                       <X className="w-[10px] h-[10px]" />
@@ -734,8 +760,7 @@ const ChatUI = ({
                     <Button
                       disabled={isAgentRunning}
                       size="sm"
-                      variant="outline"
-                      className="flex text-[10px] bg-black rounded-xl text-white hover:bg-black/80 hover:text-white items-center gap-0.5  h-6 min-h-0 px-2"
+                      className="flex text-[10px] bg-emerald-600 rounded-lg text-white hover:bg-emerald-700 items-center gap-1 h-6 min-h-0 px-2 border-0"
                       onClick={handleAcceptAllChanges}
                     >
                       <Check className="w-[10px] h-[10px]" />

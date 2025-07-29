@@ -44,6 +44,7 @@ import { FontSize } from "@/lib/extensions/font-size";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Toggle } from "@/components/ui/toggle";
+import LinkModal from "./LinkModal";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -583,6 +584,12 @@ const TiptapEditor = forwardRef<TiptapEditorRef, TiptapEditorProps>(
       setLinkModal({ isOpen: false, url: "", text: "" });
     }, []);
 
+    const handleLinkRemove = useCallback(() => {
+      if (!editor) return;
+      editor.chain().focus().extendMarkRange("link").unsetLink().run();
+      setLinkModal({ isOpen: false, url: "", text: "" });
+    }, [editor]);
+
     const handleAddToChat = useCallback(() => {
       console.log("Adding to chat:", floatingButton.selectedHTML);
       if (setAttachPartOfHTML) {
@@ -694,7 +701,7 @@ const TiptapEditor = forwardRef<TiptapEditorRef, TiptapEditorProps>(
     }
 
     return (
-      <div className="flex flex-col bg-[#F5F5F5] h-full min-w-[794px]">
+      <div className="flex flex-col bg-[#FCFCFC] h-full min-w-[794px]">
         {/* Toolbar */}
         <TiptapToolbar
           editor={editor}
@@ -732,95 +739,16 @@ const TiptapEditor = forwardRef<TiptapEditorRef, TiptapEditorProps>(
         </div>
 
         {/* Link Modal */}
-        {linkModal.isOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center">
-            {/* Overlay */}
-            <div
-              className="absolute inset-0 bg-black/50"
-              onClick={handleLinkCancel}
-            />
-
-            {/* Modal Content */}
-            <div className="relative bg-white rounded-lg shadow-lg p-6 w-full max-w-md mx-4">
-              <h3 className="text-lg font-semibold mb-4">
-                {editor?.getAttributes("link").href ? "Edit Link" : "Add Link"}
-              </h3>
-
-              <div className="space-y-4">
-                {linkModal.text && (
-                  <div>
-                    <label className="block text-sm font-medium mb-1">
-                      Selected Text
-                    </label>
-                    <div className="px-3 py-2 bg-gray-50 rounded-md text-sm">
-                      {linkModal.text}
-                    </div>
-                  </div>
-                )}
-
-                <div>
-                  <label className="block text-sm font-medium mb-1">URL</label>
-                  <input
-                    type="url"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder="https://example.com"
-                    value={linkModal.url}
-                    onChange={(e) =>
-                      setLinkModal((prev) => ({ ...prev, url: e.target.value }))
-                    }
-                    autoFocus
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") {
-                        e.preventDefault();
-                        handleLinkSubmit();
-                      } else if (e.key === "Escape") {
-                        e.preventDefault();
-                        handleLinkCancel();
-                      }
-                    }}
-                  />
-                  <p className="text-xs text-gray-500 mt-1">
-                    Leave empty to remove the link
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex justify-between mt-6">
-                <div>
-                  {editor?.getAttributes("link").href && (
-                    <Button
-                      variant="destructive"
-                      size="sm"
-                      onClick={() => {
-                        editor
-                          .chain()
-                          .focus()
-                          .extendMarkRange("link")
-                          .unsetLink()
-                          .run();
-                        setLinkModal({ isOpen: false, url: "", text: "" });
-                      }}
-                    >
-                      Remove Link
-                    </Button>
-                  )}
-                </div>
-                <div className="flex space-x-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={handleLinkCancel}
-                  >
-                    Cancel
-                  </Button>
-                  <Button size="sm" onClick={handleLinkSubmit}>
-                    {editor?.getAttributes("link").href ? "Update" : "Add"} Link
-                  </Button>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
+        <LinkModal
+          isOpen={linkModal.isOpen}
+          url={linkModal.url}
+          text={linkModal.text}
+          existingLink={!!editor?.getAttributes("link").href}
+          onUrlChange={(url) => setLinkModal((prev) => ({ ...prev, url }))}
+          onSubmit={handleLinkSubmit}
+          onCancel={handleLinkCancel}
+          onRemove={handleLinkRemove}
+        />
       </div>
     );
   }

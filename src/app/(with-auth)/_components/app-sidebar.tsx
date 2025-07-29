@@ -1,6 +1,6 @@
 "use client";
 
-import { Home, Trash2Icon } from "lucide-react";
+import { Trash2Icon } from "lucide-react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 
@@ -12,19 +12,14 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  useSidebar,
 } from "@/components/ui/sidebar";
 import {
   DotsVerticalIcon,
-  FileIcon,
   FileTextIcon,
   Pencil1Icon,
-  PersonIcon,
   PlusIcon,
-  SketchLogoIcon,
   DrawingPinFilledIcon,
   DrawingPinIcon,
-  CubeIcon,
 } from "@radix-ui/react-icons";
 import { Separator } from "@radix-ui/react-separator";
 import {
@@ -42,8 +37,7 @@ import DeleteConfirmationDialog from "./DeleteConfirmationDialog";
 import { cn } from "@/lib/utils";
 import DuplicateFromPinnedResumeModal from "./DuplicateFromPinnedResumeModal";
 
-// Loading skeleton component for resume items
-function ResumeItemSkeleton({ width = "w-3/4" }: { width?: string }) {
+function ResumeItemSkeleton() {
   return (
     <SidebarMenuItem>
       <SidebarMenuButton className="rounded-lg">
@@ -52,8 +46,8 @@ function ResumeItemSkeleton({ width = "w-3/4" }: { width?: string }) {
           <div className="w-4 h-4 bg-black/15 rounded-sm"></div>
 
           {/* Resume name skeleton - varies in width for realism */}
-          <div className="flex-1 min-w-0">
-            <div className={`h-4 bg-black/15 rounded-full ${width}`}></div>
+          <div className="flex-1 ">
+            <div className={`h-7 bg-black/15 rounded-lg `}></div>
           </div>
         </div>
       </SidebarMenuButton>
@@ -88,6 +82,7 @@ export function AppSidebar() {
     onSuccess: () => {
       // Invalidate and refetch the resumes list
       utils.resume.getAllResumeNames.invalidate();
+      utils.resume.list.invalidate();
     },
   });
 
@@ -149,7 +144,7 @@ export function AppSidebar() {
         </>
       )}
 
-      <Sidebar collapsible="none" variant="inset" className="bg-[#F5F5F5]">
+      <Sidebar collapsible="none" variant="inset" className="bg-[#FCFCFC]">
         <SidebarContent className="p-0 m-0">
           <SidebarGroup>
             <SidebarGroupContent>
@@ -172,33 +167,54 @@ export function AppSidebar() {
                       <DropdownMenuTrigger asChild>
                         <SidebarMenuButton
                           asChild
-                          className="rounded-xl bg-[#F3EBFD] text-[#AD46FF] border-[#AD46FF]  hover:bg-[#E6D6FF] cursor-pointer"
+                          className="rounded-xl bg-[#E6D6FF] text-[#AD46FF] border-[#AD46FF]  hover:bg-[#AD46FF]/40 cursor-pointer"
                         >
-                          <div className="flex items-center gap-2 text-xs font-semibold">
-                            <PlusIcon
-                              strokeWidth={2}
-                              className=" text-[#AD46FF]"
-                            />
+                          <div className="flex items-center gap-2 text-xs font-semibold px-1">
+                            <div className="p-1.5 rounded-lg bg-[#F3EBFD] dark:bg-emerald-900/30 shrink-0">
+                              <PlusIcon
+                                strokeWidth={2}
+                                className=" text-[#AD46FF]"
+                              />
+                            </div>
+
                             <p className="text-xs">
-                              <span className="text-[#AD46FF]">
-                                Create or Upload
-                              </span>
+                              <span className="text-[#AD46FF]">Create</span>
                             </p>
                           </div>
                         </SidebarMenuButton>
                       </DropdownMenuTrigger>
-                      <DropdownMenuContent className="rounded-2xl w-xs p-2 shadow-none">
+                      <DropdownMenuContent className="rounded-3xl gap-2 w-60 shadow-2xl border-0 bg-white dark:bg-gray-900">
                         <DropdownMenuItem
                           onClick={() =>
                             setDuplicateFromPinnedResumeModalOpen(true)
                           }
+                          className="rounded-2xl p-4 cursor-pointer hover:bg-emerald-50 dark:hover:bg-emerald-900/20 transition-all duration-200 focus:bg-emerald-50 dark:focus:bg-emerald-900/20"
                         >
-                          <p className="text-xs">Duplicate pinned resume</p>
+                          <div className="flex items-center gap-3 w-full">
+                            <div className="p-2 rounded-xl bg-emerald-100 dark:bg-emerald-900/30">
+                              <FileTextIcon className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                            </div>
+                            <div className="flex-1">
+                              <p className="text-xs font-medium text-gray-900 dark:text-gray-100">
+                                Duplicate Pinned Resume
+                              </p>
+                            </div>
+                          </div>
                         </DropdownMenuItem>
                         <DropdownMenuItem
                           onClick={() => setCreateFromScratchModalOpen(true)}
+                          className="rounded-2xl p-4 cursor-pointer hover:bg-purple-50 dark:hover:bg-purple-900/20 transition-all duration-200 focus:bg-purple-50 dark:focus:bg-purple-900/20"
                         >
-                          <p className="text-xs">Create new resume</p>
+                          <div className="flex items-center gap-3 w-full">
+                            <div className="p-2 rounded-xl bg-purple-100 dark:bg-purple-900/30">
+                              <PlusIcon className="w-4 h-4 text-purple-600 dark:text-purple-400" />
+                            </div>
+                            <div className="flex-1">
+                              <p className="text-xs font-medium text-gray-900 dark:text-gray-100">
+                                Create New Resume
+                              </p>
+                            </div>
+                          </div>
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
@@ -207,10 +223,11 @@ export function AppSidebar() {
                   <p className="text-xs text-gray-500 p-2">All resumes</p>
                   <div className="flex flex-col gap-2 flex-grow overflow-y-auto">
                     {isResumesLoading ? (
-                      // Show loading skeletons
-                      Array.from({ length: 3 }).map((_, index) => (
-                        <ResumeItemSkeleton key={`skeleton-${index}`} />
-                      ))
+                      <div className="flex flex-col gap-4">
+                        {Array.from({ length: 6 }).map((_, index) => (
+                          <ResumeItemSkeleton key={`skeleton-${index}`} />
+                        ))}
+                      </div>
                     ) : resumes && resumes.length > 0 ? (
                       // Show actual resumes
                       resumes.map((item) => (
@@ -226,13 +243,15 @@ export function AppSidebar() {
                           >
                             <SidebarMenuButton
                               asChild
-                              className="rounded-lg hover:bg-black/15 transition-colors duration-200"
+                              className="rounded-xl hover:bg-black/15 transition-colors duration-200"
                             >
                               <Link
                                 href={`/app/${item.id}`}
-                                className="flex items-center gap-0"
+                                className="flex items-center gap-0 px-1"
                               >
-                                <FileTextIcon className="w-4 h-4 text-[#00C950]" />
+                                <div className="p-1.5 rounded-lg bg-emerald-100 dark:bg-emerald-900/30 shrink-0">
+                                  <FileTextIcon className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+                                </div>
                                 <span className="text-xs truncate">
                                   {item.name}
                                 </span>
@@ -244,7 +263,7 @@ export function AppSidebar() {
                                       onClick={(e) =>
                                         handleTogglePin(e, item.id)
                                       }
-                                      className="p-1 hover:bg-gray-400 rounded transition-colors duration-200"
+                                      className="p-1 hover:bg-black/10 rounded-full transition-colors duration-200"
                                     >
                                       {item.pinned ? (
                                         hoveredResumeId === item.id ? (
@@ -265,7 +284,7 @@ export function AppSidebar() {
                                     <DropdownMenuTrigger asChild>
                                       <button
                                         className={cn(
-                                          "p-1 hover:bg-gray-400 rounded transition-colors duration-200 opacity-0",
+                                          "p-1 hover:bg-black/10 rounded-full transition-colors duration-200 opacity-0",
                                           (item.id === hoveredResumeId ||
                                             item.id === openDropdownId) &&
                                             "opacity-100"
@@ -276,10 +295,10 @@ export function AppSidebar() {
                                     </DropdownMenuTrigger>
                                     <DropdownMenuContent
                                       align="start"
-                                      className="rounded-2xl w-xs p-2"
+                                      className="rounded-3xl w-52 gap-2 shadow-2xl border-0 bg-white dark:bg-gray-900"
                                     >
                                       <DropdownMenuItem
-                                        className="px-2 rounded-lg"
+                                        className="rounded-2xl p-4 cursor-pointer hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-all duration-200 focus:bg-blue-50 dark:focus:bg-blue-900/20"
                                         onClick={(e) =>
                                           handleRename(
                                             e,
@@ -288,11 +307,19 @@ export function AppSidebar() {
                                           )
                                         }
                                       >
-                                        <Pencil1Icon className="w-[14px] h-[14px]" />
-                                        <p className="text-xs">Rename</p>
+                                        <div className="flex items-center gap-2 w-full">
+                                          <div className="p-2 rounded-xl bg-blue-100 dark:bg-blue-900/30">
+                                            <Pencil1Icon className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                                          </div>
+                                          <div className="flex-1">
+                                            <p className="text-xs  text-gray-900 dark:text-gray-100">
+                                              Rename Resume
+                                            </p>
+                                          </div>
+                                        </div>
                                       </DropdownMenuItem>
                                       <DropdownMenuItem
-                                        className="px-2 rounded-lg"
+                                        className="rounded-2xl p-4 cursor-pointer hover:bg-red-50 dark:hover:bg-red-900/20 transition-all duration-200 focus:bg-red-50 dark:focus:bg-red-900/20"
                                         onClick={(e) =>
                                           handleDelete(
                                             e,
@@ -301,8 +328,16 @@ export function AppSidebar() {
                                           )
                                         }
                                       >
-                                        <Trash2Icon className="w-[14px] h-[14px]" />
-                                        <p className="text-xs">Delete</p>
+                                        <div className="flex items-center gap-2 w-full">
+                                          <div className="p-2 rounded-xl bg-red-100 dark:bg-red-900/30">
+                                            <Trash2Icon className="w-4 h-4 text-red-600 dark:text-red-400" />
+                                          </div>
+                                          <div className="flex-1">
+                                            <p className="text-xs  text-gray-900 dark:text-gray-100">
+                                              Delete Resume
+                                            </p>
+                                          </div>
+                                        </div>
                                       </DropdownMenuItem>
                                     </DropdownMenuContent>
                                   </DropdownMenu>
@@ -323,13 +358,6 @@ export function AppSidebar() {
                   </div>
                   <Separator className="my-2" />
                   <div className="mt-auto">
-                    <SidebarMenuButton asChild>
-                      <div className="flex items-center gap-2">
-                        <SketchLogoIcon className="w-4 h-4" />
-                        <p className="text-xs">Upgrade</p>
-                      </div>
-                    </SidebarMenuButton>
-
                     <React.Suspense
                       fallback={
                         <div className="p-2 text-xs text-gray-400">
