@@ -1,7 +1,13 @@
-import { Button } from "@/components/ui/button";
 import { stackServerApp } from "@/stack";
-import { LOGIN_URL, SIGNUP_URL } from "@/utils/constants";
 import { redirect } from "next/navigation";
+import { Hero } from "./components/Hero";
+import { Navbar } from "./components/Navbar";
+import { Feature } from "./components/Feature";
+import { Features } from "./components/Features";
+import { Pricing } from "./components/Pricing";
+import { Features1 } from "./components/Features1";
+import { SomeMoreFeatures } from "./components/SomeMoreFeatures";
+import { BottomCall } from "./components/BottomCall";
 
 export default async function Page() {
   // SSR: Check if user is logged in
@@ -12,12 +18,16 @@ export default async function Page() {
 
   return (
     <div>
-      <a href={LOGIN_URL}>
-        <Button variant="outline">Login</Button>
-      </a>
-      <a href={SIGNUP_URL}>
-        <Button variant="outline">Signup</Button>
-      </a>
+      <div className="flex flex-col items-center justify-center ">
+        <Navbar />
+        <Hero />
+        <Features1 />
+        <SomeMoreFeatures />
+        <Features />
+        <Pricing />
+      </div>
+
+      <BottomCall />
     </div>
   );
 }
