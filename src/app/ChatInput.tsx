@@ -4,10 +4,27 @@ import { EditorContent, useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import { Button } from "@/components/ui/button";
 import { useCallback, useRef } from "react";
-import { ArrowUp, FileTextIcon, Loader2, X } from "lucide-react";
+import {
+  ArrowUp,
+  Axe,
+  AxeIcon,
+  ChevronDownIcon,
+  EllipsisVerticalIcon,
+  FileTextIcon,
+  Loader2,
+  MessageSquare,
+  Settings2,
+  X,
+} from "lucide-react";
 import { Placeholder } from "@tiptap/extensions";
 import { Badge } from "@/components/ui/badge";
 import { PaperPlaneIcon } from "@radix-ui/react-icons";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface ChatInputProps {
   onSend?: (message: string) => void;
@@ -130,7 +147,7 @@ const ChatInput = ({
         )}
       </div>
 
-      <div className="flex flex-col rounded-lg">
+      <div className="flex flex-col rounded-full">
         <div className="flex-1">
           <div
             ref={editorContainerRef}
@@ -139,24 +156,49 @@ const ChatInput = ({
             <EditorContent disabled={isStreaming} editor={editor} />
           </div>
         </div>
-        <div className="flex justify-end ">
-          {isStreaming ? (
-            <Button
-              onClick={handleSend}
-              disabled={isStreaming}
-              className="shrink-0 bg-white text-black/80 hover:bg-gray-50 hover:text-black/90 rounded-full border border-black/20 w-6 h-6 p-0 flex items-center justify-center"
-            >
-              <Loader2 className="w-3 h-3 animate-spin" />
-            </Button>
-          ) : (
-            <Button
-              onClick={handleSend}
-              variant="outline"
-              className="shrink-0 bg-[#AD46FF] text-white border-[#AD46FF] hover:bg-[#ca92f7] rounded-full w-6 h-6 p-0 flex items-center justify-center"
-            >
-              <ArrowUp rotate={45} className="w-[10px] h-[10px] text-white" />
-            </Button>
-          )}
+        <div className="flex justify-between ">
+          <div>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Badge
+                  variant="outline"
+                  className="text-[10px] bg-white text-black/80 cursor-pointer rounded-xl h-6 px-2 flex items-center gap-1 hover:bg-gray-50"
+                >
+                  <Settings2 className="w-3 h-3 text-black/80" /> Agent{" "}
+                  <ChevronDownIcon className="w-3 h-3 text-black/80" />
+                </Badge>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="rounded-xl gap-2 w-30 shadow-2xl border-0 bg-white dark:bg-gray-900">
+                <DropdownMenuItem className="rounded-xl p-2 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-900/20 transition-all duration-200 focus:bg-gray-50 dark:focus:bg-gray-900/20">
+                  <Settings2 className="w-[10px] h-[10px]" />
+                  <p className="text-[10px]">Agent</p>
+                </DropdownMenuItem>
+                <DropdownMenuItem disabled>
+                  <MessageSquare className="w-[10px] h-[10px]" />
+                  <p className="text-[10px]">Ask(coming soon)</p>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+          <div>
+            {isStreaming ? (
+              <Button
+                onClick={handleSend}
+                disabled={isStreaming}
+                className="shrink-0 bg-white text-black/80 hover:bg-gray-50 hover:text-black/90 rounded-full border border-black/20 w-6 h-6 p-0 flex items-center justify-center"
+              >
+                <Loader2 className="w-3 h-3 animate-spin" />
+              </Button>
+            ) : (
+              <Button
+                onClick={handleSend}
+                variant="outline"
+                className="shrink-0 bg-[#AD46FF] text-white border-[#AD46FF] hover:bg-[#ca92f7] rounded-full w-6 h-6 p-0 flex items-center justify-center"
+              >
+                <ArrowUp rotate={45} className="w-[10px] h-[10px] text-white" />
+              </Button>
+            )}
+          </div>
         </div>
       </div>
     </div>

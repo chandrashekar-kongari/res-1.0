@@ -588,7 +588,7 @@ export default function Home({ params }: { params: Promise<{ id: string }> }) {
     <>
       <div className="flex min-h-screen w-full gap-0">
         <SidebarInset className="flex-1 w-full">
-          <div className="h-screen w-full flex flex-row rounded-none bg-[#F5F5F5]">
+          <div className="h-screen w-full flex flex-row rounded-none bg-[#FCFCFC]">
             {/* Editor Section - Left side */}
             <div className="flex-1 flex flex-col overflow-hidden">
               <div className="flex-1 overflow-hidden">
