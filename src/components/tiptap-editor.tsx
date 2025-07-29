@@ -713,7 +713,7 @@ const TiptapEditor = forwardRef<TiptapEditorRef, TiptapEditorProps>(
         {/* Editor Container - Scrollable */}
         <div
           className={cn(
-            "flex-1 overflow-auto bg-[#f6f1fc] border  shadow-none rounded-lg p-3",
+            "flex-1 overflow-auto bg-[#f6f1fc] border  shadow-none rounded-lg rounded-b-none p-3",
             className
           )}
         >
