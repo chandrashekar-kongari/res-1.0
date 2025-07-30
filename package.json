@@ -6,7 +6,8 @@
     "dev": "next dev --turbopack",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "postinstall": "prisma generate"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^1.2.12",
@@ -78,8 +79,8 @@
     "prosemirror-state": "^1.4.3",
     "prosemirror-view": "^1.40.0",
     "puppeteer": "^24.12.1",
-    "react": "^19.0.0",
-    "react-dom": "^19.0.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
     "react-markdown": "^10.1.0",
     "react-router-dom": "^7.6.3",
     "react-scroll-to-bottom": "^4.2.0",
