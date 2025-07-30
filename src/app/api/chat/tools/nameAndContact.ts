@@ -129,6 +129,7 @@ export const nameAndContactInfoFormatTool: FunctionTool<NameAndContactToolInput>
 RETRY REQUIRED: Use the currentResumeContent provided below as the new currentEditorHTML parameter. Extract the name and contact section from this updated content and retry the tool call.
 
 
+
 Original HTML to update: ${parsedInput.htmlToUpdate}
 Tool returned oldEditorHTML: ${parsedResult.oldEditorHTML}
 Current editor content: ${parsedInput.currentEditorHTML}`,
