@@ -246,7 +246,7 @@ interface TiptapEditorProps {
   enableExport?: boolean;
   aiAppId?: string;
   aiToken?: string;
-  setAttachPartOfHTML?: (content: string[]) => void;
+  setAttachPartOfHTML?: React.Dispatch<React.SetStateAction<string[]>>;
   resumeId: string;
 }
 
@@ -609,8 +609,8 @@ const TiptapEditor = forwardRef<TiptapEditorRef, TiptapEditorProps>(
     const handleAddToChat = useCallback(() => {
       console.log("Adding to chat:", floatingButton.selectedHTML);
       if (setAttachPartOfHTML) {
-        setAttachPartOfHTML([
-          ...(Array.isArray(setAttachPartOfHTML) ? setAttachPartOfHTML : []),
+        setAttachPartOfHTML((prev: string[]) => [
+          ...prev,
           floatingButton.selectedHTML,
         ]);
       }

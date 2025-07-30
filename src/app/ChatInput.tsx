@@ -3,7 +3,7 @@
 import { EditorContent, useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import { Button } from "@/components/ui/button";
-import { useCallback, useRef } from "react";
+import { useCallback, useRef, useEffect } from "react";
 import {
   ArrowUp,
   Axe,
@@ -107,6 +107,12 @@ const ChatInput = ({
     onSend?.(editor.getText());
     editor.commands.clearContent();
   }, [editor, onSend]);
+
+  useEffect(() => {
+    if (editor) {
+      editor.commands.focus();
+    }
+  }, [editor, attachPartOfHTML?.length]);
 
   return (
     <div className="relative flex flex-col w-full rounded-xl shadow-none bg-white p-2 gap-1 border">

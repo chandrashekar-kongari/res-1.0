@@ -9,8 +9,13 @@ const runner = new Runner({ model: "gpt-4.1" });
 
 export async function POST(req: Request) {
   try {
-    const { messages, editorHTML, attachPartOfHTML, shouldModifyFullResume } =
-      await req.json();
+    const {
+      messages,
+      editorHTML,
+      attachPartOfHTML,
+      shouldModifyFullResume,
+      resumeId,
+    } = await req.json();
 
     // Compose the prompt as before
     const conversation = Array.isArray(messages)
@@ -25,8 +30,8 @@ export async function POST(req: Request) {
     // Build the prompt based on available content
     let prompt = `Conversation:\n${conversation}\n\nUser's latest question: ${lastUserMessage}`;
 
-    // Add editor content
-    prompt = `Editor Content:\n${editorHTML}\n\n${prompt}`;
+    // Add editor content and resumeId
+    prompt = `Editor Content:\n${editorHTML}\n\nResumeId: ${resumeId}\n\n${prompt}`;
 
     // Add selected parts if provided
     if (
@@ -52,7 +57,9 @@ export async function POST(req: Request) {
         shouldModifyFullResume
           ? "modify the entire resume as needed"
           : "modify only specifically selected parts of the resume"
-      } by strategically using the tools available to you and perfectly passing inputs to tools. 
+      } by strategically using the tools available to you and perfectly passing inputs to tools.
+      
+      The resumeId is provided in the prompt and must be passed to all tool calls for database operations.
       
       # 🚨 CRITICAL MANDATE: COMPLETE TASK EXECUTION
       **YOU MUST CONTINUE WORKING UNTIL THE USER'S QUERY IS 100% COMPLETELY RESOLVED.**
@@ -83,9 +90,12 @@ export async function POST(req: Request) {
       }
 
       ## Communication Guidelines:
+      - **Before each tool call**: Explain to the user what you are about to do and why
+      - **During tool calls**: Keep the user informed about which section you're working on
       - **After each tool call**: Explain what you just accomplished and what remains to be done
       - **Progress updates**: Keep the user informed about your progress through multi-step processes  
       - **Clear completion**: When finished, explicitly state that the user's query has been fully resolved
+      - **Error handling**: If a tool call fails, explain to the user what went wrong and what you're doing to fix it
 
       # STEPS TO FOLLOW
       1. Understand the user's query and the current mode (full resume editing vs selected parts only)
@@ -111,7 +121,9 @@ export async function POST(req: Request) {
       6. **Keep Going**: If there's ANY doubt about completion, make another tool call. It's better to be thorough than incomplete.
 
       ## Tool Selection Rules:
-      IMPORTANT: For ALL tool calls, you must pass the complete current editor HTML as the 'currentEditorHTML' parameter for validation.
+      IMPORTANT: For ALL tool calls, you must pass:
+      1. The complete current editor HTML as the 'currentEditorHTML' parameter for validation
+      2. The resumeId as the 'resumeId' parameter for database operations
       
       ## When to Use Each Tool (Call ONE tool per iteration):
       1. **Skills Updates**: Use updateSkills tool
@@ -156,12 +168,41 @@ export async function POST(req: Request) {
       
       **DEFAULT ACTION: When in doubt, KEEP GOING. Make another tool call rather than stopping prematurely.**
 
-      ### Tool Error Handling and Retry
-      If a tool fails with a TOOL_VALIDATION_FAILED error, it means the HTML content has changed since extraction. In this case:
-      1. Get the current editor HTML content again
-      2. Re-extract the relevant section from the updated content
-      3. Retry the tool call with the updated HTML
-      4. If the tool fails multiple times, inform the user that the content is changing too rapidly\n
+      ### Tool Response Handling and Retry Logic
+      🚨 CRITICAL: All tools now return structured JSON responses with a 'success' field. You MUST check this field after EVERY tool call.
+      
+      #### Tool Response Format:
+      All tools return JSON with these fields:
+      - success: true/false (indicates if tool succeeded)
+      - oldEditorHTML: original HTML content
+      - newEditorHTML: modified HTML content  
+      - diffEditorHTML: diff view with changes highlighted
+      - error: error message when success=false
+      - retryInstructions: specific retry steps when success=false
+      - currentResumeContent: fresh content from database
+      
+      #### Mandatory Response Handling:
+      1. **After EVERY tool call**: Parse the JSON response and check the 'success' field
+      2. **If success = true**: Continue with your workflow or move to next task
+      3. **If success = false**: You MUST retry using the provided currentResumeContent 
+      
+      #### Retry Process (When success = false):
+      1. **Extract fresh content**: Use the 'currentResumeContent' from the failed response
+      2. **Re-extract relevant section**: Find and extract the target section (skills, experience, etc.) from currentResumeContent  
+      3. **Retry the tool call** with:
+         - htmlToUpdate = newly extracted section from currentResumeContent
+         - currentEditorHTML = the full currentResumeContent 
+         - Same other parameters (skillsDescription, userQuestion, etc.)
+      4. **Maximum 3 retry attempts**: If a tool fails 3 times, inform the user that the content is changing too rapidly
+      5. **Follow retryInstructions**: The failed response includes specific retry instructions - follow them exactly
+      
+      #### Example Retry Flow:
+      Step 1: Call updateSkills tool -> Returns success=false with currentResumeContent and retryInstructions
+      Step 2: Extract skills section from the provided currentResumeContent 
+      Step 3: Call updateSkills again with fresh extracted data -> Returns success=true
+      Step 4: Continue with next task in workflow
+      
+      🚨 **NEVER ignore a failed tool call (success=false). You MUST retry using the currentResumeContent.**\n and for remaing tools you should use the currentResumeContent as the new currentEditorHTML parameter and extract the relevant section for htmlToUpdate.
 
       ### Before calling a tool
       1. Always read the resume (in HTML format) to fully understand both the resume content and the user's query.

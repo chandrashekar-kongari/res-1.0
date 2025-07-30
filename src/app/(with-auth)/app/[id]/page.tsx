@@ -163,6 +163,7 @@ export default function Home({ params }: { params: Promise<{ id: string }> }) {
             attachPartOfHTML:
               attachPartOfHTML.length > 0 ? attachPartOfHTML : undefined,
             shouldModifyFullResume: shouldSendEditorHTML,
+            resumeId: id,
           }),
           signal: abortControllerRef.current.signal,
           openWhenHidden: true, // This single line handles background tabs!
@@ -252,15 +253,56 @@ export default function Home({ params }: { params: Promise<{ id: string }> }) {
                     const textObj = event?.item?.rawItem?.output?.text;
                     const responseObj = JSON.parse(textObj);
 
+                    console.log("RESPONSEOBJ", responseObj);
+
+                    if (responseObj.success === false) {
+                      //Retry the tool call with the updated HTML
+                      setMessages((prev) => {
+                        const lastIndex = prev.length - 1;
+                        if (
+                          lastIndex >= 0 &&
+                          prev[lastIndex].role === "assistant"
+                        ) {
+                          const updated = [...prev];
+                          const lastMessage = updated[lastIndex];
+                          const exists = (lastMessage.events || []).some(
+                            (e) => e.callId === event?.item?.rawItem?.callId
+                          );
+                          if (exists) {
+                            updated[lastIndex] = {
+                              ...lastMessage,
+                              events: (lastMessage.events || []).map((e) =>
+                                e.callId === event?.item?.rawItem?.callId
+                                  ? {
+                                      ...e,
+                                      status: true,
+                                      notFound: true,
+                                    }
+                                  : e
+                              ),
+                            };
+                          }
+                          return updated;
+                        }
+                        return prev;
+                      });
+                      console.log("Should retry the tool call");
+                      return;
+                    }
+
                     if (responseObj[0]?.content) {
                       const res = JSON.parse(responseObj[0]?.content[0]?.text);
+
                       if (res?.diffEditorHTML) {
                         const htmlOfEditor = editorRef.current?.getHTML?.();
 
                         if (htmlOfEditor) {
                           if (
-                            res.oldEditorHTML &&
-                            !htmlOfEditor.includes(res.oldEditorHTML.trim())
+                            (res.oldEditorHTML &&
+                              !htmlOfEditor.includes(
+                                res.oldEditorHTML.trim()
+                              )) ||
+                            res.success === false
                           ) {
                             //Retry the tool call with the updated HTML
                             setMessages((prev) => {

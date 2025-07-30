@@ -1,5 +1,6 @@
 import { Agent, Runner, tool, FunctionTool, RunContext } from "@openai/agents";
 import { z } from "zod";
+import { prisma } from "@/lib/db";
 
 export const nameAndContactInfoFormatTool: FunctionTool<any> = {
   type: "function",
@@ -15,12 +16,17 @@ export const nameAndContactInfoFormatTool: FunctionTool<any> = {
         type: "string",
         description: "The current full editor HTML content for validation",
       },
+      resumeId: {
+        type: "string",
+        description: "The ID of the resume being edited",
+      },
     },
     required: [
       "htmlToUpdate",
       "jobDescription",
       "userQuestion",
       "currentEditorHTML",
+      "resumeId",
     ],
     additionalProperties: false,
   },
@@ -32,6 +38,7 @@ export const nameAndContactInfoFormatTool: FunctionTool<any> = {
       jobDescription: string;
       userQuestion: string;
       currentEditorHTML: string;
+      resumeId: string;
     };
 
     // Create a sub-agent for this tool
@@ -92,50 +99,94 @@ export const nameAndContactInfoFormatTool: FunctionTool<any> = {
         outputText = JSON.stringify(result);
       }
       // Parse the result to validate oldEditorHTML
+      // Get current resume content from database
+      const resume = await prisma.resume.findUnique({
+        where: {
+          id: parsedInput.resumeId,
+        },
+        select: {
+          content: true,
+        },
+      });
+
+      // Parse the result to validate oldEditorHTML
       try {
-        const parsedResult = JSON.parse(outputText);
+        const parsedResult = outputText as any;
 
         // Validate that the oldEditorHTML from the tool matches what's in the current editor
         if (
           parsedResult.oldEditorHTML &&
-          !parsedInput.currentEditorHTML.includes(
-            parsedResult.oldEditorHTML.trim()
-          )
+          resume?.content &&
+          !resume?.content.includes(parsedResult.oldEditorHTML.trim())
         ) {
-          // Tool failed - oldEditorHTML doesn't match current editor state
-          throw new Error(`TOOL_VALIDATION_FAILED: The HTML section to be updated was not found in the current editor. This likely means the editor content has changed since the tool was called. Please retry with the updated editor content. 
+          // Tool failed - return failure response with current resume content
+          return JSON.stringify({
+            success: false,
+            oldEditorHTML: parsedInput.htmlToUpdate,
+            newEditorHTML: parsedInput.htmlToUpdate,
+            diffEditorHTML: parsedInput.htmlToUpdate,
+            error: `TOOL_VALIDATION_FAILED: The HTML section to be updated was not found in the current editor. This likely means the editor content has changed since the tool was called. 
+
+RETRY REQUIRED: Use the currentResumeContent provided below as the new currentEditorHTML parameter. Extract the name and contact section from this updated content and retry the tool call.
 
 Original HTML to update: ${parsedInput.htmlToUpdate}
 Tool returned oldEditorHTML: ${parsedResult.oldEditorHTML}
-Current editor content: ${parsedInput.currentEditorHTML}`);
+Current editor content: ${parsedInput.currentEditorHTML}`,
+            retryInstructions:
+              "Extract the name and contact section from currentResumeContent and retry the nameAndContactInfoFormat tool with: 1) htmlToUpdate = name and contact section from currentResumeContent, 2) currentEditorHTML = currentResumeContent, 3) same jobDescription and userQuestion",
+            currentResumeContent: resume?.content || "",
+          });
         }
 
-        return outputText;
+        // Success case - add success flag and current resume content
+        const successResult = {
+          success: true,
+          ...(typeof parsedResult === "string"
+            ? JSON.parse(parsedResult)
+            : parsedResult),
+          currentResumeContent: resume?.content || "",
+        };
+
+        return JSON.stringify(successResult);
       } catch (parseError: any) {
-        if (
-          parseError.message &&
-          parseError.message.startsWith("TOOL_VALIDATION_FAILED:")
-        ) {
-          throw parseError; // Re-throw validation errors
-        }
-        // If parsing fails, return the original output
-        return outputText;
+        // Return failure response with current resume content
+        return JSON.stringify({
+          success: false,
+          oldEditorHTML: parsedInput.htmlToUpdate,
+          newEditorHTML: parsedInput.htmlToUpdate,
+          diffEditorHTML: parsedInput.htmlToUpdate,
+          error: `Failed to parse tool output: ${parseError.message}. RETRY REQUIRED: Use the currentResumeContent below and retry the tool call.`,
+          retryInstructions:
+            "Extract the name and contact section from currentResumeContent and retry the nameAndContactInfoFormat tool with: 1) htmlToUpdate = name and contact section from currentResumeContent, 2) currentEditorHTML = currentResumeContent, 3) same jobDescription and userQuestion",
+          currentResumeContent: resume?.content || "",
+        });
       }
     } catch (error: any) {
-      // If it's our validation error, throw it to the agent
-      if (
-        error.message &&
-        error.message.startsWith("TOOL_VALIDATION_FAILED:")
-      ) {
-        throw error;
-      }
+      // Get current resume content even in error case
+      let currentResumeContent = "";
+      try {
+        const resume = await prisma.resume.findUnique({
+          where: {
+            id: parsedInput.resumeId,
+          },
+          select: {
+            content: true,
+          },
+        });
+        currentResumeContent = resume?.content || "";
+      } catch (dbError) {}
 
-      // For other errors, also throw them so the agent knows the tool failed
-      throw new Error(
-        `Name and Contact update tool failed: ${
+      // Return error response instead of throwing
+      return JSON.stringify({
+        success: false,
+        oldEditorHTML: parsedInput.htmlToUpdate,
+        newEditorHTML: parsedInput.htmlToUpdate,
+        diffEditorHTML: parsedInput.htmlToUpdate,
+        error: `Name and Contact update tool failed: ${
           error.message || "Unknown error"
-        }`
-      );
+        }`,
+        currentResumeContent: currentResumeContent,
+      });
     }
   },
 };
