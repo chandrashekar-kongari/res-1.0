@@ -129,6 +129,7 @@ interface FloatingButtonProps {
   onAddToChat: () => void;
   onReplaceText: () => void;
   onAddLink: () => void;
+  editor: any; // Add editor instance to props
 }
 
 const FloatingButton = ({
@@ -137,6 +138,7 @@ const FloatingButton = ({
   onAddToChat,
   onReplaceText,
   onAddLink,
+  editor,
 }: FloatingButtonProps) => (
   <div
     style={{
@@ -171,7 +173,7 @@ const FloatingButton = ({
       className="text-xs p-1 h-fit rounded-sm"
       onClick={(e) => {
         e.preventDefault();
-        onReplaceText();
+        editor?.chain().focus().toggleBold().run();
       }}
     >
       <FontBoldIcon className="h-4 w-4" />
@@ -190,9 +192,13 @@ const FloatingButton = ({
     <Button
       size="sm"
       variant="ghost"
-      className="text-xs p-1 h-fit rounded-sm"
+      className={cn(
+        "text-xs p-1 h-fit rounded-sm",
+        editor?.getAttributes("paragraph").borderBottom ? "bg-accent" : ""
+      )}
       onClick={(e) => {
         e.preventDefault();
+        editor?.chain().focus().toggleBorderBottom().run();
       }}
     >
       <BorderBottomIcon className="h-4 w-4" />
@@ -202,7 +208,14 @@ const FloatingButton = ({
         variant="ghost"
         key={size}
         size="sm"
-        className="text-xs p-1 h-fit rounded-sm"
+        className={cn(
+          "text-xs p-1 h-fit rounded-sm",
+          editor?.getAttributes("fontSize").size === size ? "bg-accent" : ""
+        )}
+        onClick={(e) => {
+          e.preventDefault();
+          editor?.chain().focus().setFontSize(size).run();
+        }}
       >
         {size}
       </Button>
@@ -211,9 +224,13 @@ const FloatingButton = ({
     <Button
       size="sm"
       variant="ghost"
-      className="text-xs p-1 h-fit rounded-sm"
+      className={cn(
+        "text-xs p-1 h-fit rounded-sm",
+        editor?.isActive("bulletList") ? "bg-accent" : ""
+      )}
       onClick={(e) => {
         e.preventDefault();
+        editor?.chain().focus().toggleBulletList().run();
       }}
     >
       <ListBulletIcon className="h-4 w-4" />
@@ -229,7 +246,7 @@ interface TiptapEditorProps {
   enableExport?: boolean;
   aiAppId?: string;
   aiToken?: string;
-  setAttachPartOfHTML?: (content: string[]) => void;
+  setAttachPartOfHTML?: React.Dispatch<React.SetStateAction<string[]>>;
   resumeId: string;
 }
 
@@ -558,6 +575,7 @@ const TiptapEditor = forwardRef<TiptapEditorRef, TiptapEditorProps>(
       if (linkModal.url.trim() === "") {
         editor.chain().focus().extendMarkRange("link").unsetLink().run();
         setLinkModal({ isOpen: false, url: "", text: "" });
+        setFloatingButton((prev) => ({ ...prev, visible: false }));
         return;
       }
 
@@ -570,6 +588,7 @@ const TiptapEditor = forwardRef<TiptapEditorRef, TiptapEditorProps>(
           .setLink({ href: linkModal.url.trim() })
           .run();
         setLinkModal({ isOpen: false, url: "", text: "" });
+        setFloatingButton((prev) => ({ ...prev, visible: false }));
       } catch (e: any) {
         alert(e.message);
       }
@@ -577,19 +596,21 @@ const TiptapEditor = forwardRef<TiptapEditorRef, TiptapEditorProps>(
 
     const handleLinkCancel = useCallback(() => {
       setLinkModal({ isOpen: false, url: "", text: "" });
+      setFloatingButton((prev) => ({ ...prev, visible: false }));
     }, []);
 
     const handleLinkRemove = useCallback(() => {
       if (!editor) return;
       editor.chain().focus().extendMarkRange("link").unsetLink().run();
       setLinkModal({ isOpen: false, url: "", text: "" });
+      setFloatingButton((prev) => ({ ...prev, visible: false }));
     }, [editor]);
 
     const handleAddToChat = useCallback(() => {
       console.log("Adding to chat:", floatingButton.selectedHTML);
       if (setAttachPartOfHTML) {
-        setAttachPartOfHTML([
-          ...(Array.isArray(setAttachPartOfHTML) ? setAttachPartOfHTML : []),
+        setAttachPartOfHTML((prev: string[]) => [
+          ...prev,
           floatingButton.selectedHTML,
         ]);
       }
@@ -600,14 +621,20 @@ const TiptapEditor = forwardRef<TiptapEditorRef, TiptapEditorProps>(
       if (!editor) return;
 
       const previousUrl = editor.getAttributes("link").href || "";
+      const selectedText = editor.state.selection.empty
+        ? ""
+        : editor.state.doc.textBetween(
+            editor.state.selection.from,
+            editor.state.selection.to
+          );
 
       setLinkModal({
         isOpen: true,
         url: previousUrl,
-        text: floatingButton.text,
+        text: selectedText,
       });
-      setFloatingButton((prev) => ({ ...prev, visible: false }));
-    }, [editor, floatingButton.text]);
+      // Don't hide floating button immediately - let the modal handle the selection
+    }, [editor]);
 
     const handleReplaceText = useCallback(async () => {
       if (!editor) return;
@@ -719,6 +746,7 @@ const TiptapEditor = forwardRef<TiptapEditorRef, TiptapEditorProps>(
               onAddToChat={handleAddToChat}
               onReplaceText={handleReplaceText}
               onAddLink={handleAddLink}
+              editor={editor}
             />
           )}
 

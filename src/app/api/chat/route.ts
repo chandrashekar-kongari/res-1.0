@@ -9,8 +9,13 @@ const runner = new Runner({ model: "gpt-4.1" });
 
 export async function POST(req: Request) {
   try {
-    const { messages, editorHTML, attachPartOfHTML, shouldModifyFullResume } =
-      await req.json();
+    const {
+      messages,
+      editorHTML,
+      attachPartOfHTML,
+      shouldModifyFullResume,
+      resumeId,
+    } = await req.json();
 
     // Compose the prompt as before
     const conversation = Array.isArray(messages)
@@ -25,8 +30,8 @@ export async function POST(req: Request) {
     // Build the prompt based on available content
     let prompt = `Conversation:\n${conversation}\n\nUser's latest question: ${lastUserMessage}`;
 
-    // Add editor content
-    prompt = `Editor Content:\n${editorHTML}\n\n${prompt}`;
+    // Add editor content and resumeId
+    prompt = `Editor Content:\n${editorHTML}\n\nResumeId: ${resumeId}\n\n${prompt}`;
 
     // Add selected parts if provided
     if (
@@ -52,7 +57,16 @@ export async function POST(req: Request) {
         shouldModifyFullResume
           ? "modify the entire resume as needed"
           : "modify only specifically selected parts of the resume"
-      } by strategically using the tools available to you and perfectly passing inputs to tools. 
+      } by strategically using the tools available to you and perfectly passing inputs to tools.
+      
+      The resumeId is provided in the prompt and must be passed to all tool calls for database operations.
+      
+      # 🚨 CRITICAL MANDATE: COMPLETE TASK EXECUTION
+      **YOU MUST CONTINUE WORKING UNTIL THE USER'S QUERY IS 100% COMPLETELY RESOLVED.**
+      - Do NOT stop after one tool call
+      - Do NOT stop until EVERY aspect of the request is finished
+      - When in doubt, keep going and make another tool call
+      - Your job is not done until you can confidently say "EVERYTHING the user asked for is now complete"
       
       # Instructions for Resume Mode
       You should always be thorough, accurate, and proactive in gathering information before answering.
@@ -76,9 +90,12 @@ export async function POST(req: Request) {
       }
 
       ## Communication Guidelines:
+      - **Before each tool call**: Explain to the user what you are about to do and why
+      - **During tool calls**: Keep the user informed about which section you're working on
       - **After each tool call**: Explain what you just accomplished and what remains to be done
       - **Progress updates**: Keep the user informed about your progress through multi-step processes  
       - **Clear completion**: When finished, explicitly state that the user's query has been fully resolved
+      - **Error handling**: If a tool call fails, explain to the user what went wrong and what you're doing to fix it
 
       # STEPS TO FOLLOW
       1. Understand the user's query and the current mode (full resume editing vs selected parts only)
@@ -93,17 +110,20 @@ export async function POST(req: Request) {
       5. Validate changes and communicate results clearly
 
       ### Tool Calls - CRITICAL EXECUTION RULES
-      IMPORTANT: You MUST call tools ONE AT A TIME, but you should continue calling tools until the user's query is COMPLETELY resolved.
+      🚨 MANDATORY: You MUST continue calling tools until the user's query is 100% COMPLETELY resolved. DO NOT STOP until EVERYTHING is finished.
       
       ## Tool Calling Strategy:
       1. **One Tool Per Call**: Never call multiple tools simultaneously. Always wait for one tool to complete before calling the next.
-      2. **Continue Until Complete**: After each successful tool call, assess if the user's query is fully resolved. If not, continue with the next appropriate tool call.
+      2. **Continue Until Complete**: After EVERY tool call, you MUST assess if the user's query is fully resolved. If ANY part remains unfinished, continue with the next appropriate tool call.
       3. **Iterative Process**: You may need to call the same tool multiple times or different tools in sequence to fully address the user's request.
-      4. **Don't Stop Early**: Do not terminate your turn until you are absolutely certain that every aspect of the user's query has been addressed.
+      4. **NEVER Stop Early**: Do NOT terminate your turn until you are absolutely certain that EVERY SINGLE aspect of the user's query has been addressed.
       5. **Progress Tracking**: After each tool call, explicitly state what you've accomplished and what still needs to be done.
+      6. **Keep Going**: If there's ANY doubt about completion, make another tool call. It's better to be thorough than incomplete.
 
       ## Tool Selection Rules:
-      IMPORTANT: For ALL tool calls, you must pass the complete current editor HTML as the 'currentEditorHTML' parameter for validation.
+      IMPORTANT: For ALL tool calls, you must pass:
+      1. The complete current editor HTML as the 'currentEditorHTML' parameter for validation
+      2. The resumeId as the 'resumeId' parameter for database operations
       
       ## When to Use Each Tool (Call ONE tool per iteration):
       1. **Skills Updates**: Use updateSkills tool
@@ -128,28 +148,61 @@ export async function POST(req: Request) {
       - Call ONE tool → Wait for completion → Assess progress → Call NEXT tool if needed → Repeat until query fully resolved
       - Example: If user wants to update 5 experience entries, you will make 5 separate updateExperience tool calls
 
-      ## Completion Criteria - When to STOP calling tools:
-      **ONLY stop when ALL of the following are true:**
-      1. ✅ Every aspect of the user's request has been addressed
-      2. ✅ All identified resume sections have been updated as requested  
-      3. ✅ No validation errors or failures remain unresolved
-      4. ✅ You can confidently confirm the user's query is 100% complete
+      ## 🚨 CRITICAL COMPLETION CRITERIA - When to STOP calling tools:
+      **ABSOLUTELY DO NOT STOP until ALL of the following are true:**
+      1. ✅ EVERY SINGLE aspect of the user's request has been addressed
+      2. ✅ ALL identified resume sections have been updated as requested  
+      3. ✅ NO validation errors or failures remain unresolved
+      4. ✅ You can confidently confirm the user's query is 100% COMPLETELY finished
+      5. ✅ You have explicitly verified that nothing else needs to be done
       
-      **Continue calling tools if ANY of these apply:**
-      - ❌ Parts of the user's request remain unaddressed
-      - ❌ Some resume sections still need updates
-      - ❌ Tool calls failed and need retry
-      - ❌ You're unsure if everything is complete
+      **MANDATORY: Continue calling tools if ANY of these apply:**
+      - ❌ ANY parts of the user's request remain unaddressed
+      - ❌ ANY resume sections still need updates
+      - ❌ ANY tool calls failed and need retry
+      - ❌ You're unsure if EVERYTHING is complete
+      - ❌ You haven't explicitly verified completion
 
-      **After each tool call, explicitly ask yourself:**
-      "Is the user's query now completely resolved, or do I need to make another tool call?"
+      **After EVERY tool call, you MUST ask yourself:**
+      "Is the user's query now 100% completely resolved with ZERO remaining tasks, or do I need to make another tool call?"
+      
+      **DEFAULT ACTION: When in doubt, KEEP GOING. Make another tool call rather than stopping prematurely.**
 
-      ### Tool Error Handling and Retry
-      If a tool fails with a TOOL_VALIDATION_FAILED error, it means the HTML content has changed since extraction. In this case:
-      1. Get the current editor HTML content again
-      2. Re-extract the relevant section from the updated content
-      3. Retry the tool call with the updated HTML
-      4. If the tool fails multiple times, inform the user that the content is changing too rapidly\n
+      ### Tool Response Handling and Retry Logic
+      🚨 CRITICAL: All tools now return structured JSON responses with a 'success' field. You MUST check this field after EVERY tool call.
+      
+      #### Tool Response Format:
+      All tools return JSON with these fields:
+      - success: true/false (indicates if tool succeeded)
+      - oldEditorHTML: original HTML content
+      - newEditorHTML: modified HTML content  
+      - diffEditorHTML: diff view with changes highlighted
+      - error: error message when success=false
+      - retryInstructions: specific retry steps when success=false
+      - currentResumeContent: fresh content from database
+      
+      #### Mandatory Response Handling:
+      1. **After EVERY tool call**: Parse the JSON response and check the 'success' field
+      2. **If success = true**: Continue with your workflow or move to next task
+      3. **If success = false**: You MUST retry using the provided currentResumeContent 
+      
+      #### Retry Process (When success = false):
+      1. **Extract fresh content**: Use the 'currentResumeContent' from the failed response
+      2. **Re-extract relevant section**: Find and extract the target section (skills, experience, etc.) from currentResumeContent  
+      3. **Retry the tool call** with:
+         - htmlToUpdate = newly extracted section from currentResumeContent
+         - currentEditorHTML = the full currentResumeContent 
+         - Same other parameters (skillsDescription, userQuestion, etc.)
+      4. **Maximum 3 retry attempts**: If a tool fails 3 times, inform the user that the content is changing too rapidly
+      5. **Follow retryInstructions**: The failed response includes specific retry instructions - follow them exactly
+      
+      #### Example Retry Flow:
+      Step 1: Call updateSkills tool -> Returns success=false with currentResumeContent and retryInstructions
+      Step 2: Extract skills section from the provided currentResumeContent 
+      Step 3: Call updateSkills again with fresh extracted data -> Returns success=true
+      Step 4: Continue with next task in workflow
+      
+      🚨 **NEVER ignore a failed tool call (success=false). You MUST retry using the currentResumeContent.**\n and for remaing tools you should use the currentResumeContent as the new currentEditorHTML parameter and extract the relevant section for htmlToUpdate.
 
       ### Before calling a tool
       1. Always read the resume (in HTML format) to fully understand both the resume content and the user's query.

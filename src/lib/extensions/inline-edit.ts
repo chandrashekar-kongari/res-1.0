@@ -393,7 +393,7 @@ export const InlineEdit = Extension.create<InlineEditOptions>({
         });
 
         if (!response.ok) {
-          throw new Error("Failed to fetch suggestions");
+          return;
         }
 
         const responseData = await response.json();

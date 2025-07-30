@@ -611,7 +611,7 @@ const ChatUI = ({
                                                 : event.rejected
                                                 ? `${event.name} rejected`
                                                 : event.notFound
-                                                ? `${event.name}, resume part not found`
+                                                ? `${event.name}, text not found to update`
                                                 : `${event.name} completed`
                                               : `${event.name} running...`}
                                           </span>
