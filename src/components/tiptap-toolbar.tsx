@@ -12,10 +12,9 @@ import {
   TextAlignBottomIcon,
   TextAlignTopIcon,
   LineHeightIcon,
-  ColorWheelIcon,
   BorderBottomIcon,
 } from "@radix-ui/react-icons";
-import { DownloadIcon } from "lucide-react";
+import { DownloadIcon, PaletteIcon, BrushIcon } from "lucide-react";
 import { Editor } from "@tiptap/react";
 import { Toggle } from "./ui/toggle";
 import { Button } from "./ui/button";
@@ -28,6 +27,30 @@ import {
   DropdownMenuTrigger,
 } from "./ui/dropdown-menu";
 import { cn } from "@/lib/utils";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "./ui/tooltip";
+
+interface TooltipWrapperProps {
+  children: React.ReactNode;
+  content: string;
+}
+
+function TooltipWrapper({ children, content }: TooltipWrapperProps) {
+  return (
+    <TooltipProvider>
+      <Tooltip delayDuration={100}>
+        <TooltipTrigger asChild>{children}</TooltipTrigger>
+        <TooltipContent sideOffset={5} className="text-xs">
+          {content}
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
+  );
+}
 
 interface TiptapToolbarProps {
   editor: Editor | null;
@@ -49,39 +72,50 @@ export function TiptapToolbar({
   return (
     <div className="sticky top-0 z-10  justify-center flex flex-row">
       <div className="p-[2px] flex flex-wrap gap-[2px] items-center">
-        <Toggle
-          size="sm"
-          pressed={editor.isActive("bold")}
-          onPressedChange={() => editor.chain().focus().toggleBold().run()}
-        >
-          <FontBoldIcon className="h-4 w-4" />
-        </Toggle>
-        <Toggle
-          size="sm"
-          pressed={editor.isActive("italic")}
-          onPressedChange={() => editor.chain().focus().toggleItalic().run()}
-        >
-          <FontItalicIcon className="h-4 w-4" />
-        </Toggle>
-        <Toggle
-          size="sm"
-          pressed={editor.isActive("underline")}
-          onPressedChange={() => editor.chain().focus().toggleUnderline().run()}
-        >
-          <UnderlineIcon className="h-4 w-4" />
-        </Toggle>
+        <TooltipWrapper content="Bold">
+          <Toggle
+            size="sm"
+            pressed={editor.isActive("bold")}
+            onPressedChange={() => editor.chain().focus().toggleBold().run()}
+          >
+            <FontBoldIcon className="h-4 w-4" />
+          </Toggle>
+        </TooltipWrapper>
+        <TooltipWrapper content="Italic">
+          <Toggle
+            size="sm"
+            pressed={editor.isActive("italic")}
+            onPressedChange={() => editor.chain().focus().toggleItalic().run()}
+          >
+            <FontItalicIcon className="h-4 w-4" />
+          </Toggle>
+        </TooltipWrapper>
+        <TooltipWrapper content="Underline">
+          <Toggle
+            size="sm"
+            pressed={editor.isActive("underline")}
+            onPressedChange={() =>
+              editor.chain().focus().toggleUnderline().run()
+            }
+          >
+            <UnderlineIcon className="h-4 w-4" />
+          </Toggle>
+        </TooltipWrapper>
 
         {/* Color Dropdown */}
+
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="sm">
-              <ColorWheelIcon
-                className="h-4 w-4"
-                style={{
-                  color: editor.getAttributes("textStyle").color || "#000",
-                }}
-              />
-            </Button>
+            <TooltipWrapper content="Text Color">
+              <Button variant="ghost" size="sm">
+                <PaletteIcon
+                  className="h-4 w-4"
+                  style={{
+                    color: editor.getAttributes("textStyle").color || "#000",
+                  }}
+                />
+              </Button>
+            </TooltipWrapper>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="start">
             <DropdownMenuLabel className="text-xs">
@@ -100,15 +134,9 @@ export function TiptapToolbar({
             ].map((color) => (
               <DropdownMenuItem
                 key={color}
-                onClick={() =>
-                  editor
-                    .chain()
-                    .focus()
-                    .updateAttributes("paragraph", { color })
-                    .run()
-                }
+                onClick={() => editor.chain().focus().setColor(color).run()}
                 className={cn(
-                  editor.getAttributes("paragraph").color === color
+                  editor.getAttributes("textStyle").color === color
                     ? "bg-accent"
                     : ""
                 )}
@@ -121,28 +149,78 @@ export function TiptapToolbar({
               </DropdownMenuItem>
             ))}
             <DropdownMenuItem
-              onClick={() =>
-                editor
-                  .chain()
-                  .focus()
-                  .updateAttributes("paragraph", { color: null })
-                  .run()
-              }
+              onClick={() => editor.chain().focus().unsetColor().run()}
             >
               Remove Color
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
 
-        <Toggle
-          size="sm"
-          pressed={editor.getAttributes("paragraph").borderBottom}
-          onPressedChange={() =>
-            editor.chain().focus().toggleBorderBottom().run()
-          }
-        >
-          <BorderBottomIcon className="h-4 w-4" />
-        </Toggle>
+        {/* Highlight Dropdown */}
+
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <TooltipWrapper content="Highlight Color">
+              <Button variant="ghost" size="sm">
+                <BrushIcon
+                  className="h-4 w-4"
+                  style={{
+                    color: editor.isActive("highlight")
+                      ? editor.getAttributes("highlight").color || "#ffd700"
+                      : "currentColor",
+                  }}
+                />
+              </Button>
+            </TooltipWrapper>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="start">
+            <DropdownMenuLabel className="text-xs">
+              Highlight Color
+            </DropdownMenuLabel>
+            {[
+              "#ffd700", // Yellow
+              "#ffc078", // Orange
+              "#8ce99a", // Green
+              "#74c0fc", // Blue
+              "#b197fc", // Purple
+              "#ffa8a8", // Red
+            ].map((color) => (
+              <DropdownMenuItem
+                key={color}
+                onClick={() =>
+                  editor.chain().focus().toggleHighlight({ color }).run()
+                }
+                className={cn(
+                  editor.isActive("highlight", { color }) ? "bg-accent" : ""
+                )}
+              >
+                <span
+                  className="inline-block w-4 h-4 rounded-full mr-2"
+                  style={{ backgroundColor: color }}
+                />
+                {color}
+              </DropdownMenuItem>
+            ))}
+            <DropdownMenuItem
+              onClick={() => editor.chain().focus().unsetHighlight().run()}
+              disabled={!editor.isActive("highlight")}
+            >
+              Remove Highlight
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+
+        <TooltipWrapper content="Border Bottom">
+          <Toggle
+            size="sm"
+            pressed={editor.getAttributes("paragraph").borderBottom}
+            onPressedChange={() =>
+              editor.chain().focus().toggleBorderBottom().run()
+            }
+          >
+            <BorderBottomIcon className="h-4 w-4" />
+          </Toggle>
+        </TooltipWrapper>
 
         {/* Font Size Quick Toggles */}
         {["14px", "18px", "21px"].map((size) => (
@@ -163,11 +241,14 @@ export function TiptapToolbar({
         ))}
 
         {/* Font Size Dropdown */}
+
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="sm">
-              <FontSizeIcon className="h-4 w-4" />
-            </Button>
+            <TooltipWrapper content="Font Size">
+              <Button variant="ghost" size="sm">
+                <FontSizeIcon className="h-4 w-4" />
+              </Button>
+            </TooltipWrapper>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="start">
             <DropdownMenuLabel className="text-xs">Font Size</DropdownMenuLabel>
@@ -192,85 +273,102 @@ export function TiptapToolbar({
           </DropdownMenuContent>
         </DropdownMenu>
 
-        <Toggle
-          size="sm"
-          pressed={editor.isActive("link")}
-          onPressedChange={onSetLink}
-        >
-          <Link2Icon className="h-4 w-4" />
-        </Toggle>
+        <TooltipWrapper content="Add Link">
+          <Toggle
+            size="sm"
+            pressed={editor.isActive("link")}
+            onPressedChange={onSetLink}
+          >
+            <Link2Icon className="h-4 w-4" />
+          </Toggle>
+        </TooltipWrapper>
 
         {/* Lists */}
-        <Toggle
-          size="sm"
-          pressed={editor.isActive("bulletList")}
-          onPressedChange={() =>
-            editor.chain().focus().toggleBulletList().run()
-          }
-        >
-          <ListBulletIcon className="h-4 w-4" />
-        </Toggle>
-        <Toggle
-          size="sm"
-          pressed={editor.isActive("orderedList")}
-          onPressedChange={() =>
-            editor.chain().focus().toggleOrderedList().run()
-          }
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            viewBox="0 0 24 24"
-            fill="currentColor"
-            className="h-3 w-3"
+        <TooltipWrapper content="Bullet List">
+          <Toggle
+            size="sm"
+            pressed={editor.isActive("bulletList")}
+            onPressedChange={() =>
+              editor.chain().focus().toggleBulletList().run()
+            }
           >
-            <path d="M5.75024 3.5H4.71733L3.25 3.89317V5.44582L4.25002 5.17782L4.25018 8.5H3V10H7V8.5H5.75024V3.5ZM10 4H21V6H10V4ZM10 11H21V13H10V11ZM10 18H21V20H10V18ZM2.875 15.625C2.875 14.4514 3.82639 13.5 5 13.5C6.17361 13.5 7.125 14.4514 7.125 15.625C7.125 16.1106 6.96183 16.5587 6.68747 16.9167L6.68271 16.9229L5.31587 18.5H7V20H3.00012L2.99959 18.8786L5.4717 16.035C5.5673 15.9252 5.625 15.7821 5.625 15.625C5.625 15.2798 5.34518 15 5 15C4.67378 15 4.40573 15.2501 4.37747 15.5688L4.3651 15.875H2.875V15.625Z" />
-          </svg>
-        </Toggle>
+            <ListBulletIcon className="h-4 w-4" />
+          </Toggle>
+        </TooltipWrapper>
+        <TooltipWrapper content="Numbered List">
+          <Toggle
+            size="sm"
+            pressed={editor.isActive("orderedList")}
+            onPressedChange={() =>
+              editor.chain().focus().toggleOrderedList().run()
+            }
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+              fill="currentColor"
+              className="h-3 w-3"
+            >
+              <path d="M5.75024 3.5H4.71733L3.25 3.89317V5.44582L4.25002 5.17782L4.25018 8.5H3V10H7V8.5H5.75024V3.5ZM10 4H21V6H10V4ZM10 11H21V13H10V11ZM10 18H21V20H10V18ZM2.875 15.625C2.875 14.4514 3.82639 13.5 5 13.5C6.17361 13.5 7.125 14.4514 7.125 15.625C7.125 16.1106 6.96183 16.5587 6.68747 16.9167L6.68271 16.9229L5.31587 18.5H7V20H3.00012L2.99959 18.8786L5.4717 16.035C5.5673 15.9252 5.625 15.7821 5.625 15.625C5.625 15.2798 5.34518 15 5 15C4.67378 15 4.40573 15.2501 4.37747 15.5688L4.3651 15.875H2.875V15.625Z" />
+            </svg>
+          </Toggle>
+        </TooltipWrapper>
 
         {/* Text Alignment */}
-        <Toggle
-          size="sm"
-          pressed={editor.isActive({ textAlign: "left" })}
-          onPressedChange={() =>
-            editor.chain().focus().setTextAlign("left").run()
-          }
-        >
-          <TextAlignLeftIcon className="h-4 w-4" />
-        </Toggle>
-        <Toggle
-          size="sm"
-          pressed={editor.isActive({ textAlign: "center" })}
-          onPressedChange={() =>
-            editor.chain().focus().setTextAlign("center").run()
-          }
-        >
-          <TextAlignCenterIcon className="h-4 w-4" />
-        </Toggle>
-        <Toggle
-          size="sm"
-          pressed={editor.isActive({ textAlign: "right" })}
-          onPressedChange={() =>
-            editor.chain().focus().setTextAlign("right").run()
-          }
-        >
-          <TextAlignRightIcon className="h-4 w-4" />
-        </Toggle>
-        <Toggle
-          size="sm"
-          pressed={editor.isActive({ textAlign: "justify" })}
-          onPressedChange={() =>
-            editor.chain().focus().setTextAlign("justify").run()
-          }
-        >
-          <TextAlignJustifyIcon className="h-4 w-4" />
-        </Toggle>
+        <TooltipWrapper content="Align Left">
+          <Toggle
+            size="sm"
+            pressed={editor.isActive({ textAlign: "left" })}
+            onPressedChange={() =>
+              editor.chain().focus().setTextAlign("left").run()
+            }
+          >
+            <TextAlignLeftIcon className="h-4 w-4" />
+          </Toggle>
+        </TooltipWrapper>
+        <TooltipWrapper content="Align Center">
+          <Toggle
+            size="sm"
+            pressed={editor.isActive({ textAlign: "center" })}
+            onPressedChange={() =>
+              editor.chain().focus().setTextAlign("center").run()
+            }
+          >
+            <TextAlignCenterIcon className="h-4 w-4" />
+          </Toggle>
+        </TooltipWrapper>
+        <TooltipWrapper content="Align Right">
+          <Toggle
+            size="sm"
+            pressed={editor.isActive({ textAlign: "right" })}
+            onPressedChange={() =>
+              editor.chain().focus().setTextAlign("right").run()
+            }
+          >
+            <TextAlignRightIcon className="h-4 w-4" />
+          </Toggle>
+        </TooltipWrapper>
+        <TooltipWrapper content="Justify">
+          <Toggle
+            size="sm"
+            pressed={editor.isActive({ textAlign: "justify" })}
+            onPressedChange={() =>
+              editor.chain().focus().setTextAlign("justify").run()
+            }
+          >
+            <TextAlignJustifyIcon className="h-4 w-4" />
+          </Toggle>
+        </TooltipWrapper>
 
         {/* Line Height */}
+
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="sm">
-              <LineHeightIcon className="h-4 w-4" />
-            </Button>
+            <TooltipWrapper content="Line Height">
+              <Button variant="ghost" size="sm">
+                <LineHeightIcon className="h-4 w-4" />
+              </Button>
+            </TooltipWrapper>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="start">
             <DropdownMenuLabel className="text-xs">
@@ -304,11 +402,14 @@ export function TiptapToolbar({
         </DropdownMenu>
 
         {/* Margin Top */}
+
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="sm">
-              <TextAlignTopIcon className="h-4 w-4" />
-            </Button>
+            <TooltipWrapper content="Margin Top">
+              <Button variant="ghost" size="sm">
+                <TextAlignTopIcon className="h-4 w-4" />
+              </Button>
+            </TooltipWrapper>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="start">
             <DropdownMenuLabel className="text-xs">
@@ -337,11 +438,14 @@ export function TiptapToolbar({
         </DropdownMenu>
 
         {/* Margin Bottom */}
+
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="sm">
-              <TextAlignBottomIcon className="h-4 w-4" />
-            </Button>
+            <TooltipWrapper content="Margin Bottom">
+              <Button variant="ghost" size="sm">
+                <TextAlignBottomIcon className="h-4 w-4" />
+              </Button>
+            </TooltipWrapper>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="start">
             <DropdownMenuLabel className="text-xs">
@@ -371,18 +475,20 @@ export function TiptapToolbar({
         </DropdownMenu>
 
         {/* Export PDF */}
-        <button
-          onClick={onExportPDF}
-          disabled={isLoading || editor.isEmpty}
-          className="disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          <Badge
-            variant="outline"
-            className="cursor-pointer bg-[#F3EBFD] text-[#AD46FF] border-[#AD46FF] py-[3px] flex items-center gap-1"
+        <TooltipWrapper content="Export to PDF">
+          <button
+            onClick={onExportPDF}
+            disabled={isLoading || editor.isEmpty}
+            className="disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            <DownloadIcon className="h-4 w-4 text-[#AD46FF]" /> pdf
-          </Badge>
-        </button>
+            <Badge
+              variant="outline"
+              className="cursor-pointer bg-[#F3EBFD] text-[#AD46FF] border-[#AD46FF] py-[3px] flex items-center gap-1"
+            >
+              <DownloadIcon className="h-4 w-4 text-[#AD46FF]" /> pdf
+            </Badge>
+          </button>
+        </TooltipWrapper>
       </div>
     </div>
   );
