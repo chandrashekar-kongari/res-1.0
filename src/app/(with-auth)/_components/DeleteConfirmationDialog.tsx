@@ -66,8 +66,8 @@ const DeleteConfirmationDialog = ({
         <div className="px-6 pb-6 space-y-6">
           <div className="p-4 rounded-2xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800">
             <DialogDescription className="text-sm text-red-800 dark:text-red-200 leading-relaxed">
-              Are you sure you want to delete "
-              <span className="font-medium">{resumeName}</span>"? This will
+              Are you sure you want to delete &quot;
+              <span className="font-medium">{resumeName}</span>&quot;? This will
               permanently remove the resume and all its content.
             </DialogDescription>
           </div>

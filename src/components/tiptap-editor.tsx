@@ -1,6 +1,6 @@
 "use client";
 
-import { useEditor, EditorContent } from "@tiptap/react";
+import { useEditor, EditorContent, Editor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import { CustomColor } from "@/lib/extensions/custom-color";
 import FontFamily from "@tiptap/extension-font-family";
@@ -17,8 +17,6 @@ import { CustomListItem } from "@/lib/extensions/custom-list-item";
 import {
   BorderBottomIcon,
   FontBoldIcon,
-  FontItalicIcon,
-  FontSizeIcon,
   Link2Icon,
   ListBulletIcon,
 } from "@radix-ui/react-icons";
@@ -129,7 +127,7 @@ interface FloatingButtonProps {
   onAddToChat: () => void;
   onReplaceText: () => void;
   onAddLink: () => void;
-  editor: any; // Add editor instance to props
+  editor: Editor;
 }
 
 const FloatingButton = ({
@@ -253,7 +251,7 @@ interface TiptapEditorProps {
 
 export interface TiptapEditorRef {
   getEditorElement: () => HTMLElement | null;
-  getEditor: () => any;
+  getEditor: () => Editor | null;
   getHTML: () => string;
   setHTML: (html: string) => void;
   getText: () => string;
@@ -590,8 +588,9 @@ const TiptapEditor = forwardRef<TiptapEditorRef, TiptapEditorProps>(
           .run();
         setLinkModal({ isOpen: false, url: "", text: "" });
         setFloatingButton((prev) => ({ ...prev, visible: false }));
-      } catch (e: any) {
-        alert(e.message);
+      } catch (e) {
+        const error = e as Error;
+        alert(error.message);
       }
     }, [editor, linkModal.url]);
 
@@ -709,7 +708,8 @@ const TiptapEditor = forwardRef<TiptapEditorRef, TiptapEditorProps>(
         window.URL.revokeObjectURL(url);
 
         setIsLoading(false);
-      } catch (error: any) {
+      } catch (err) {
+        const error = err as Error;
         setError(error.message);
         setIsLoading(false);
       }

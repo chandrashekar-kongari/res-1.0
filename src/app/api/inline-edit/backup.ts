@@ -7,7 +7,7 @@ const openai = new OpenAI({
 
 export async function POST(request: NextRequest) {
   try {
-    const { text, context, position, fullResumeContent } = await request.json();
+    const { text, context, fullResumeContent } = await request.json();
 
     const jobDescription = `About Your Contributions
 
@@ -42,9 +42,6 @@ Experience with Agile/Scrum methodologies and tools, including Git, Jira, planni
       !text.trim().endsWith(".") &&
       !text.trim().endsWith("!") &&
       !text.trim().endsWith("?");
-    const isVeryShort = text.trim().length < 5;
-    const isJustBulletSymbol =
-      /^[\s]*[-•*]\s*$/.test(text) || /^[\s]*\d+\.\s*$/.test(text);
 
     const prompt = `
     

@@ -1,7 +1,6 @@
 "use client";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { ChevronRight, Circle, Loader2, X } from "lucide-react";
+import { Circle, Loader2, X } from "lucide-react";
 import { Check } from "lucide-react";
 import ChatInput from "./ChatInput";
 import ReactMarkdown from "react-markdown";
@@ -15,14 +14,13 @@ import {
   CheckCircledIcon,
   CounterClockwiseClockIcon,
   PlusIcon,
-  StopIcon,
   UpdateIcon,
 } from "@radix-ui/react-icons";
 import { trpc } from "@/lib/trpc";
 
 interface ChatInputProps {
   messages: ChatMessage[];
-  isLoading: boolean;
+
   isAgentRunning: boolean;
   handleSendMessage: (message: string, shouldSendEditorHTML?: boolean) => void;
   canvasEditor: RefObject<TiptapEditorRef | null>;
@@ -45,10 +43,6 @@ const ChatUI = ({
   handleStopAssistant,
 }: ChatInputProps) => {
   const updateMessage = trpc.message.update.useMutation();
-  // Expanded state for event accordions
-  const [expandedEvents, setExpandedEvents] = useState<{
-    [callId: string]: boolean;
-  }>({});
 
   // Animated dots for streaming indicator
   const [dots, setDots] = useState(".");

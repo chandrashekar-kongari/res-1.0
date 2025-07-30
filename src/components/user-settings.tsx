@@ -5,11 +5,10 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuLabel,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
+
 import { Mail, LogOut, User2, MessageCircle } from "lucide-react";
 import * as React from "react";
 import { SidebarMenuButton } from "./ui/sidebar";

@@ -1,7 +1,13 @@
-import { Agent, Runner, tool, FunctionTool, RunContext } from "@openai/agents";
+import { Agent, Runner, FunctionTool, RunContext } from "@openai/agents";
 import { z } from "zod";
 
-export const updateExperienceTool: FunctionTool<any> = {
+interface ExperienceToolInput {
+  htmlToUpdate: string;
+  jobDescription: string;
+  userQuestion: string;
+}
+
+export const updateExperienceTool: FunctionTool<ExperienceToolInput> = {
   type: "function",
   name: "updateExperience",
   description: "Updates the experience section of the resume",
@@ -69,7 +75,7 @@ export const updateExperienceTool: FunctionTool<any> = {
     });
     const subRunner = new Runner({ model: "gpt-4.1" });
     const prompt = `Job Description: ${parsedInput.jobDescription}\nUser Question: ${parsedInput.userQuestion}\nHTML to Update: ${parsedInput.htmlToUpdate}`;
-    const result: any = await subRunner.run(subAgent, prompt);
+    const result = await subRunner.run(subAgent, prompt);
     let outputText = "";
     if (result && typeof result === "object" && "output" in result) {
       outputText = result.output;

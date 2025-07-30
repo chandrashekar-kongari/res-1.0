@@ -2,7 +2,7 @@ import { stackServerApp } from "@/stack";
 import { redirect } from "next/navigation";
 import { Hero } from "./components/Hero";
 import { Navbar } from "./components/Navbar";
-import { Feature } from "./components/Feature";
+
 import { Features } from "./components/Features";
 import { Pricing } from "./components/Pricing";
 import { Features1 } from "./components/Features1";

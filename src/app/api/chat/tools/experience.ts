@@ -1,8 +1,15 @@
-import { Agent, Runner, tool, FunctionTool, RunContext } from "@openai/agents";
+import { Agent, Runner, FunctionTool, RunContext } from "@openai/agents";
 import { z } from "zod";
 import { prisma } from "@/lib/db";
 
-export const updateExperienceTool: FunctionTool<any> = {
+interface ExperienceToolInput {
+  htmlToUpdate: string;
+  jobDescription: string;
+  userQuestion: string;
+  currentEditorHTML: string;
+  resumeId: string;
+}
+export const updateExperienceTool: FunctionTool<ExperienceToolInput> = {
   type: "function",
   name: "updateExperience",
   description: "Updates the experience section of the resume",
@@ -85,22 +92,10 @@ export const updateExperienceTool: FunctionTool<any> = {
     const prompt = `Job Description: ${parsedInput.jobDescription}\nUser Question: ${parsedInput.userQuestion}\nHTML to Update: ${parsedInput.htmlToUpdate}`;
 
     try {
-      const result: any = await subRunner.run(subAgent, prompt);
+      const result = await subRunner.run(subAgent, prompt);
       let outputText = "";
 
-      if (result && typeof result === "object" && "output" in result) {
-        outputText = result.output;
-      } else if (typeof result === "string") {
-        outputText = result;
-      } else if (
-        Array.isArray(result) &&
-        result.length > 0 &&
-        typeof result[0] === "string"
-      ) {
-        outputText = result[0];
-      } else {
-        outputText = JSON.stringify(result);
-      }
+      outputText = JSON.stringify(result);
 
       // Parse the result to validate oldEditorHTML
       // Get current resume content from database
@@ -115,7 +110,8 @@ export const updateExperienceTool: FunctionTool<any> = {
 
       // Parse the result to validate oldEditorHTML
       try {
-        const parsedResult = outputText as any;
+        const parsedResult =
+          typeof outputText === "string" ? JSON.parse(outputText) : outputText;
 
         // Validate that the oldEditorHTML from the tool matches what's in the current editor
         if (
@@ -152,20 +148,22 @@ Current editor content: ${parsedInput.currentEditorHTML}`,
         };
 
         return JSON.stringify(successResult);
-      } catch (parseError: any) {
+      } catch (parseError) {
+        const error = parseError as Error;
         // Return failure response with current resume content
         return JSON.stringify({
           success: false,
           oldEditorHTML: parsedInput.htmlToUpdate,
           newEditorHTML: parsedInput.htmlToUpdate,
           diffEditorHTML: parsedInput.htmlToUpdate,
-          error: `Failed to parse tool output: ${parseError.message}. RETRY REQUIRED: Use the currentResumeContent below and retry the tool call.`,
+          error: `Failed to parse tool output: ${error.message}. RETRY REQUIRED: Use the currentResumeContent below and retry the tool call.`,
           retryInstructions:
             "Extract the experience section from currentResumeContent and retry the updateExperience tool with: 1) htmlToUpdate = experience section from currentResumeContent, 2) currentEditorHTML = currentResumeContent, 3) same jobDescription and userQuestion",
           currentResumeContent: resume?.content || "",
         });
       }
-    } catch (error: any) {
+    } catch (err) {
+      const error = err as Error;
       // Get current resume content even in error case
       let currentResumeContent = "";
       try {

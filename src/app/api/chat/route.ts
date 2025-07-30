@@ -1,5 +1,39 @@
 import { NextResponse } from "next/server";
-import { Agent, Runner } from "@openai/agents";
+import { Agent, Runner, Tool } from "@openai/agents";
+
+interface BaseToolInput {
+  htmlToUpdate: string;
+  userQuestion: string;
+  currentEditorHTML: string;
+  resumeId: string;
+}
+
+interface SkillsToolInput extends BaseToolInput {
+  skillsDescription: string;
+}
+
+interface ExperienceToolInput extends BaseToolInput {
+  jobDescription: string;
+}
+
+interface EducationToolInput extends BaseToolInput {
+  educationDescription: string;
+}
+
+interface ProjectsToolInput extends BaseToolInput {
+  projectDescription: string;
+}
+
+interface NameAndContactToolInput extends BaseToolInput {
+  jobDescription: string;
+}
+
+type AnyToolInput =
+  | SkillsToolInput
+  | ExperienceToolInput
+  | EducationToolInput
+  | ProjectsToolInput
+  | NameAndContactToolInput;
 import { updateSkillsTool } from "./tools/skills";
 import { updateProjectsTool } from "./tools/projects";
 import { nameAndContactInfoFormatTool } from "./tools/nameAndContact";
@@ -232,11 +266,11 @@ export async function POST(req: Request) {
       `,
 
       tools: [
-        updateSkillsTool,
-        updateExperienceTool,
-        updateEducationTool,
-        updateProjectsTool,
-        nameAndContactInfoFormatTool,
+        updateSkillsTool as Tool<AnyToolInput>,
+        updateExperienceTool as Tool<AnyToolInput>,
+        updateEducationTool as Tool<AnyToolInput>,
+        updateProjectsTool as Tool<AnyToolInput>,
+        nameAndContactInfoFormatTool as Tool<AnyToolInput>,
       ],
     });
 

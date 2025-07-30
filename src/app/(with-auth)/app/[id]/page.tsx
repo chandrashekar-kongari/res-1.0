@@ -670,7 +670,6 @@ export default function Home({ params }: { params: Promise<{ id: string }> }) {
             ) : (
               <ChatUI
                 messages={messages}
-                isLoading={isLoading}
                 isAgentRunning={isAgentRunning}
                 handleSendMessage={handleSendMessage}
                 canvasEditor={editorRef}

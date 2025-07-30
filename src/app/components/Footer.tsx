@@ -17,14 +17,6 @@ const Footer = () => {
     },
   ];
 
-  const socialLinks = [
-    {
-      icon: <LinkedInLogoIcon className="size-5" />,
-      href: "#",
-      label: "LinkedIn",
-    },
-  ];
-
   const legalLinks = [
     { name: "Terms of Service", href: "#" },
     { name: "Privacy Policy", href: "#" },
