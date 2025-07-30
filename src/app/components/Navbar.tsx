@@ -27,6 +27,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
+import Image from "next/image";
 
 const Navbar = () => {
   const features = [
@@ -67,10 +68,13 @@ const Navbar = () => {
       <div className="py-2 sm:py-3 px-3 sm:px-6 border border-white/20 rounded-2xl mt-2 sm:mt-4 bg-white/20 backdrop-blur shadow-lg shadow-black/5">
         <nav className="flex items-center justify-between">
           <a href="#" className="flex items-center gap-2 min-w-0 flex-shrink-0">
-            <div className="w-6 h-6 sm:h-8 sm:w-8 rounded-lg  bg-[#AD46FF]  flex items-center justify-center flex-shrink-0 shadow-lg shadow-[#AD46FF]/25">
-              <span className="text-white font-bold text-sm sm:text-base">
-                M
-              </span>
+            <div className="w-8 h-12 rounded-lg  flex items-center justify-center flex-shrink-0  ">
+              <Image
+                src="/memic-logo-4.svg"
+                alt="Memic"
+                width={48}
+                height={48}
+              />
             </div>
             <span className="text-sm sm:text-lg font-semibold tracking-tight truncate text-gray-900">
               Memic
