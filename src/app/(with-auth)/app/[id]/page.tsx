@@ -623,7 +623,7 @@ export default function Home({ params }: { params: Promise<{ id: string }> }) {
   );
 
   if (isResumeLoading) {
-    return <div>Loading...</div>;
+    return <></>;
   }
 
   return (

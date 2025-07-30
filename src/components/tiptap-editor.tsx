@@ -147,13 +147,14 @@ const FloatingButton = ({
       top: `${y}px`,
       transform: "translateY(-100%)",
       zIndex: 50,
-      padding: "2px",
+      padding: "4px",
       display: "flex",
       gap: "2px",
       backgroundColor: "white",
-      border: "1px solid #fbbf24",
+      border: "1px solid #e5e7eb",
+
       borderRadius: "8px",
-      boxShadow: "0 1px 2px rgba(0, 0, 0, 0.1)",
+      boxShadow: "0 2px 4px #0000001a",
     }}
   >
     <Button
