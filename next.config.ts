@@ -1,13 +1,7 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  experimental: {
-    serverComponentsExternalPackages: [
-      "@opentelemetry/api",
-      "@ai-sdk/anthropic",
-      "ai",
-    ],
-  },
+  serverExternalPackages: ["@opentelemetry/api", "@ai-sdk/anthropic", "ai"],
   webpack: (config, { isServer }) => {
     if (isServer) {
       config.externals.push({

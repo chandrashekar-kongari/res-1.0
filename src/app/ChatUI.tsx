@@ -9,7 +9,7 @@ import type { ChatMessage } from "./(with-auth)/app/[id]/page";
 import React, { RefObject, useEffect, useState, useRef } from "react";
 import ScrollToBottom from "react-scroll-to-bottom";
 import DiffEditor from "@/components/diff-editor";
-import { TiptapEditorRef } from "@/components/tiptap-editor-replica";
+import { TiptapEditorRef } from "@/components/tiptap-editor";
 import {
   CheckCircledIcon,
   CounterClockwiseClockIcon,
@@ -33,7 +33,7 @@ interface ChatInputProps {
 }
 const ChatUI = ({
   messages,
-  isLoading,
+
   isAgentRunning,
   handleSendMessage,
   canvasEditor,
@@ -47,12 +47,12 @@ const ChatUI = ({
   // Animated dots for streaming indicator
   const [dots, setDots] = useState(".");
   const [showingDiff, setShowingDiff] = useState<boolean>(false);
-
+  const [, setExpandedEvents] = useState<Record<string, boolean>>({});
   const [creatingNewThread, setCreatingNewThread] = useState<boolean>(false);
   const utils = trpc.useUtils();
 
   const createNewThread = trpc.thread.create.useMutation({
-    onSuccess: (data) => {
+    onSuccess: () => {
       void utils.thread.getLatest.invalidate(undefined, {
         refetchType: "all",
       });
@@ -112,7 +112,7 @@ const ChatUI = ({
       }
       // Assistant messages will auto-scroll to bottom via ScrollToBottom component
     }
-  }, [messages.length]);
+  }, [messages]);
 
   // Animate dots when streaming
   useEffect(() => {
@@ -352,7 +352,6 @@ const ChatUI = ({
   };
 
   const handleRejectAllChanges = () => {
-    let anyEventProcessed = false;
     // Iterate through messages in reverse order
     for (let i = messages.length - 1; i >= 0; i--) {
       const message = messages[i];
@@ -369,13 +368,12 @@ const ChatUI = ({
             !event.accepted
           ) {
             handleRejectEvent(
-              event.output.oldEditorHTML,
-              event.output.diffEditorHTML,
-              event.output.newEditorHTML,
+              event.output.oldEditorHTML!,
+              event.output.diffEditorHTML!,
+              event.output.newEditorHTML!,
               event.output.diffEditorHTMLId,
               event.callId
             );
-            anyEventProcessed = true;
           }
         }
       }
@@ -385,7 +383,6 @@ const ChatUI = ({
   };
 
   const handleAcceptAllChanges = () => {
-    let anyEventProcessed = false;
     // Iterate through messages in reverse order
     for (let i = messages.length - 1; i >= 0; i--) {
       const message = messages[i];
@@ -402,14 +399,13 @@ const ChatUI = ({
             !event.rejected
           ) {
             handleAcceptEvent(
-              event.output.oldEditorHTML,
-              event.output.diffEditorHTML,
-              event.output.newEditorHTML,
-              event.output.diffFromAssistant,
+              event.output.oldEditorHTML!,
+              event.output.diffEditorHTML!,
+              event.output.newEditorHTML!,
+              event.output.diffFromAssistant!,
               event.output.diffEditorHTMLId,
               event.callId
             );
-            anyEventProcessed = true;
           }
         }
       }
@@ -626,11 +622,11 @@ const ChatUI = ({
                                                   onClick={() =>
                                                     handleRejectEvent(
                                                       event.output
-                                                        ?.oldEditorHTML,
+                                                        ?.oldEditorHTML || "",
                                                       event.output
-                                                        ?.diffEditorHTML,
+                                                        ?.diffEditorHTML || "",
                                                       event.output
-                                                        ?.newEditorHTML,
+                                                        ?.newEditorHTML || "",
                                                       event.output
                                                         ?.diffEditorHTMLId,
                                                       event.callId
@@ -646,13 +642,14 @@ const ChatUI = ({
                                                   onClick={() =>
                                                     handleAcceptEvent(
                                                       event.output
-                                                        ?.oldEditorHTML,
+                                                        ?.oldEditorHTML || "",
                                                       event.output
-                                                        ?.diffEditorHTML,
+                                                        ?.diffEditorHTML || "",
                                                       event.output
-                                                        ?.newEditorHTML,
+                                                        ?.newEditorHTML || "",
                                                       event.output
-                                                        ?.diffFromAssistant,
+                                                        ?.diffFromAssistant ||
+                                                        "",
                                                       event.output
                                                         ?.diffEditorHTMLId,
                                                       event.callId

@@ -179,7 +179,9 @@ Current editor content: ${parsedInput.currentEditorHTML}`,
           },
         });
         currentResumeContent = resume?.content || "";
-      } catch (dbError) {}
+      } catch {
+        // Ignore database errors when fetching current content
+      }
 
       // Return error response instead of throwing
       return JSON.stringify({

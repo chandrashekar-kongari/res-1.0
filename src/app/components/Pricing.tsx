@@ -1,6 +1,6 @@
 "use client";
 
-import { CircleCheck, Sparkles, Zap, Crown, Star } from "lucide-react";
+import { CircleCheck, Sparkles, Crown, Star } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -19,7 +19,8 @@ const Pricing = () => {
               </span>
             </h2>
             <p className="text-sm sm:text-base lg:text-lg xl:text-xl text-gray-600 max-w-2xl mx-auto leading-relaxed">
-              Start free and upgrade when you're ready for premium AI features
+              Start free and upgrade when you&apos;re ready for premium AI
+              features
             </p>
           </div>
 
@@ -185,8 +186,8 @@ const Pricing = () => {
 
             <div className="relative">
               <p className="text-xs sm:text-sm text-gray-500 max-w-md mx-auto leading-relaxed">
-                Join thousands of professionals who've landed their dream jobs
-                with our AI-powered resume builder.
+                Join thousands of professionals who&apos;ve landed their dream
+                jobs with our AI-powered resume builder.
               </p>
 
               {/* Subtle background accent */}

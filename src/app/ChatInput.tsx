@@ -90,7 +90,7 @@ const ChatInput = ({
         return false;
       },
     },
-    onUpdate: ({ editor }) => {
+    onUpdate: ({}) => {
       // Ensure the cursor is always visible by scrolling to the bottom
       if (editorContainerRef.current) {
         const container = editorContainerRef.current;

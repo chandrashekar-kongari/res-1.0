@@ -16,6 +16,15 @@ import {
 } from "@radix-ui/react-icons";
 import { DownloadIcon, PaletteIcon, BrushIcon } from "lucide-react";
 import { Editor } from "@tiptap/react";
+
+interface CustomCommands {
+  setMarginTop: (margin: string) => void;
+  setMarginBottom: (margin: string) => void;
+}
+
+type EditorWithCustomCommands = Editor & {
+  commands: Editor["commands"] & CustomCommands;
+};
 import { Toggle } from "./ui/toggle";
 import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
@@ -53,7 +62,7 @@ function TooltipWrapper({ children, content }: TooltipWrapperProps) {
 }
 
 interface TiptapToolbarProps {
-  editor: Editor | null;
+  editor: EditorWithCustomCommands | null;
   isLoading?: boolean;
   onExportPDF?: () => void;
   onSetLink?: () => void;
@@ -421,7 +430,7 @@ export function TiptapToolbar({
                   key={mt}
                   onClick={() => {
                     editor.commands.focus();
-                    (editor.commands as any).setMarginTop(mt + "em");
+                    editor.commands.setMarginTop(mt + "em");
                   }}
                   className={cn(
                     editor.getAttributes("paragraph").marginTop === mt + "em" ||
@@ -457,7 +466,7 @@ export function TiptapToolbar({
                   key={mb}
                   onClick={() => {
                     editor.commands.focus();
-                    (editor.commands as any).setMarginBottom(mb + "em");
+                    editor.commands.setMarginBottom(mb + "em");
                   }}
                   className={cn(
                     editor.getAttributes("paragraph").marginBottom ===

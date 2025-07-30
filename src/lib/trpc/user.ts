@@ -1,5 +1,4 @@
-import { z } from "zod";
-import { router, protectedProcedure, Context } from "../trpcServer";
+import { router, protectedProcedure } from "../trpcServer";
 import { prisma } from "../db";
 import { TRPCError } from "@trpc/server";
 

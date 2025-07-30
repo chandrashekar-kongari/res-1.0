@@ -9,6 +9,44 @@ import {
 } from "@react-pdf/renderer";
 import { pdf } from "@react-pdf/renderer";
 import React from "react";
+import { Style as PDFStyle } from "@react-pdf/types";
+
+interface Mark {
+  type: string;
+  attrs?: {
+    color?: string;
+    fontFamily?: string;
+    href?: string;
+  };
+}
+
+interface TextNode {
+  type: "text";
+  text: string;
+  marks?: Mark[];
+}
+
+interface ContentNode {
+  type: string;
+  attrs?: {
+    level?: number;
+    textAlign?: string;
+    src?: string;
+    alt?: string;
+  };
+  content?: (TextNode | ContentNode)[];
+}
+
+type TextDecoration = "line-through" | "underline" | "none";
+
+interface Style extends PDFStyle {
+  fontWeight?: string;
+  fontStyle?: "normal" | "italic" | undefined;
+  textDecoration?: TextDecoration;
+  color?: string;
+  fontFamily?: string;
+  backgroundColor?: string;
+}
 
 const styles = StyleSheet.create({
   page: {
@@ -190,21 +228,25 @@ const getFontFamily = (fontFamily: string) => {
 };
 
 // Helper function to render text content with marks
+function isTextNode(node: ContentNode | TextNode): node is TextNode {
+  return node.type === "text" && "text" in node;
+}
+
 const renderTextWithMarks = (
-  textNode: any,
+  textNode: TextNode,
   key?: string
 ): React.ReactElement => {
   if (!textNode.marks || textNode.marks.length === 0) {
     return <Text key={key}>{textNode.text}</Text>;
   }
 
-  let style: any = {};
+  const style: Style = {};
   let isHighlighted = false;
   let highlightColor = "#fef08a"; // Default yellow highlight
   let isLink = false;
   let linkHref = "";
 
-  textNode.marks.forEach((mark: any) => {
+  textNode.marks.forEach((mark: Mark) => {
     switch (mark.type) {
       case "bold":
         style.fontWeight = "bold";
@@ -213,7 +255,7 @@ const renderTextWithMarks = (
         style.fontStyle = "italic";
         break;
       case "underline":
-        style.textDecoration = "underline";
+        style.textDecoration = "underline" as TextDecoration;
         break;
       case "textStyle":
         if (mark.attrs?.color) {
@@ -261,55 +303,60 @@ const renderTextWithMarks = (
 
 // Helper function to render node content
 const renderNodeContent = (
-  node: any
+  node: ContentNode
 ): React.ReactElement | React.ReactElement[] => {
   if (!node.content) return [];
 
-  return node.content.map((childNode: any, index: number) => {
-    return renderNode(childNode, `node-${index}`);
-  });
+  return node.content.map(
+    (childNode: ContentNode | TextNode, index: number) => {
+      return renderNode(childNode, `node-${index}`);
+    }
+  );
 };
 
 // Helper function to render table
-const renderTable = (node: any, key: string): React.ReactElement => {
+const renderTable = (node: ContentNode, key: string): React.ReactElement => {
   if (!node.content) return <View key={key}></View>;
 
   return (
     <View key={key} style={styles.table}>
-      {node.content.map((row: any, rowIndex: number) => (
+      {node.content.map((row: ContentNode, rowIndex: number) => (
         <View key={`row-${rowIndex}`} style={styles.tableRow}>
-          {row.content?.map((cell: any, cellIndex: number) => {
+          {row.content?.map((cell: ContentNode, cellIndex: number) => {
             const isHeader = cell.type === "tableHeader";
             const cellStyle = isHeader ? styles.tableHeader : styles.tableCell;
 
             return (
               <View key={`cell-${cellIndex}`} style={cellStyle}>
-                {cell.content?.map((cellContent: any, contentIndex: number) => {
-                  if (cellContent.type === "paragraph") {
-                    return (
-                      <Text
-                        key={`cell-content-${contentIndex}`}
-                        style={{
-                          fontSize: 14,
-                          lineHeight: 1.5,
-                          fontFamily: "Helvetica",
-                        }}
-                      >
-                        {cellContent.content?.map(
-                          (textNode: any, textIndex: number) =>
-                            renderTextWithMarks(
-                              textNode,
-                              `cell-text-${textIndex}`
-                            )
-                        )}
-                      </Text>
+                {cell.content?.map(
+                  (
+                    cellContent: ContentNode | TextNode,
+                    contentIndex: number
+                  ) => {
+                    if (cellContent.type === "paragraph") {
+                      return (
+                        <Text
+                          key={`cell-content-${contentIndex}`}
+                          style={{
+                            fontSize: 14,
+                            lineHeight: 1.5,
+                            fontFamily: "Helvetica",
+                          }}
+                        >
+                          {cellContent.content?.map((node, index) =>
+                            isTextNode(node)
+                              ? renderTextWithMarks(node, `cell-text-${index}`)
+                              : null
+                          )}
+                        </Text>
+                      );
+                    }
+                    return renderNode(
+                      cellContent,
+                      `cell-content-${contentIndex}`
                     );
                   }
-                  return renderNode(
-                    cellContent,
-                    `cell-content-${contentIndex}`
-                  );
-                })}
+                )}
               </View>
             );
           })}
@@ -320,7 +367,10 @@ const renderTable = (node: any, key: string): React.ReactElement => {
 };
 
 // Main function to render individual nodes
-const renderNode = (node: any, key: string): React.ReactElement => {
+const renderNode = (
+  node: ContentNode | TextNode,
+  key: string
+): React.ReactElement => {
   switch (node.type) {
     case "doc":
       return <View key={key}>{renderNodeContent(node)}</View>;
@@ -332,8 +382,10 @@ const renderNode = (node: any, key: string): React.ReactElement => {
       return (
         <View key={key} style={styles.section}>
           <Text style={[styles.paragraph, alignStyle]}>
-            {node.content?.map((textNode: any, textIndex: number) =>
-              renderTextWithMarks(textNode, `text-${textIndex}`)
+            {node.content?.map((node, index) =>
+              isTextNode(node)
+                ? renderTextWithMarks(node, `text-${index}`)
+                : null
             )}
           </Text>
         </View>
@@ -348,8 +400,10 @@ const renderNode = (node: any, key: string): React.ReactElement => {
       return (
         <View key={key} style={styles.section}>
           <Text style={[headingStyle, headingAlignStyle]}>
-            {node.content?.map((textNode: any, textIndex: number) =>
-              renderTextWithMarks(textNode, `heading-text-${textIndex}`)
+            {node.content?.map((node, index) =>
+              isTextNode(node)
+                ? renderTextWithMarks(node, `heading-text-${index}`)
+                : null
             )}
           </Text>
         </View>
@@ -358,7 +412,7 @@ const renderNode = (node: any, key: string): React.ReactElement => {
     case "bulletList":
       return (
         <View key={key} style={styles.listContainer}>
-          {node.content?.map((listItem: any, listIndex: number) => (
+          {node.content?.map((listItem: ContentNode, listIndex: number) => (
             <View key={`bullet-${listIndex}`} style={styles.listItem}>
               <Text
                 style={{
@@ -369,14 +423,16 @@ const renderNode = (node: any, key: string): React.ReactElement => {
               >
                 •{" "}
                 {listItem.content?.map(
-                  (itemContent: any, itemIndex: number) => {
+                  (itemContent: ContentNode | TextNode, itemIndex: number) => {
                     if (itemContent.type === "paragraph") {
                       return itemContent.content?.map(
-                        (textNode: any, textIndex: number) =>
-                          renderTextWithMarks(
-                            textNode,
-                            `bullet-text-${textIndex}`
-                          )
+                        (node: ContentNode | TextNode, textIndex: number) =>
+                          isTextNode(node)
+                            ? renderTextWithMarks(
+                                node,
+                                `bullet-text-${textIndex}`
+                              )
+                            : renderNode(node, `bullet-content-${textIndex}`)
                       );
                     }
                     return renderNode(
@@ -394,7 +450,7 @@ const renderNode = (node: any, key: string): React.ReactElement => {
     case "orderedList":
       return (
         <View key={key} style={styles.listContainer}>
-          {node.content?.map((listItem: any, listIndex: number) => (
+          {node.content?.map((listItem: ContentNode, listIndex: number) => (
             <View key={`ordered-${listIndex}`} style={styles.orderedListItem}>
               <Text
                 style={{
@@ -405,14 +461,16 @@ const renderNode = (node: any, key: string): React.ReactElement => {
               >
                 {listIndex + 1}.{" "}
                 {listItem.content?.map(
-                  (itemContent: any, itemIndex: number) => {
+                  (itemContent: ContentNode | TextNode, itemIndex: number) => {
                     if (itemContent.type === "paragraph") {
                       return itemContent.content?.map(
-                        (textNode: any, textIndex: number) =>
-                          renderTextWithMarks(
-                            textNode,
-                            `ordered-text-${textIndex}`
-                          )
+                        (node: ContentNode | TextNode, textIndex: number) =>
+                          isTextNode(node)
+                            ? renderTextWithMarks(
+                                node,
+                                `ordered-text-${textIndex}`
+                              )
+                            : renderNode(node, `ordered-content-${textIndex}`)
                       );
                     }
                     return renderNode(
@@ -431,11 +489,15 @@ const renderNode = (node: any, key: string): React.ReactElement => {
       return <View key={key}>{renderNodeContent(node)}</View>;
 
     case "text":
-      return renderTextWithMarks(node, key);
+      return isTextNode(node) ? (
+        renderTextWithMarks(node, key)
+      ) : (
+        <View key={key}></View>
+      );
 
     case "image":
       const src = node.attrs?.src;
-      const alt = node.attrs?.alt || "";
+
       if (src) {
         return <PDFImage key={key} src={src} style={styles.image} />;
       }
@@ -458,7 +520,7 @@ const renderNode = (node: any, key: string): React.ReactElement => {
 };
 
 // Main PDF document component
-const PDFDocument = ({ content }: { content: any }) => (
+const PDFDocument = ({ content }: { content: ContentNode }) => (
   <Document>
     <Page size="A4" style={styles.page}>
       {renderNodeContent(content)}
@@ -468,7 +530,7 @@ const PDFDocument = ({ content }: { content: any }) => (
 
 // Export function to generate and download PDF
 export const exportToPDF = async (
-  editorJSON: any,
+  editorJSON: ContentNode,
   filename: string = "document.pdf"
 ) => {
   try {

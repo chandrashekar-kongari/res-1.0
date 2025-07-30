@@ -1,11 +1,10 @@
 import { z } from "zod";
-import { router, protectedProcedure, Context } from "../trpcServer";
+import { router, protectedProcedure } from "../trpcServer";
 import { prisma } from "../db";
 import { TRPCError } from "@trpc/server";
-import { randomUUID } from "crypto";
 
 export const threadRouter = router({
-  getLatest: protectedProcedure.query(async ({ ctx, input }) => {
+  getLatest: protectedProcedure.query(async ({ ctx }) => {
     if (!ctx.user?.primaryEmail) {
       throw new TRPCError({
         code: "UNAUTHORIZED",
@@ -85,7 +84,7 @@ export const threadRouter = router({
         resumeId: z.string().uuid(),
       })
     )
-    .query(async ({ ctx, input }) => {
+    .query(async ({ ctx }) => {
       if (!ctx.user?.primaryEmail) {
         throw new TRPCError({
           code: "UNAUTHORIZED",

@@ -1,4 +1,5 @@
 import { Button } from "@/components/ui/button";
+import Image from "next/image";
 
 const Feature = () => {
   return (
@@ -10,9 +11,11 @@ const Feature = () => {
           {/* Image Section */}
           <div className="relative">
             <div className="relative overflow-hidden rounded-xl lg:rounded-2xl shadow-xl">
-              <img
-                src="test.webp"
+              <Image
+                src="/test.webp"
                 alt="AI-powered resume builder interface showing intelligent content suggestions"
+                width={1200}
+                height={800}
                 className="w-full h-64 sm:h-80 lg:h-96 xl:h-[28rem] object-cover transition-transform duration-700 hover:scale-105"
               />
               <div className="absolute inset-0 bg-gradient-to-br from-black/5 to-transparent"></div>

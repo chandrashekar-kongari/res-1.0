@@ -1,4 +1,3 @@
-import { LinkedInLogoIcon } from "@radix-ui/react-icons";
 import React from "react";
 
 const Footer = () => {

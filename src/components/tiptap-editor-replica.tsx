@@ -1,6 +1,6 @@
 "use client";
 
-import { useEditor, EditorContent } from "@tiptap/react";
+import { useEditor, Editor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import { CustomColor } from "@/lib/extensions/custom-color";
 import FontFamily from "@tiptap/extension-font-family";
@@ -115,29 +115,17 @@ interface TiptapEditorProps {
 
 export interface TiptapEditorRef {
   getEditorElement: () => HTMLElement | null;
-  getEditor: () => any;
+  getEditor: () => Editor | null;
   getHTML: () => string | undefined;
   setHTML: (html: string) => void;
   getText: () => string | undefined;
 }
 
 const TiptapEditorReplica = forwardRef<TiptapEditorRef, TiptapEditorProps>(
-  (
-    {
-      content = null,
-      onChange,
-      placeholder = "",
-      className = "",
-      enableExport = false,
-      aiAppId = "",
-      aiToken = "",
-      previousState = "",
-    },
-    ref
-  ) => {
+  ({ content = null, placeholder = "" }, ref) => {
     const editorContentRef = useRef<HTMLDivElement>(null);
-    const [isOverflowing, setIsOverflowing] = useState(false);
-    const [error, setError] = useState<string | null>(null);
+    const [, setIsOverflowing] = useState(false);
+    const [, setError] = useState<string | null>(null);
 
     const editor = useEditor({
       immediatelyRender: false,

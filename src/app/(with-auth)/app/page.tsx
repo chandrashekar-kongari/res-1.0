@@ -1,4 +1,3 @@
-import { prisma } from "@/lib/db";
 import { serverTrpc } from "@/lib/trpc-server";
 import { redirect } from "next/navigation";
 

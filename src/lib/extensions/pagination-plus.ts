@@ -134,10 +134,7 @@ export const PaginationPlus = Extension.create<PaginationPlusOptions>({
       }
     };
 
-    const callback = (
-      mutationList: MutationRecord[],
-      observer: MutationObserver
-    ) => {
+    const callback = (mutationList: MutationRecord[]) => {
       if (mutationList.length > 0 && mutationList[0].target) {
         const _target = mutationList[0].target as HTMLElement;
         if (_target.classList.contains("rm-with-pagination")) {
@@ -268,7 +265,6 @@ function createDecoration(
 
       const pageBreakDefinition = ({
         firstPage = false,
-        lastPage = false,
       }: {
         firstPage: boolean;
         lastPage: boolean;

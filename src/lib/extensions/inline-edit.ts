@@ -412,9 +412,7 @@ export const InlineEdit = Extension.create<InlineEditOptions>({
 
         // Validate state is still current
         const currentState = view.state;
-        const currentPluginState = plugin.getState(
-          currentState
-        ) as InlineEditPluginState;
+        plugin.getState(currentState) as InlineEditPluginState;
 
         if (!suggestion || !suggestion.trim()) {
           console.log("❌ No suggestion returned or empty suggestion");

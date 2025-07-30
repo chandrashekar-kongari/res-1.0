@@ -53,12 +53,20 @@ export async function POST(req: Request) {
 
     // Compose the prompt as before
     const conversation = Array.isArray(messages)
-      ? messages.map((msg: any) => `${msg.role}: ${msg.content}`).join("\n")
+      ? messages
+          .map(
+            (msg: { role: string; content: string }) =>
+              `${msg.role}: ${msg.content}`
+          )
+          .join("\n")
       : "";
     // Extract the latest user question
     const lastUserMessage = Array.isArray(messages)
-      ? messages.filter((msg: any) => msg.role === "user").slice(-1)[0]
-          ?.content || ""
+      ? messages
+          .filter(
+            (msg: { role: string; content: string }) => msg.role === "user"
+          )
+          .slice(-1)[0]?.content || ""
       : "";
 
     // Build the prompt based on available content
