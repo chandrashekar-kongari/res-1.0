@@ -36,6 +36,7 @@ import RenameModal from "./RenameModal";
 import DeleteConfirmationDialog from "./DeleteConfirmationDialog";
 import { cn } from "@/lib/utils";
 import DuplicateFromPinnedResumeModal from "./DuplicateFromPinnedResumeModal";
+import Image from "next/image";
 
 function ResumeItemSkeleton() {
   return (
@@ -153,10 +154,13 @@ export function AppSidebar() {
                   <SidebarMenuItem key="app">
                     <SidebarMenuButton asChild>
                       <div className="flex items-center ">
-                        <div className="w-6 h-6 rounded-lg bg-[#AD46FF]  flex items-center justify-center">
-                          <span className="text-white font-bold text-sm">
-                            M
-                          </span>
+                        <div className="w-6 h-6 rounded-lg flex items-center justify-center">
+                          <Image
+                            src="/memic-logo-4.svg"
+                            alt="Memic"
+                            width={48}
+                            height={48}
+                          />
                         </div>
                         <p className="text-sm font-semibold">Memic</p>
                       </div>

@@ -454,9 +454,9 @@ const ChatUI = ({
         <div className="pl-2 flex flex-row items-center gap-1">
           <p className="p-2 text-xs ">Chat Window</p>
           <Button
-            variant="outline"
+            variant="ghost"
             onClick={createNewChat}
-            className="flex text-[10px] bg-gray-50 border-gray-200 hover:bg-gray-100 hover:border-gray-300 rounded-lg px-1 items-center gap-0.5  h-6 min-h-0"
+            className="flex text-[10px] bg-gray-100  hover:bg-gray-200 hover:border-gray-300 rounded-lg px-1 items-center gap-0.5  h-6 min-h-0"
           >
             <div className="p-0.5 rounded-md bg-gray-200/50">
               {creatingNewThread ? (

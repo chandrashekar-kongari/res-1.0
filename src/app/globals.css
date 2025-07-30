@@ -105,3 +105,52 @@
   border-top: 1px dashed #ccc;
   margin: 10px 0;
 }
+
+/* Inline Edit Suggestions */
+.inline-edit-suggestion-container {
+  display: inline-block;
+  position: relative;
+}
+
+.inline-edit-suggestion {
+  color: #6b7280;
+  background-color: #f3f4f6;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-style: italic;
+  opacity: 0.85;
+  user-select: none;
+  margin-left: 2px;
+  border: 1px solid #e5e7eb;
+  transition: all 0.2s ease-in-out;
+  font-size: 0.95em;
+}
+
+.inline-edit-suggestion:hover {
+  opacity: 1;
+  background-color: #e5e7eb;
+}
+
+.inline-edit-hint {
+  color: #9ca3af;
+  font-size: 0.75em;
+  font-style: normal;
+  margin-left: 4px;
+  user-select: none;
+  opacity: 0.7;
+}
+
+/* Dark mode support for inline edit */
+.dark .inline-edit-suggestion {
+  color: #9ca3af;
+  background-color: #374151;
+  border-color: #4b5563;
+}
+
+.dark .inline-edit-suggestion:hover {
+  background-color: #4b5563;
+}
+
+.dark .inline-edit-hint {
+  color: #6b7280;
+}

@@ -15,24 +15,12 @@ import { CustomBulletList } from "@/lib/extensions/custom-bullet-list";
 import { CustomOrderedList } from "@/lib/extensions/custom-ordered-list";
 import { CustomListItem } from "@/lib/extensions/custom-list-item";
 import {
+  BorderBottomIcon,
   FontBoldIcon,
   FontItalicIcon,
   FontSizeIcon,
   Link2Icon,
   ListBulletIcon,
-  TextAlignCenterIcon,
-  TextAlignJustifyIcon,
-  TextAlignLeftIcon,
-  TextAlignRightIcon,
-  UnderlineIcon,
-  TextIcon,
-  ResetIcon,
-  BorderBottomIcon,
-  TextAlignBottomIcon,
-  TextAlignTopIcon,
-  LineHeightIcon,
-  CircleIcon,
-  ColorWheelIcon,
 } from "@radix-ui/react-icons";
 
 import { PageLimit } from "@/lib/extensions/page-limit";
@@ -40,18 +28,11 @@ import { PaginationPlus } from "@/lib/extensions/pagination-plus";
 import { LineHeight } from "@/lib/extensions/line-height";
 import { Margin } from "@/lib/extensions/margin";
 import { FontSize } from "@/lib/extensions/font-size";
+import { InlineEdit } from "@/lib/extensions/inline-edit";
 
 import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
-import { Toggle } from "@/components/ui/toggle";
 import LinkModal from "./LinkModal";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+
 import {
   forwardRef,
   useImperativeHandle,
@@ -67,7 +48,6 @@ import Paragraph from "@tiptap/extension-paragraph";
 import Text from "@tiptap/extension-text";
 import { getHTMLFromFragment } from "@tiptap/core";
 import { trpc } from "@/lib/trpc";
-import { DownloadIcon, HeadingIcon } from "lucide-react";
 import { BorderBottom } from "@/lib/extensions/border-bottom";
 import { CustomHeading } from "@/lib/extensions/custom-heading";
 import { TiptapToolbar } from "./tiptap-toolbar";
@@ -169,15 +149,15 @@ const FloatingButton = ({
       display: "flex",
       gap: "2px",
       backgroundColor: "white",
-      border: "1px solid #e0e0e0",
-      borderRadius: "4px",
+      border: "1px solid #fbbf24",
+      borderRadius: "8px",
       boxShadow: "0 1px 2px rgba(0, 0, 0, 0.1)",
     }}
   >
     <Button
       size="sm"
       variant="ghost"
-      className="text-xs rounded-none p-1 h-fit"
+      className="text-xs  p-1 h-fit rounded-sm"
       onClick={(e) => {
         e.preventDefault();
         onAddToChat();
@@ -188,7 +168,7 @@ const FloatingButton = ({
     <Button
       size="sm"
       variant="ghost"
-      className="text-xs rounded-none p-1 h-fit"
+      className="text-xs p-1 h-fit rounded-sm"
       onClick={(e) => {
         e.preventDefault();
         onReplaceText();
@@ -199,18 +179,7 @@ const FloatingButton = ({
     <Button
       size="sm"
       variant="ghost"
-      className="text-xs rounded-none p-1 h-fit"
-      onClick={(e) => {
-        e.preventDefault();
-        onReplaceText();
-      }}
-    >
-      <FontItalicIcon className="h-4 w-4" />
-    </Button>
-    <Button
-      size="sm"
-      variant="ghost"
-      className="text-xs rounded-none p-1 h-fit"
+      className="text-xs p-1 h-fit rounded-sm"
       onClick={(e) => {
         e.preventDefault();
         onAddLink();
@@ -221,13 +190,33 @@ const FloatingButton = ({
     <Button
       size="sm"
       variant="ghost"
-      className="text-xs rounded-none p-1 h-fit"
+      className="text-xs p-1 h-fit rounded-sm"
       onClick={(e) => {
         e.preventDefault();
-        onReplaceText();
       }}
     >
-      <FontSizeIcon className="h-4 w-4" />
+      <BorderBottomIcon className="h-4 w-4" />
+    </Button>
+    {["14px", "18px", "21px"].map((size) => (
+      <Button
+        variant="ghost"
+        key={size}
+        size="sm"
+        className="text-xs p-1 h-fit rounded-sm"
+      >
+        {size}
+      </Button>
+    ))}
+
+    <Button
+      size="sm"
+      variant="ghost"
+      className="text-xs p-1 h-fit rounded-sm"
+      onClick={(e) => {
+        e.preventDefault();
+      }}
+    >
+      <ListBulletIcon className="h-4 w-4" />
     </Button>
   </div>
 );
@@ -472,6 +461,12 @@ const TiptapEditor = forwardRef<TiptapEditorRef, TiptapEditorProps>(
           pageBreakBackground: "#f7f7f7",
           pageHeaderHeight: 37.8,
           maxPages: 10, // Allow more pages for longer documents
+        }),
+        InlineEdit.configure({
+          minLength: 3,
+          debounce: 500,
+          apiEndpoint: "/api/inline-edit",
+          enabled: true,
         }),
       ],
       content,
