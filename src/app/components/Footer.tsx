@@ -9,23 +9,19 @@ const Footer = () => {
   const sections = [
     {
       title: "Features",
+      href: "#features",
     },
     {
       title: "Pricing",
+      href: "#pricing",
     },
     {
       title: "Contact",
+      href: "mailto:hello@memic.app",
     },
     {
       title: "LinkedIn",
-    },
-  ];
-
-  const socialLinks = [
-    {
-      icon: <LinkedInLogoIcon className="size-5" />,
-      href: "#",
-      label: "LinkedIn",
+      href: "https://www.linkedin.com/company/memic-app",
     },
   ];
 
@@ -46,6 +42,14 @@ const Footer = () => {
                 Memic
               </h2>
             </div>
+
+            <p className="text-sm text-gray-500">
+              Memic is a platform that helps you build your resume faster and
+              easier. Contact us at{" "}
+              <a href="mailto:hello@memic.app" className="text-blue-500">
+                hello@memic.app
+              </a>
+            </p>
             {/* Action Buttons */}
             <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
               <Button
@@ -75,7 +79,12 @@ const Footer = () => {
           <div className="flex  items-end flex-row gap-4">
             {sections.map((section, sectionIdx) => (
               <div key={sectionIdx} className="space-y-2">
-                <h3 className="text-sm ">{section.title}</h3>
+                <a
+                  href={section.href}
+                  className="text-sm hover:text-gray-600 transition-colors duration-200 cursor-pointer"
+                >
+                  {section.title}
+                </a>
               </div>
             ))}
           </div>
