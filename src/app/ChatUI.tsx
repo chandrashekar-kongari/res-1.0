@@ -643,7 +643,7 @@ const ChatUI = ({
                                                     )
                                                   }
                                                 >
-                                                  <X className="w-3 h-3 mr-1" />
+                                                  <X className="w-3 h-3" />
                                                   Reject
                                                 </Button>
                                                 <Button
@@ -665,7 +665,7 @@ const ChatUI = ({
                                                     )
                                                   }
                                                 >
-                                                  <Check className="w-3 h-3 mr-1" />
+                                                  <Check className="w-3 h-3" />
                                                   Accept
                                                 </Button>
                                               </div>
