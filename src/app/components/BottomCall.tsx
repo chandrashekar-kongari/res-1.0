@@ -25,7 +25,7 @@ export function BottomCall() {
             Try Memic for free
           </div>
           <div className="font-extralight text-base md:text-4xl dark:text-neutral-200 py-4">
-            And save your time.
+            To create ATS friendly resumes in seconds.
           </div>
           <Button
             variant="outline"

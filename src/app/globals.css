@@ -66,6 +66,13 @@
     --sidebar-ring: 217.2 91.2% 59.8%;
   }
 }
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
 /* 
 @layer base {
   body {
