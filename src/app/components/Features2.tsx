@@ -1,16 +1,15 @@
-const Features1 = () => {
+const Features2 = () => {
   return (
     <section className="py-16 sm:py-24 lg:py-32 bg-white">
       <div className="container px-4 sm:px-6 lg:px-8">
         <div className="z-10 mx-auto pb-8 sm:pb-12 lg:pb-16 flex max-w-4xl flex-col items-center gap-8 sm:gap-12 lg:gap-14 text-center">
           <div className="space-y-4">
             <h2 className="text-3xl md:text-4xl lg:text-5xl font-medium text-gray-900 leading-tight">
-              Just <span className="text-green-500 font-bold">chat</span> to
-              build.
+              Download <span className="text-yellow-500 font-bold">ATS</span>{" "}
+              friendly resume instantly
             </h2>
             <p className="mx-auto max-w-lg sm:max-w-xl text-sm sm:text-base lg:text-lg text-gray-600 leading-relaxed">
-              Tell us about yourself and Memic creates a professional resume
-              tailored just for you.
+              Download perfect resume in seconds.
             </p>
           </div>
         </div>
@@ -59,4 +58,4 @@ const Features1 = () => {
   );
 };
 
-export { Features1 };
+export { Features2 };

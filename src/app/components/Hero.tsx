@@ -28,11 +28,9 @@ const Hero = () => {
               </span>{" "}
               Building
             </h1>
-            <p className="mx-auto max-w-lg sm:max-w-xl text-sm sm:text-base lg:text-lg text-black/70 leading-relaxed">
-              We are not just building a resume builder, we are building a
-              platform that every job seeker{" "}
-              <span className="font-bold">trusts</span> throughout their
-              journey.
+            <p className="mx-auto max-w-lg sm:max-w-lg text-sm sm:text-base lg:text-2xl text-black/70 leading-relaxed">
+              We are not just building a resume builder, we are reimagining the
+              way you build resumes.
             </p>
           </div>
 
@@ -55,8 +53,7 @@ const Hero = () => {
               }}
               className="w-full sm:w-auto sm:min-w-[200px] h-12 sm:h-14 text-sm sm:text-base rounded-2xl font-medium border-[#AD46FF] bg-[#F3EBFD]  text-[#AD46FF]  shadow-lg hover:bg-[#F3EBFD]/80 hover:text-[#AD46FF]/80"
             >
-              <Calendar className="mr-2 h-4 w-4 sm:h-5 sm:w-5" />
-              Build With Us
+              Create Now
             </Button>
           </div>
         </div>

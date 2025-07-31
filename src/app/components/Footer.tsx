@@ -1,5 +1,9 @@
+"use client";
+
 import { LinkedInLogoIcon } from "@radix-ui/react-icons";
 import React from "react";
+import { Button } from "@/components/ui/button";
+import { LOGIN_URL, SIGNUP_URL } from "@/utils/constants";
 
 const Footer = () => {
   const sections = [
@@ -41,6 +45,29 @@ const Footer = () => {
               <h2 className="text-lg sm:text-xl font-semibold truncate text-gray-900">
                 Memic
               </h2>
+            </div>
+            {/* Action Buttons */}
+            <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
+              <Button
+                onClick={() => {
+                  window.location.href = LOGIN_URL;
+                }}
+                variant="outline"
+                size="sm"
+                className="border-gray-300 rounded-xl bg-gray-50 text-gray-700 shadow-lg hover:bg-gray-50/80 hover:text-gray-700/80 text-xs"
+              >
+                Sign in
+              </Button>
+              <Button
+                onClick={() => {
+                  window.location.href = SIGNUP_URL;
+                }}
+                variant="outline"
+                size="sm"
+                className="border-[#AD46FF] rounded-xl bg-[#F3EBFD] text-[#AD46FF] shadow-lg hover:bg-[#F3EBFD]/80 hover:text-[#AD46FF]/80 text-xs"
+              >
+                Start for free
+              </Button>
             </div>
           </div>
 

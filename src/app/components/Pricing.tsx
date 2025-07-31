@@ -4,6 +4,7 @@ import { CircleCheck, Sparkles, Zap, Crown, Star } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { SIGNUP_URL } from "@/utils/constants";
 
 const Pricing = () => {
   return (
@@ -56,10 +57,11 @@ const Pricing = () => {
                 {/* Features */}
                 <ul className="space-y-3 sm:space-y-4">
                   {[
+                    "Limited AI agent chats",
+                    "Limited Tab completion",
+                    "Standard AI response time",
                     "Unlimited resumes",
                     "Unlimited PDF downloads",
-                    "Limited AI agent chats",
-                    "Standard AI response time",
                   ].map((feature, index) => (
                     <li
                       key={index}
@@ -77,6 +79,9 @@ const Pricing = () => {
                 <Button
                   size="lg"
                   variant="outline"
+                  onClick={() => {
+                    window.location.href = SIGNUP_URL;
+                  }}
                   className="w-full h-12 sm:h-14 text-sm sm:text-base font-medium border-[#AD46FF] bg-[#F3EBFD] text-[#AD46FF] shadow-lg hover:bg-[#F3EBFD]/80 hover:text-[#AD46FF]/80 transition-all duration-300"
                 >
                   Start Free Trial
@@ -172,14 +177,6 @@ const Pricing = () => {
               <div className="group flex items-center gap-2 hover:text-gray-700 transition-colors duration-300">
                 <div className="w-2 h-2 bg-[#00C950] rounded-full group-hover:scale-110 transition-transform duration-300"></div>
                 <span>No setup fees</span>
-              </div>
-              <div className="group flex items-center gap-2 hover:text-gray-700 transition-colors duration-300">
-                <div className="w-2 h-2 bg-[#AD46FF] rounded-full group-hover:scale-110 transition-transform duration-300"></div>
-                <span>Cancel anytime</span>
-              </div>
-              <div className="group flex items-center gap-2 hover:text-gray-700 transition-colors duration-300">
-                <div className="w-2 h-2 bg-[#FE9900] rounded-full group-hover:scale-110 transition-transform duration-300"></div>
-                <span>14-day money-back guarantee</span>
               </div>
             </div>
 

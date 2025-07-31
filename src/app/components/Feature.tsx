@@ -1,4 +1,7 @@
+"use client";
+
 import { Button } from "@/components/ui/button";
+import { SIGNUP_URL } from "@/utils/constants";
 
 const Feature = () => {
   return (
@@ -37,13 +40,13 @@ const Feature = () => {
             <div className="flex w-full flex-col justify-center gap-3 sm:gap-4 sm:flex-row lg:justify-start pt-2">
               <Button
                 variant="outline"
-                asChild
                 size="lg"
+                onClick={() => {
+                  window.location.href = SIGNUP_URL;
+                }}
                 className="w-full sm:w-auto sm:min-w-[140px] h-11 sm:h-12 text-sm sm:text-base font-medium border-[#AD46FF] bg-[#F3EBFD] text-[#AD46FF] shadow-lg hover:bg-[#F3EBFD]/80 hover:text-[#AD46FF]/80"
               >
-                <a href="#" target="_blank" rel="noopener noreferrer">
-                  Start for free
-                </a>
+                Start for free
               </Button>
             </div>
           </div>

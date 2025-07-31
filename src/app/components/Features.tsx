@@ -1,6 +1,9 @@
+"use client";
+
 import { Calendar, Sparkles, Zap, Shield } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { SIGNUP_URL } from "@/utils/constants";
 
 const Features = () => {
   return (
@@ -36,11 +39,21 @@ const Features = () => {
               />
             </div>
 
-            <div className="mt-4 sm:mt-6 text-center">
+            <div className="mt-4 sm:mt-6 text-center space-y-4">
               <p className="text-xs sm:text-sm text-gray-500 max-w-2xl mx-auto">
                 Watch how our AI assistant helps you craft the perfect resume in
                 real-time
               </p>
+              <Button
+                size="lg"
+                variant="outline"
+                onClick={() => {
+                  window.location.href = SIGNUP_URL;
+                }}
+                className="w-full sm:w-auto sm:min-w-[200px] h-12 sm:h-14 text-sm sm:text-base rounded-2xl font-medium border-[#AD46FF] bg-[#F3EBFD] text-[#AD46FF] shadow-lg hover:bg-[#F3EBFD]/80 hover:text-[#AD46FF]/80"
+              >
+                Get Started Now
+              </Button>
             </div>
           </div>
         </div>

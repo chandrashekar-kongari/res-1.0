@@ -2,14 +2,7 @@
 
 import { MenuIcon } from "lucide-react";
 import { LOGIN_URL, SIGNUP_URL } from "@/utils/constants";
-import { useRouter } from "next/navigation";
 
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
 import {
   NavigationMenu,
@@ -17,7 +10,6 @@ import {
   NavigationMenuItem,
   NavigationMenuLink,
   NavigationMenuList,
-  NavigationMenuTrigger,
   navigationMenuTriggerStyle,
 } from "@/components/ui/navigation-menu";
 import {
@@ -30,42 +22,9 @@ import {
 import Image from "next/image";
 
 const Navbar = () => {
-  const features = [
-    {
-      title: "AI Writing Assistant",
-      description: "Smart content suggestions for your resume",
-      href: "#",
-    },
-    {
-      title: "Professional Templates",
-      description: "Industry-standard resume layouts",
-      href: "#",
-    },
-    {
-      title: "Real-time Collaboration",
-      description: "Share and get feedback instantly",
-      href: "#",
-    },
-    {
-      title: "ATS Optimization",
-      description: "Ensure your resume passes screening systems",
-      href: "#",
-    },
-    {
-      title: "Export Options",
-      description: "PDF, Word, and other formats",
-      href: "#",
-    },
-    {
-      title: "Career Resources",
-      description: "Tips and guides for job searching",
-      href: "#",
-    },
-  ];
-
   return (
     <section className="sticky top-2 sm:top-2 z-50 max-w-4xl w-full mx-auto px-4 sm:px-6">
-      <div className="py-2 sm:py-3 px-3 sm:px-6 border border-white/20 rounded-2xl mt-2 sm:mt-4 bg-white/20 backdrop-blur shadow-lg shadow-black/5">
+      <div className="py-2 sm:py-3 px-3 sm:px-6 border border-white/20 rounded-2xl mt-2 sm:mt-4 bg-white/20 backdrop-blur ">
         <nav className="flex items-center justify-between">
           <a href="#" className="flex items-center gap-2 min-w-0 flex-shrink-0">
             <div className="w-8 h-12 rounded-lg  flex items-center justify-center flex-shrink-0  ">
@@ -86,7 +45,7 @@ const Navbar = () => {
             <NavigationMenuList>
               <NavigationMenuItem>
                 <NavigationMenuLink
-                  href="#"
+                  href="#features"
                   className={`${navigationMenuTriggerStyle()} text-gray-700 text-xs rounded-xl hover:text-gray-900 hover:bg-gray-50 transition-colors`}
                 >
                   Features
@@ -94,7 +53,7 @@ const Navbar = () => {
               </NavigationMenuItem>
               <NavigationMenuItem>
                 <NavigationMenuLink
-                  href="#"
+                  href="#pricing"
                   className={`${navigationMenuTriggerStyle()} text-gray-700 text-xs rounded-xl hover:text-gray-900 hover:bg-gray-50 transition-colors`}
                 >
                   Pricing
@@ -168,13 +127,13 @@ const Navbar = () => {
                 {/* Mobile Navigation Links */}
                 <div className="flex flex-col space-y-2">
                   <a
-                    href="#"
+                    href="#features"
                     className="font-medium text-base py-2 px-3 rounded-md hover:bg-gray-50 transition-colors text-gray-700"
                   >
                     Features
                   </a>
                   <a
-                    href="#"
+                    href="#pricing"
                     className="font-medium text-base py-2 px-3 rounded-md hover:bg-gray-50 transition-colors text-gray-700"
                   >
                     Pricing
@@ -187,39 +146,6 @@ const Navbar = () => {
                   </a>
                 </div>
 
-                {/* Features Accordion */}
-                <Accordion
-                  type="single"
-                  collapsible
-                  className="border-t border-gray-200 pt-4"
-                >
-                  <AccordionItem value="features" className="border-none">
-                    <AccordionTrigger className="text-base font-medium hover:no-underline py-2 px-3 text-gray-700">
-                      Features
-                    </AccordionTrigger>
-                    <AccordionContent className="pt-2">
-                      <div className="grid gap-2 sm:grid-cols-2">
-                        {features.map((feature, index) => (
-                          <a
-                            href={feature.href}
-                            key={index}
-                            className="rounded-md p-3 transition-colors hover:bg-gray-50 block"
-                          >
-                            <div>
-                              <p className="mb-1 font-semibold text-gray-900 text-sm">
-                                {feature.title}
-                              </p>
-                              <p className="text-xs text-gray-600">
-                                {feature.description}
-                              </p>
-                            </div>
-                          </a>
-                        ))}
-                      </div>
-                    </AccordionContent>
-                  </AccordionItem>
-                </Accordion>
-
                 {/* Mobile Action Buttons */}
                 <div className="flex flex-col gap-3 pt-4 border-t border-gray-200">
                   <Button
@@ -227,7 +153,7 @@ const Navbar = () => {
                       window.location.href = LOGIN_URL;
                     }}
                     variant="outline"
-                    className="w-full border-gray-300 bg-gray-50 text-gray-700 shadow-lg hover:bg-gray-50/80 hover:text-gray-700/80"
+                    className="w-full border-gray-300 rounded-xl bg-gray-50 text-gray-700 shadow-lg hover:bg-gray-50/80 hover:text-gray-700/80"
                   >
                     Sign in
                   </Button>
@@ -236,7 +162,7 @@ const Navbar = () => {
                       window.location.href = SIGNUP_URL;
                     }}
                     variant="outline"
-                    className="w-full border-[#AD46FF] rounded-2xl bg-[#F3EBFD] text-[#AD46FF] shadow-lg hover:bg-[#F3EBFD]/80 hover:text-[#AD46FF]/80"
+                    className="w-full border-[#AD46FF] rounded-xl bg-[#F3EBFD] text-[#AD46FF] shadow-lg hover:bg-[#F3EBFD]/80 hover:text-[#AD46FF]/80"
                   >
                     Start for free
                   </Button>
