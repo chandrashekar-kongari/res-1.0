@@ -1,6 +1,6 @@
 "use client";
 
-import { useEditor, EditorContent } from "@tiptap/react";
+import { useEditor, EditorContent, Editor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import { CustomColor } from "@/lib/extensions/custom-color";
 import FontFamily from "@tiptap/extension-font-family";
@@ -17,8 +17,6 @@ import { CustomListItem } from "@/lib/extensions/custom-list-item";
 import {
   BorderBottomIcon,
   FontBoldIcon,
-  FontItalicIcon,
-  FontSizeIcon,
   Link2Icon,
   ListBulletIcon,
 } from "@radix-ui/react-icons";
@@ -127,16 +125,15 @@ interface FloatingButtonProps {
   x: number;
   y: number;
   onAddToChat: () => void;
-  onReplaceText: () => void;
   onAddLink: () => void;
-  editor: any; // Add editor instance to props
+  onReplaceText: () => Promise<void>;
+  editor: Editor;
 }
 
 const FloatingButton = ({
   x,
   y,
   onAddToChat,
-  onReplaceText,
   onAddLink,
   editor,
 }: FloatingButtonProps) => (
@@ -253,7 +250,7 @@ interface TiptapEditorProps {
 
 export interface TiptapEditorRef {
   getEditorElement: () => HTMLElement | null;
-  getEditor: () => any;
+  getEditor: () => Editor | null;
   getHTML: () => string;
   setHTML: (html: string) => void;
   getText: () => string;
@@ -266,9 +263,6 @@ const TiptapEditor = forwardRef<TiptapEditorRef, TiptapEditorProps>(
       onChange,
       placeholder = "",
       className = "",
-      enableExport = false,
-      aiAppId = "",
-      aiToken = "",
       setAttachPartOfHTML,
       resumeId,
     },
@@ -276,15 +270,14 @@ const TiptapEditor = forwardRef<TiptapEditorRef, TiptapEditorProps>(
   ) => {
     const utils = trpc.useUtils();
     const saveResumeMutation = trpc.resume.update.useMutation({
-      onSuccess: (data) => {
+      onSuccess: () => {
         void utils.resume.invalidate();
       },
     });
     const editorContentRef = useRef<HTMLDivElement>(null);
-    const importRef = useRef<HTMLInputElement>(null);
     const [isLoading, setIsLoading] = useState(false);
-    const [error, setError] = useState<string | null>(null);
-    const { mutate: saveResume } = trpc.resume.create.useMutation();
+    const [, setError] = useState<string | null>(null);
+
     const [floatingButton, setFloatingButton] = useState<{
       x: number;
       y: number;
@@ -302,7 +295,7 @@ const TiptapEditor = forwardRef<TiptapEditorRef, TiptapEditorProps>(
       to: 0,
       selectedHTML: "",
     });
-    const [isOverflowing, setIsOverflowing] = useState(false);
+    const [, setIsOverflowing] = useState(false);
     const [linkModal, setLinkModal] = useState({
       isOpen: false,
       url: "",
@@ -590,8 +583,9 @@ const TiptapEditor = forwardRef<TiptapEditorRef, TiptapEditorProps>(
           .run();
         setLinkModal({ isOpen: false, url: "", text: "" });
         setFloatingButton((prev) => ({ ...prev, visible: false }));
-      } catch (e: any) {
-        alert(e.message);
+      } catch (e) {
+        const error = e as Error;
+        alert(error.message);
       }
     }, [editor, linkModal.url]);
 
@@ -616,7 +610,7 @@ const TiptapEditor = forwardRef<TiptapEditorRef, TiptapEditorProps>(
         ]);
       }
       setFloatingButton((prev) => ({ ...prev, visible: false }));
-    }, [floatingButton.selectedHTML]);
+    }, [floatingButton.selectedHTML, setAttachPartOfHTML]);
 
     const handleAddLink = useCallback(() => {
       if (!editor) return;
@@ -709,15 +703,12 @@ const TiptapEditor = forwardRef<TiptapEditorRef, TiptapEditorProps>(
         window.URL.revokeObjectURL(url);
 
         setIsLoading(false);
-      } catch (error: any) {
+      } catch (err) {
+        const error = err as Error;
         setError(error.message);
         setIsLoading(false);
       }
     }, [editor]);
-
-    const handleImportClick = useCallback(() => {
-      importRef.current?.click();
-    }, []);
 
     if (!editor) {
       return null;

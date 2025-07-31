@@ -6,10 +6,7 @@ import { Button } from "@/components/ui/button";
 import { useCallback, useRef, useEffect } from "react";
 import {
   ArrowUp,
-  Axe,
-  AxeIcon,
   ChevronDownIcon,
-  EllipsisVerticalIcon,
   FileTextIcon,
   Loader2,
   MessageSquare,
@@ -18,7 +15,7 @@ import {
 } from "lucide-react";
 import { Placeholder } from "@tiptap/extensions";
 import { Badge } from "@/components/ui/badge";
-import { PaperPlaneIcon } from "@radix-ui/react-icons";
+
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -93,7 +90,7 @@ const ChatInput = ({
         return false;
       },
     },
-    onUpdate: ({ editor }) => {
+    onUpdate: ({}) => {
       // Ensure the cursor is always visible by scrolling to the bottom
       if (editorContainerRef.current) {
         const container = editorContainerRef.current;

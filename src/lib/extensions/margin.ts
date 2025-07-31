@@ -1,4 +1,13 @@
-import { Extension } from "@tiptap/core";
+import { Extension, CommandProps } from "@tiptap/core";
+
+declare module "@tiptap/core" {
+  interface Commands<ReturnType> {
+    margin: {
+      setMarginTop: (margin: string) => ReturnType;
+      setMarginBottom: (margin: string) => ReturnType;
+    };
+  }
+}
 
 export interface MarginOptions {
   types: string[];
@@ -61,7 +70,7 @@ export const Margin = Extension.create<MarginOptions>({
     return {
       setMarginTop:
         (marginTop: string) =>
-        ({ commands }: { commands: any }) => {
+        ({ commands }: CommandProps) => {
           let updated = false;
           if (commands.updateAttributes) {
             updated = commands.updateAttributes("paragraph", { marginTop });
@@ -72,7 +81,7 @@ export const Margin = Extension.create<MarginOptions>({
         },
       setMarginBottom:
         (marginBottom: string) =>
-        ({ commands }: { commands: any }) => {
+        ({ commands }: CommandProps) => {
           let updated = false;
           if (commands.updateAttributes) {
             updated = commands.updateAttributes("paragraph", { marginBottom });
@@ -81,6 +90,6 @@ export const Margin = Extension.create<MarginOptions>({
           }
           return updated;
         },
-    } as Partial<Record<string, any>>;
+    };
   },
 });

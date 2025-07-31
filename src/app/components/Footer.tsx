@@ -1,4 +1,3 @@
-import { LinkedInLogoIcon } from "@radix-ui/react-icons";
 import React from "react";
 
 const Footer = () => {
@@ -14,14 +13,6 @@ const Footer = () => {
     },
     {
       title: "LinkedIn",
-    },
-  ];
-
-  const socialLinks = [
-    {
-      icon: <LinkedInLogoIcon className="size-5" />,
-      href: "#",
-      label: "LinkedIn",
     },
   ];
 

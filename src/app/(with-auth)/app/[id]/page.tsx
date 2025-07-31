@@ -8,7 +8,9 @@ import {
   fetchEventSource,
   EventSourceMessage,
 } from "@microsoft/fetch-event-source";
-import TiptapEditorReplica from "@/components/tiptap-editor-replica";
+import TiptapEditorReplica, {
+  TiptapEditorRef as TiptapEditorReplicaRef,
+} from "@/components/tiptap-editor-replica";
 import { trpc } from "@/lib/trpc";
 import { v4 as uuidv4 } from "uuid";
 import { Loader2 } from "lucide-react";
@@ -24,12 +26,15 @@ export interface ChatMessage {
     name: string;
     status: boolean;
     type?: string; // Add type field for different event types
-    data?: any; // Add data field for event data
+    data?: {
+      delta?: string;
+      [key: string]: string | number | boolean | null | undefined;
+    };
     output?: {
-      diffEditorHTML?: any;
-      newEditorHTML?: any;
-      oldEditorHTML?: any;
-      diffFromAssistant?: any;
+      diffEditorHTML?: string;
+      newEditorHTML?: string;
+      oldEditorHTML?: string;
+      diffFromAssistant?: string;
       diffEditorHTMLId?: string;
     };
     accepted?: boolean;
@@ -63,7 +68,7 @@ export default function Home({ params }: { params: Promise<{ id: string }> }) {
     if (resume?.content && !content) {
       setContent(resume.content);
     }
-  }, [resume?.content]);
+  }, [resume?.content, content]);
 
   const [messages, setMessages] = useState<ChatMessage[]>([]);
 
@@ -73,9 +78,9 @@ export default function Home({ params }: { params: Promise<{ id: string }> }) {
     }
   }, [messagesData]);
 
-  const [isLoading, setIsLoading] = useState(false);
+  const [, setIsLoading] = useState(false);
   const editorRef = useRef<TiptapEditorRef>(null);
-  const replicaRef = useRef<TiptapEditorRef>(null);
+  const replicaRef = useRef<TiptapEditorReplicaRef>(null);
   const [attachPartOfHTML, setAttachPartOfHTML] = useState<string[]>([]);
 
   const abortControllerRef = useRef<AbortController | null>(null);
@@ -381,8 +386,7 @@ export default function Home({ params }: { params: Promise<{ id: string }> }) {
                             diffFromAssistant = `<div id="${finalId}" style="font-size: 14px; padding: 0px; line-height: 1.25; font-family: Calibri, Arial, sans-serif; white-space: pre-wrap; margin: 0px;">${res?.diffEditorHTML}</div>`;
                           }
 
-                          const replicaInitialHTML =
-                            replicaRef.current?.setHTML(diffFromAssistant);
+                          replicaRef.current?.setHTML(diffFromAssistant);
 
                           // if (replicaInitialHTML) {
                           //   replicaRef.current?.setHTML(
@@ -459,7 +463,7 @@ export default function Home({ params }: { params: Promise<{ id: string }> }) {
             }
           },
 
-          onerror(err: any) {
+          onerror(err: Error) {
             setIsAgentRunning(false);
             // Simple retry logic - only retry network errors, max 3 times
             if (err.name !== "AbortError" && retryCount < 3) {
@@ -561,9 +565,13 @@ export default function Home({ params }: { params: Promise<{ id: string }> }) {
             });
           },
         });
-      } catch (err: any) {
+      } catch (err: unknown) {
         setIsAgentRunning(false);
-        if (err.name !== "AbortError" && retryCount < 3) {
+        if (
+          err instanceof Error &&
+          err.name !== "AbortError" &&
+          retryCount < 3
+        ) {
           console.log(`Request failed, retrying... (${retryCount + 1}/3)`);
           retryTimeoutRef.current = setTimeout(() => {
             handleSendMessage(message, shouldSendEditorHTML, retryCount + 1);
@@ -571,7 +579,7 @@ export default function Home({ params }: { params: Promise<{ id: string }> }) {
           return;
         }
 
-        if (err.name !== "AbortError") {
+        if (err instanceof Error && err.name !== "AbortError") {
           setMessages((prev) => {
             const updated = [...prev];
             const lastIndex = updated.length - 1;
@@ -619,7 +627,7 @@ export default function Home({ params }: { params: Promise<{ id: string }> }) {
         setIsLoading(false);
       }
     },
-    [messages, attachPartOfHTML]
+    [messages, attachPartOfHTML, id, thread?.id, upsertMessage, user?.id]
   );
 
   if (isResumeLoading) {
@@ -670,7 +678,6 @@ export default function Home({ params }: { params: Promise<{ id: string }> }) {
             ) : (
               <ChatUI
                 messages={messages}
-                isLoading={isLoading}
                 isAgentRunning={isAgentRunning}
                 handleSendMessage={handleSendMessage}
                 canvasEditor={editorRef}

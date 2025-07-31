@@ -1,7 +1,3 @@
-import { Calendar, Sparkles, Zap, Shield } from "lucide-react";
-
-import { Button } from "@/components/ui/button";
-
 const Features = () => {
   return (
     <section className="py-16 sm:py-24 lg:py-32 bg-white">

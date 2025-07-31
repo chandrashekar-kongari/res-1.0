@@ -1,7 +1,7 @@
 import { Extension } from "@tiptap/core";
 
 export interface BorderBottomOptions {
-  HTMLAttributes: Record<string, any>;
+  HTMLAttributes: Record<string, string | number | boolean | null | undefined>;
 }
 
 declare module "@tiptap/core" {

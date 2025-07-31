@@ -1,7 +1,22 @@
 import { StackHandler } from "@stackframe/stack";
 import { stackServerApp } from "@/stack";
 
-export default function Handler(props: any) {
+interface HandlerProps {
+  params: Promise<{
+    stack: string[];
+  }>;
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+}
+
+export default async function Handler(props: HandlerProps) {
+  const params = await props.params;
+  const searchParams = await props.searchParams;
+
+  const routeProps = {
+    params,
+    searchParams,
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-white to-gray-50/30 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
@@ -32,7 +47,7 @@ export default function Handler(props: any) {
           <div className="relative p-8">
             <StackHandler
               app={stackServerApp}
-              routeProps={props}
+              routeProps={routeProps}
               fullPage={false}
             />
           </div>

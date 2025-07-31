@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { router, protectedProcedure, Context } from "../trpcServer";
+import { router, protectedProcedure } from "../trpcServer";
 import { prisma } from "../db";
 import { TRPCError } from "@trpc/server";
 import { message } from "@prisma/client";
@@ -34,12 +34,7 @@ export const messageRouter = router({
           message: "You must be logged in to access this resource",
         });
       }
-      const {
-        id,
-        user_id,
-        threadId: msgThreadId,
-        ...messageData
-      } = input.message;
+      const { ...messageData } = input.message;
       return prisma.message.upsert({
         where: { id: input.message.id },
         update: {
