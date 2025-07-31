@@ -228,7 +228,7 @@ export const resumeRouter = router({
         deleted_at: null,
       },
       orderBy: {
-        created_at: "desc",
+        updated_at: "desc",
       },
     });
     if (resumes.length === 0) {

@@ -187,12 +187,12 @@ export function AppSidebar() {
                           </div>
                         </SidebarMenuButton>
                       </DropdownMenuTrigger>
-                      <DropdownMenuContent className="rounded-3xl gap-2 w-60 shadow-2xl border-0 bg-white dark:bg-gray-900">
+                      <DropdownMenuContent className="rounded-3xl p-2 gap-2 w-30 shadow-2xl border-0 bg-white dark:bg-gray-900">
                         <DropdownMenuItem
                           onClick={() =>
                             setDuplicateFromPinnedResumeModalOpen(true)
                           }
-                          className="rounded-2xl p-4 cursor-pointer hover:bg-emerald-50 dark:hover:bg-emerald-900/20 transition-all duration-200 focus:bg-emerald-50 dark:focus:bg-emerald-900/20"
+                          className="rounded-2xl p-2 cursor-pointer hover:bg-emerald-50 dark:hover:bg-emerald-900/20 transition-all duration-200 focus:bg-emerald-50 dark:focus:bg-emerald-900/20"
                         >
                           <div className="flex items-center gap-3 w-full">
                             <div className="p-2 rounded-xl bg-emerald-100 dark:bg-emerald-900/30">
@@ -207,7 +207,7 @@ export function AppSidebar() {
                         </DropdownMenuItem>
                         <DropdownMenuItem
                           onClick={() => setCreateFromScratchModalOpen(true)}
-                          className="rounded-2xl p-4 cursor-pointer hover:bg-purple-50 dark:hover:bg-purple-900/20 transition-all duration-200 focus:bg-purple-50 dark:focus:bg-purple-900/20"
+                          className="rounded-2xl p-2 cursor-pointer hover:bg-purple-50 dark:hover:bg-purple-900/20 transition-all duration-200 focus:bg-purple-50 dark:focus:bg-purple-900/20"
                         >
                           <div className="flex items-center gap-3 w-full">
                             <div className="p-2 rounded-xl bg-purple-100 dark:bg-purple-900/30">
@@ -299,10 +299,10 @@ export function AppSidebar() {
                                     </DropdownMenuTrigger>
                                     <DropdownMenuContent
                                       align="start"
-                                      className="rounded-3xl w-52 gap-2 shadow-2xl border-0 bg-white dark:bg-gray-900"
+                                      className="rounded-3xl p-2 w-30 gap-2 shadow-2xl border-0 bg-white dark:bg-gray-900"
                                     >
                                       <DropdownMenuItem
-                                        className="rounded-2xl p-4 cursor-pointer hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-all duration-200 focus:bg-blue-50 dark:focus:bg-blue-900/20"
+                                        className="rounded-2xl p-2 cursor-pointer hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-all duration-200 focus:bg-blue-50 dark:focus:bg-blue-900/20"
                                         onClick={(e) =>
                                           handleRename(
                                             e,
@@ -323,7 +323,7 @@ export function AppSidebar() {
                                         </div>
                                       </DropdownMenuItem>
                                       <DropdownMenuItem
-                                        className="rounded-2xl p-4 cursor-pointer hover:bg-red-50 dark:hover:bg-red-900/20 transition-all duration-200 focus:bg-red-50 dark:focus:bg-red-900/20"
+                                        className="rounded-2xl p-2 cursor-pointer hover:bg-red-50 dark:hover:bg-red-900/20 transition-all duration-200 focus:bg-red-50 dark:focus:bg-red-900/20"
                                         onClick={(e) =>
                                           handleDelete(
                                             e,

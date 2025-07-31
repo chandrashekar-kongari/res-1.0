@@ -41,18 +41,10 @@ const UserSettings = () => {
       </DropdownMenuTrigger>
       <DropdownMenuContent
         align="start"
-        className="w-80 rounded-3xl border-0 shadow-2xl bg-white dark:bg-gray-900 p-2"
+        className="w-72 rounded-3xl border-0 shadow-2xl bg-white dark:bg-gray-900 p-2"
       >
-        <DropdownMenuLabel className="p-4 rounded-2xl bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-900 mb-2">
+        <DropdownMenuLabel className="p-2 rounded-2xl  dark:from-gray-800 dark:to-gray-900 mb-2">
           <div className="flex items-center gap-3">
-            <Avatar className="border-2 border-gray-200 dark:border-gray-700 w-12 h-12 flex items-center justify-center rounded-full shadow-sm">
-              <AvatarFallback className="text-sm font-bold text-gray-700 dark:text-gray-300 bg-gradient-to-br from-[#AD46FF]/10 to-purple-100 dark:from-[#AD46FF]/20 dark:to-purple-900/30">
-                {(user?.displayName ?? user?.primaryEmail ?? "A")
-                  .split(" ")
-                  .map((n) => n[0])
-                  .join("")}
-              </AvatarFallback>
-            </Avatar>
             <div className="flex flex-col gap-1 flex-1 min-w-0">
               <span className="font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-2 truncate">
                 <User2 className="w-4 h-4 text-gray-600 dark:text-gray-400 flex-shrink-0" />
@@ -67,7 +59,7 @@ const UserSettings = () => {
         </DropdownMenuLabel>
 
         <DropdownMenuItem
-          className="rounded-2xl p-4 cursor-pointer hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-all duration-200 focus:bg-blue-50 dark:focus:bg-blue-900/20 mb-2"
+          className="rounded-2xl p-2 cursor-pointer hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-all duration-200 focus:bg-blue-50 dark:focus:bg-blue-900/20 mb-2"
           onClick={() => {
             window.open("https://tally.so/r/w505Ob", "_blank");
           }}
@@ -77,7 +69,7 @@ const UserSettings = () => {
               <MessageCircle className="w-4 h-4 text-blue-600 dark:text-blue-400" />
             </div>
             <div className="flex-1">
-              <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
+              <p className="text-xs font-medium text-gray-900 dark:text-gray-100">
                 Contact Us
               </p>
               <p className="text-xs text-gray-500 dark:text-gray-400">
@@ -88,7 +80,7 @@ const UserSettings = () => {
         </DropdownMenuItem>
 
         <DropdownMenuItem
-          className="rounded-2xl p-4 cursor-pointer hover:bg-red-50 dark:hover:bg-red-900/20 transition-all duration-200 focus:bg-red-50 dark:focus:bg-red-900/20"
+          className="rounded-2xl p-2 cursor-pointer hover:bg-red-50 dark:hover:bg-red-900/20 transition-all duration-200 focus:bg-red-50 dark:focus:bg-red-900/20"
           onClick={() => user?.signOut()}
         >
           <div className="flex items-center gap-3 w-full">
@@ -96,7 +88,7 @@ const UserSettings = () => {
               <LogOut className="w-4 h-4 text-red-600 dark:text-red-400" />
             </div>
             <div className="flex-1">
-              <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
+              <p className="text-xs font-medium text-gray-900 dark:text-gray-100">
                 Sign Out
               </p>
               <p className="text-xs text-gray-500 dark:text-gray-400">
