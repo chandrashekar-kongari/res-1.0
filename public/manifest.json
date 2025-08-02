@@ -1,0 +1,26 @@
+{
+  "name": "Memic - AI-Powered Resume Builder",
+  "short_name": "Memic",
+  "description": "Create ATS-friendly resumes in seconds with AI-powered resume builder",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#6366f1",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/memic-logo-4.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/favicon.ico",
+      "sizes": "48x48",
+      "type": "image/x-icon"
+    }
+  ],
+  "categories": ["productivity", "business", "utilities"],
+  "lang": "en-US",
+  "dir": "ltr"
+}
