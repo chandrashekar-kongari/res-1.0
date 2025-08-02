@@ -290,6 +290,8 @@ export const InlineEdit = Extension.create<InlineEditOptions>({
       },
 
       view() {
+        let lastDocContent = "";
+
         return {
           update: async (view: EditorView) => {
             if (!options.enabled) return;
@@ -306,6 +308,14 @@ export const InlineEdit = Extension.create<InlineEditOptions>({
             const currentCursorPosition = selection.from;
             const currentText = state.doc.textContent;
             const paragraph = $from.parent.textContent;
+
+            // Only proceed if content has actually changed (typing occurred)
+            const hasContentChanged = currentText !== lastDocContent;
+            lastDocContent = currentText;
+
+            if (!hasContentChanged) {
+              return;
+            }
 
             // Clear suggestions if cursor moved away from the current paragraph or far from suggestions
             if (pluginState.suggestions.length > 0) {

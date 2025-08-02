@@ -7,7 +7,7 @@ import ChatInput from "./ChatInput";
 import ReactMarkdown from "react-markdown";
 import type { ChatMessage } from "./(with-auth)/app/[id]/page";
 
-import React, { RefObject, useEffect, useState, useRef } from "react";
+import React, { RefObject, useEffect, useState, useRef, Fragment } from "react";
 import ScrollToBottom from "react-scroll-to-bottom";
 import DiffEditor from "@/components/diff-editor";
 import { TiptapEditorRef } from "@/components/tiptap-editor-replica";
@@ -32,6 +32,7 @@ interface ChatInputProps {
     messages: ChatMessage[] | ((prev: ChatMessage[]) => ChatMessage[])
   ) => void;
   handleStopAssistant: () => void;
+  resumeId: string;
 }
 const ChatUI = ({
   messages,
@@ -43,8 +44,10 @@ const ChatUI = ({
   setAttachPartOfHTML,
   setMessages,
   handleStopAssistant,
+  resumeId,
 }: ChatInputProps) => {
   const updateMessage = trpc.message.update.useMutation();
+  const saveResumeMutation = trpc.resume.update.useMutation();
   // Expanded state for event accordions
   const [expandedEvents, setExpandedEvents] = useState<{
     [callId: string]: boolean;
@@ -53,7 +56,8 @@ const ChatUI = ({
   // Animated dots for streaming indicator
   const [dots, setDots] = useState(".");
   const [showingDiff, setShowingDiff] = useState<boolean>(false);
-
+  const [isRejectingAll, setIsRejectingAll] = useState<boolean>(false);
+  const [isAcceptingAll, setIsAcceptingAll] = useState<boolean>(false);
   const [creatingNewThread, setCreatingNewThread] = useState<boolean>(false);
   const utils = trpc.useUtils();
 
@@ -194,6 +198,7 @@ const ChatUI = ({
           msg.role === "assistant" &&
           msg.events?.some((e) => e.callId === eventCallId)
       );
+      console.log("targetMessage", targetMessage);
       if (targetMessage?.id) {
         updateMessage.mutate({
           id: targetMessage.id,
@@ -223,6 +228,12 @@ const ChatUI = ({
         oldEditorHTML
       );
       canvasEditor?.current?.setHTML?.(newHtml);
+      // Save the resume content to the database
+      saveResumeMutation.mutate({
+        content: newHtml,
+        id: resumeId,
+      });
+      updateMessageStateAndDB(eventCallId, { rejected: true, accepted: false });
     } else {
       if (!htmlOfEditor.includes(diffEditorHTML)) {
         updateMessageStateAndDB(eventCallId, { notFound: true });
@@ -230,6 +241,11 @@ const ChatUI = ({
       }
       const newHtml = htmlOfEditor.replace(diffEditorHTML, oldEditorHTML);
       canvasEditor?.current?.setHTML?.(newHtml);
+      // Save the resume content to the database
+      saveResumeMutation.mutate({
+        content: newHtml,
+        id: resumeId,
+      });
     }
 
     updateMessageStateAndDB(eventCallId, { rejected: true, accepted: false });
@@ -257,6 +273,11 @@ const ChatUI = ({
           newEditorHTML
         );
         canvasEditor?.current?.setHTML?.(newHtml);
+        // Save the resume content to the database
+        saveResumeMutation.mutate({
+          content: newHtml,
+          id: resumeId,
+        });
         updateMessageStateAndDB(eventCallId, {
           accepted: true,
           rejected: false,
@@ -272,64 +293,76 @@ const ChatUI = ({
     }
   };
 
-  const handleRejectAllChanges = () => {
-    let anyEventProcessed = false;
-    // Iterate through messages in reverse order
-    for (let i = messages.length - 1; i >= 0; i--) {
-      const message = messages[i];
-      if (message.role === "assistant" && message.events) {
-        // Iterate through events in reverse order
-        for (let j = message.events.length - 1; j >= 0; j--) {
-          const event = message.events[j];
-          // Only process events that have diff data, status is complete and aren't already rejected
-          if (
-            event.output?.diffEditorHTML &&
-            event.status &&
-            !event.rejected &&
-            !event.notFound &&
-            !event.accepted
-          ) {
-            handleRejectEvent(
-              event.output.oldEditorHTML,
-              event.output.diffEditorHTML,
-              event.output.diffEditorHTMLId,
-              event.callId
-            );
-            anyEventProcessed = true;
+  const handleRejectAllChanges = async () => {
+    try {
+      setIsRejectingAll(true);
+      let anyEventProcessed = false;
+      // Iterate through messages in reverse order
+      for (let i = messages.length - 1; i >= 0; i--) {
+        const message = messages[i];
+        if (message.role === "assistant" && message.events) {
+          // Iterate through events in reverse order
+          for (let j = message.events.length - 1; j >= 0; j--) {
+            const event = message.events[j];
+            // Only process events that have diff data, status is complete and aren't already rejected
+            if (
+              event.output?.diffEditorHTML &&
+              event.status &&
+              !event.rejected &&
+              !event.notFound &&
+              !event.accepted
+            ) {
+              await new Promise((resolve) => setTimeout(resolve, 500));
+              handleRejectEvent(
+                event.output.oldEditorHTML,
+                event.output.diffEditorHTML,
+                event.output.diffEditorHTMLId,
+                event.callId
+              );
+              anyEventProcessed = true;
+            }
           }
         }
       }
+      // Only hide diff if we actually processed some events
+      setShowingDiff(false);
+    } finally {
+      setIsRejectingAll(false);
     }
-    // Only hide diff if we actually processed some events
-    setShowingDiff(false);
   };
 
-  const handleAcceptAllChanges = () => {
-    let anyEventProcessed = false;
-    // Iterate through messages in reverse order
-    for (let i = messages.length - 1; i >= 0; i--) {
-      const message = messages[i];
-      if (message.role === "assistant" && message.events) {
-        // Iterate through events in reverse order
-        for (let j = message.events.length - 1; j >= 0; j--) {
-          const event = message.events[j];
-          // Only process events that have diff data, status is complete and aren't already accepted
-          if (
-            event.output?.diffEditorHTML &&
-            event.status &&
-            !event.accepted &&
-            !event.notFound &&
-            !event.rejected
-          ) {
-            handleAcceptEvent(
-              event.output.newEditorHTML,
-              event.output.diffEditorHTMLId,
-              event.callId
-            );
-            anyEventProcessed = true;
+  const handleAcceptAllChanges = async () => {
+    try {
+      setIsAcceptingAll(true);
+      let anyEventProcessed = false;
+      // Iterate through messages in reverse order
+      for (let i = messages.length - 1; i >= 0; i--) {
+        const message = messages[i];
+        if (message.role === "assistant" && message.events) {
+          // Iterate through events in reverse order
+          for (let j = message.events.length - 1; j >= 0; j--) {
+            const event = message.events[j];
+            // Only process events that have diff data, status is complete and aren't already accepted
+            if (
+              event.output?.diffEditorHTML &&
+              event.status &&
+              !event.accepted &&
+              !event.notFound &&
+              !event.rejected
+            ) {
+              await new Promise((resolve) => setTimeout(resolve, 500));
+              handleAcceptEvent(
+                event.output.newEditorHTML,
+                event.output.diffEditorHTMLId,
+                event.callId
+              );
+              anyEventProcessed = true;
+            }
           }
         }
       }
+    } finally {
+      setIsAcceptingAll(false);
     }
   };
 
@@ -390,6 +423,7 @@ const ChatUI = ({
           <ChatInput
             isStreaming={isAgentRunning}
             onSend={(message) => handleSendMessage(message, isResumeSelected)}
+            onStop={handleStopAssistant}
             isResumeSelected={isResumeSelected}
             setIsResumeSelected={setIsResumeSelected}
             attachPartOfHTML={attachPartOfHTML}
@@ -509,8 +543,10 @@ const ChatUI = ({
                                               ) : (
                                                 <CheckCircledIcon className="w-3 h-3 text-blue-600" />
                                               )
-                                            ) : (
+                                            ) : message.isStreaming ? (
                                               <UpdateIcon className="w-3 h-3 text-purple-600 animate-spin" />
+                                            ) : (
+                                              <UpdateIcon className="w-3 h-3 text-purple-600" />
                                             )}
                                           </div>
                                           <span className="text-xs font-medium">
@@ -602,7 +638,7 @@ const ChatUI = ({
                             return outputChunks.map((chunk, idx) =>
                               chunk.type === "markdown" ? (
                                 <ReactMarkdown
-                                  key={idx}
+                                  key={`markdown-${message.id}-${idx}`}
                                   components={{
                                     p: ({ children }) => <>{children}</>,
                                   }}
@@ -610,7 +646,11 @@ const ChatUI = ({
                                   {chunk.content}
                                 </ReactMarkdown>
                               ) : (
-                                chunk.element
+                                <React.Fragment
+                                  key={`tool-${message.id}-${idx}`}
+                                >
+                                  {chunk.element}
+                                </React.Fragment>
                               )
                             );
                           })()}
@@ -652,20 +692,32 @@ const ChatUI = ({
                     <Button
                       size="sm"
                       variant="outline"
-                      disabled={isAgentRunning}
+                      disabled={
+                        isAgentRunning || isRejectingAll || isAcceptingAll
+                      }
                       className="flex text-[10px] items-center rounded-lg gap-1 h-6 min-h-0 px-2 border-red-200 text-red-600 hover:bg-red-50"
                       onClick={handleRejectAllChanges}
                     >
-                      <X className="w-[10px] h-[10px]" />
+                      {isRejectingAll ? (
+                        <Loader2 className="w-[10px] h-[10px] animate-spin" />
+                      ) : (
+                        <X className="w-[10px] h-[10px]" />
+                      )}
                       Reject all
                     </Button>
                     <Button
-                      disabled={isAgentRunning}
+                      disabled={
+                        isAgentRunning || isRejectingAll || isAcceptingAll
+                      }
                       size="sm"
                       className="flex text-[10px] bg-emerald-600 rounded-lg text-white hover:bg-emerald-700 items-center gap-1 h-6 min-h-0 px-2 border-0"
                       onClick={handleAcceptAllChanges}
                     >
-                      <Check className="w-[10px] h-[10px]" />
+                      {isAcceptingAll ? (
+                        <Loader2 className="w-[10px] h-[10px] animate-spin" />
+                      ) : (
+                        <Check className="w-[10px] h-[10px]" />
+                      )}
                       Accept all
                     </Button>
                   </div>
@@ -676,6 +728,7 @@ const ChatUI = ({
             <ChatInput
               isStreaming={isAgentRunning}
               onSend={(message) => handleSendMessage(message, isResumeSelected)}
+              onStop={handleStopAssistant}
               isResumeSelected={isResumeSelected}
               setIsResumeSelected={setIsResumeSelected}
               attachPartOfHTML={attachPartOfHTML}

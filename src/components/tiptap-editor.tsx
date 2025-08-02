@@ -484,7 +484,7 @@ const TiptapEditor = forwardRef<TiptapEditorRef, TiptapEditorProps>(
           minLength: 3,
           debounce: 500,
           apiEndpoint: "/api/inline-edit",
-          enabled: true,
+          enabled: false,
         }),
       ],
       content,

@@ -1,3 +1,4 @@
+import { OpenAIChatCompletionsModel } from "@openai/agents";
 import { NextRequest, NextResponse } from "next/server";
 import OpenAI from "openai";
 
@@ -110,8 +111,13 @@ Response: NO_SUGGESTION
 
 Be extremely conservative and minimal!`;
 
-    const completion = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
+    const external_client = new OpenAI({
+      apiKey: process.env.ANTHROPIC_API_KEY,
+      baseURL: "https://api.anthropic.com/v1/",
+    });
+
+    const completion = await external_client.chat.completions.create({
+      model: "claude-3-5-haiku-20241022",
       messages: [
         {
           role: "system",
