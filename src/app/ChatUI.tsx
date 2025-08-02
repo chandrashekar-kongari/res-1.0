@@ -166,62 +166,12 @@ const ChatUI = ({
     return html;
   }
 
-  const handleRejectEvent = (
-    oldEditorHTML: string,
-    diffEditorHTML: string,
-    diffEditorHTMLId?: string,
-    eventCallId?: string
+  // Shared utility function to update message state and database
+  const updateMessageStateAndDB = (
+    eventCallId: string,
+    updates: { accepted?: boolean; rejected?: boolean; notFound?: boolean }
   ) => {
-    const htmlOfEditor = canvasEditor?.current?.getHTML?.();
-
-    if (htmlOfEditor && diffEditorHTMLId) {
-      const newHtml = replaceElementById(
-        htmlOfEditor,
-        diffEditorHTMLId,
-        oldEditorHTML
-      );
-      canvasEditor?.current?.setHTML?.(newHtml);
-    } else if (htmlOfEditor) {
-      if (!htmlOfEditor.includes(diffEditorHTML)) {
-        setMessages((prev: ChatMessage[]) => {
-          const newMessages = prev.map((message: ChatMessage) => {
-            if (message.role === "assistant" && message.events) {
-              return {
-                ...message,
-                events: message.events.map((event) => {
-                  if (event.callId === eventCallId) {
-                    return { ...event, notFound: true };
-                  }
-                  return event;
-                }),
-              };
-            }
-            return message;
-          });
-
-          // Update message in database
-          const targetMessage = newMessages.find(
-            (msg) =>
-              msg.role === "assistant" &&
-              msg.events?.some((e) => e.callId === eventCallId)
-          );
-          if (targetMessage?.id) {
-            updateMessage.mutate({
-              id: targetMessage.id,
-              events: targetMessage.events || [],
-            });
-          }
-
-          return newMessages;
-        });
-
-        return;
-      }
-      const newHtml = htmlOfEditor.replace(diffEditorHTML, oldEditorHTML);
-      canvasEditor?.current?.setHTML?.(newHtml);
-    }
-
-    // Update message state to mark as rejected
+    // Update state
     setMessages((prev: ChatMessage[]) => {
       const newMessages = prev.map((message: ChatMessage) => {
         if (message.role === "assistant" && message.events) {
@@ -229,7 +179,7 @@ const ChatUI = ({
             ...message,
             events: message.events.map((event) => {
               if (event.callId === eventCallId) {
-                return { ...event, rejected: true, accepted: false };
+                return { ...event, ...updates };
               }
               return event;
             }),
@@ -238,7 +188,7 @@ const ChatUI = ({
         return message;
       });
 
-      // Update message in database
+      // Update database
       const targetMessage = newMessages.find(
         (msg) =>
           msg.role === "assistant" &&
@@ -255,14 +205,47 @@ const ChatUI = ({
     });
   };
 
+  const handleRejectEvent = (
+    oldEditorHTML: string,
+    diffEditorHTML: string,
+    diffEditorHTMLId?: string,
+    eventCallId?: string
+  ) => {
+    if (!eventCallId) return;
+
+    const htmlOfEditor = canvasEditor?.current?.getHTML?.();
+    if (!htmlOfEditor) return;
+
+    if (diffEditorHTMLId) {
+      const newHtml = replaceElementById(
+        htmlOfEditor,
+        diffEditorHTMLId,
+        oldEditorHTML
+      );
+      canvasEditor?.current?.setHTML?.(newHtml);
+    } else {
+      if (!htmlOfEditor.includes(diffEditorHTML)) {
+        updateMessageStateAndDB(eventCallId, { notFound: true });
+        return;
+      }
+      const newHtml = htmlOfEditor.replace(diffEditorHTML, oldEditorHTML);
+      canvasEditor?.current?.setHTML?.(newHtml);
+    }
+
+    updateMessageStateAndDB(eventCallId, { rejected: true, accepted: false });
+  };
+
   const handleAcceptEvent = (
     newEditorHTML: string,
     diffEditorHTMLId?: string,
     eventCallId?: string
   ) => {
-    const htmlOfEditor = canvasEditor?.current?.getHTML?.();
+    if (!eventCallId) return;
 
-    if (htmlOfEditor && diffEditorHTMLId) {
+    const htmlOfEditor = canvasEditor?.current?.getHTML?.();
+    if (!htmlOfEditor) return;
+
+    if (diffEditorHTMLId) {
       const parser = new DOMParser();
       const doc = parser.parseFromString(htmlOfEditor, "text/html");
       const targetElement = doc.getElementById(diffEditorHTMLId);
@@ -274,80 +257,19 @@ const ChatUI = ({
           newEditorHTML
         );
         canvasEditor?.current?.setHTML?.(newHtml);
+        updateMessageStateAndDB(eventCallId, {
+          accepted: true,
+          rejected: false,
+        });
       } else {
         console.warn(
           `Element with ID ${diffEditorHTMLId} not found in current editor HTML!`
         );
-        // Update message state to mark as notFound
-        setMessages((prev: ChatMessage[]) => {
-          const newMessages = prev.map((message: ChatMessage) => {
-            if (message.role === "assistant" && message.events) {
-              return {
-                ...message,
-                events: message.events.map((event) => {
-                  if (event.callId === eventCallId) {
-                    return { ...event, notFound: true };
-                  }
-                  return event;
-                }),
-              };
-            }
-            return message;
-          });
-
-          // Update message in database
-          const targetMessage = newMessages.find(
-            (msg) =>
-              msg.role === "assistant" &&
-              msg.events?.some((e) => e.callId === eventCallId)
-          );
-          if (targetMessage?.id) {
-            updateMessage.mutate({
-              id: targetMessage.id,
-              events: targetMessage.events || [],
-            });
-          }
-
-          return newMessages;
-        });
-
-        return;
+        updateMessageStateAndDB(eventCallId, { notFound: true });
       }
     } else {
+      updateMessageStateAndDB(eventCallId, { accepted: true, rejected: false });
     }
-
-    // Update message state to mark as accepted
-    setMessages((prev: ChatMessage[]) => {
-      const newMessages = prev.map((message: ChatMessage) => {
-        if (message.role === "assistant" && message.events) {
-          return {
-            ...message,
-            events: message.events.map((event) => {
-              if (event.callId === eventCallId) {
-                return { ...event, accepted: true, rejected: false };
-              }
-              return event;
-            }),
-          };
-        }
-        return message;
-      });
-
-      // Update message in database
-      const targetMessage = newMessages.find(
-        (msg) =>
-          msg.role === "assistant" &&
-          msg.events?.some((e) => e.callId === eventCallId)
-      );
-      if (targetMessage?.id) {
-        updateMessage.mutate({
-          id: targetMessage.id,
-          events: targetMessage.events || [],
-        });
-      }
-
-      return newMessages;
-    });
   };
 
   const handleRejectAllChanges = () => {

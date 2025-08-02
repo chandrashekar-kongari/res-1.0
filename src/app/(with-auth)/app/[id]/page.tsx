@@ -40,6 +40,18 @@ export interface ChatMessage {
   isStreaming?: boolean; // Add streaming flag
 }
 
+// Helper function to ensure message updates preserve IDs
+const updateMessageWithId = (
+  message: ChatMessage,
+  updates: Partial<ChatMessage>
+): ChatMessage => {
+  return {
+    ...message,
+    ...updates,
+    id: message.id, // Always preserve the original ID
+  };
+};
+
 export default function Home({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const { data: user } = trpc.user.get.useQuery();
@@ -189,8 +201,7 @@ export default function Home({ params }: { params: Promise<{ id: string }> }) {
                     ) {
                       const updated = [...prev];
                       const lastMessage = updated[lastIndex];
-                      updated[lastIndex] = {
-                        ...lastMessage,
+                      updated[lastIndex] = updateMessageWithId(lastMessage, {
                         events: [
                           ...(lastMessage.events || []),
                           {
@@ -201,7 +212,7 @@ export default function Home({ params }: { params: Promise<{ id: string }> }) {
                             data: { delta: text },
                           },
                         ],
-                      };
+                      });
                       return updated;
                     }
                     return prev;
@@ -226,8 +237,7 @@ export default function Home({ params }: { params: Promise<{ id: string }> }) {
                           e.callId === event?.data?.event?.item?.type?.call_id
                       );
                       if (!exists) {
-                        updated[lastIndex] = {
-                          ...lastMessage,
+                        updated[lastIndex] = updateMessageWithId(lastMessage, {
                           events: [
                             ...(lastMessage.events || []),
                             {
@@ -238,7 +248,7 @@ export default function Home({ params }: { params: Promise<{ id: string }> }) {
                               data: event?.data?.event?.item,
                             },
                           ],
-                        };
+                        });
                       }
                       return updated;
                     }
@@ -271,19 +281,21 @@ export default function Home({ params }: { params: Promise<{ id: string }> }) {
                             (e) => e.callId === callId
                           );
                           if (!exists) {
-                            updated[lastIndex] = {
-                              ...lastMessage,
-                              events: [
-                                ...(lastMessage.events || []),
-                                {
-                                  callId: callId,
-                                  name: toolCall.function.name,
-                                  status: false, // Still in progress
-                                  type: "function_call",
-                                  data: toolCall,
-                                },
-                              ],
-                            };
+                            updated[lastIndex] = updateMessageWithId(
+                              lastMessage,
+                              {
+                                events: [
+                                  ...(lastMessage.events || []),
+                                  {
+                                    callId: callId,
+                                    name: toolCall.function.name,
+                                    status: false, // Still in progress
+                                    type: "function_call",
+                                    data: toolCall,
+                                  },
+                                ],
+                              }
+                            );
                           }
                           return updated;
                         }
@@ -425,8 +437,7 @@ export default function Home({ params }: { params: Promise<{ id: string }> }) {
                           <mark style="background-color: #acf2bd;">${res.newEditorHTML}</mark>
                         </div>`;
 
-                        const replicaInitialHTML =
-                          replicaRef.current?.setHTML(diffFromAssistant);
+                        replicaRef.current?.setHTML(diffFromAssistant);
 
                         const replicaHtml = replicaRef.current
                           ?.getHTML()
