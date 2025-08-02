@@ -692,6 +692,7 @@ const TiptapEditor = forwardRef<TiptapEditorRef, TiptapEditorProps>(
       setError(null);
 
       try {
+        // First try server-side PDF generation
         const html = editor.getHTML();
         console.log("html: ", html);
 
@@ -701,20 +702,40 @@ const TiptapEditor = forwardRef<TiptapEditorRef, TiptapEditorProps>(
           body: JSON.stringify({ html, filename: "document.pdf" }),
         });
 
-        if (!response.ok) throw new Error("Failed to export PDF");
+        if (response.ok) {
+          const blob = await response.blob();
+          const url = window.URL.createObjectURL(blob);
+          const a = document.createElement("a");
+          a.href = url;
+          a.download = "document.pdf";
+          a.click();
+          window.URL.revokeObjectURL(url);
+          setIsLoading(false);
+          return;
+        }
 
-        const blob = await response.blob();
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = "document.pdf";
-        a.click();
-        window.URL.revokeObjectURL(url);
-
+        // Fallback to client-side PDF generation if server-side fails
+        console.warn(
+          "Server-side PDF generation failed, falling back to client-side"
+        );
+        const { exportToPDF } = await import("../lib/pdf-export");
+        const editorJSON = editor.getJSON();
+        await exportToPDF(editorJSON, "document.pdf");
         setIsLoading(false);
       } catch (error: any) {
-        setError(error.message);
-        setIsLoading(false);
+        console.error("PDF export error:", error);
+
+        // Try client-side fallback on any error
+        try {
+          const { exportToPDF } = await import("../lib/pdf-export");
+          const editorJSON = editor.getJSON();
+          await exportToPDF(editorJSON, "document.pdf");
+          setIsLoading(false);
+        } catch (fallbackError: any) {
+          console.error("Client-side PDF fallback also failed:", fallbackError);
+          setError("Failed to export PDF: " + fallbackError.message);
+          setIsLoading(false);
+        }
       }
     }, [editor]);
 
