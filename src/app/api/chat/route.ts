@@ -17,7 +17,7 @@ const external_client = new AsyncOpenAI({
 const runner = new Runner({
   model: new OpenAIChatCompletionsModel(
     external_client,
-    "claude-3-7-sonnet-20250219"
+    "claude-3-5-sonnet-20241022"
   ),
 });
 
@@ -164,7 +164,45 @@ export async function POST(req: Request) {
       ### Tool Calls - CRITICAL EXECUTION RULES
       🚨 MANDATORY: You MUST continue calling tools until the user's query is 100% COMPLETELY resolved. DO NOT STOP until EVERYTHING is finished.
       
-      ## Tool Calling Strategy:
+      ## Tool Calling Strategy and Completion Checks:
+      
+      ### Before ANY Tool Call:
+      1. **Pre-Call Assessment**:
+         - Review the original user query in detail
+         - List all remaining tasks/aspects not yet addressed
+         - Confirm this tool call is necessary for completion
+         - Validate that the selected tool matches the current task
+      
+      2. **Query Completion Check**:
+         - Ask yourself: "What specific part of the user's query will this tool call address?"
+         - Verify: "Is this the most appropriate tool for this task?"
+         - Consider: "Are there any prerequisites before making this call?"
+         - Document: "What aspects will remain after this call?"
+      
+      ### After EVERY Tool Call:
+      1. **Post-Call Verification**:
+         - Review the tool's response and results
+         - Compare against original user query requirements
+         - List which aspects have been completed
+         - Identify any remaining unaddressed parts
+      
+      2. **Completion Assessment**:
+         - Create a checklist of original requirements
+         - Mark off completed aspects
+         - Document any partial completions
+         - List remaining tasks explicitly
+      
+      3. **Decision Point**:
+         - If ANY aspects remain incomplete:
+           * Identify next required tool
+           * Plan next action
+           * Continue with next tool call
+         - If ALL aspects are complete:
+           * Double-check against original query
+           * Verify no edge cases were missed
+           * Provide completion summary to user
+      
+      ### Core Strategy Rules:
       1. **Sequential for Dependencies**: Only use sequential tool calls when operations have dependencies (e.g., one tool's output is needed for another tool's input).
       2. **Continue Until Complete**: After tool calls complete, you MUST assess if the user's query is fully resolved. If ANY part remains unfinished, continue with the next appropriate tool call(s).
       3. **Iterative Process**: You may need to call multiple tools in parallel or sequence multiple tool batches to fully address the user's request.
@@ -263,13 +301,47 @@ export async function POST(req: Request) {
          - Verify each small change
          - Only mark complete when ALL micro-tasks are done
 
-      ## 🚨 CRITICAL COMPLETION CRITERIA - When to STOP calling tools:
+      ## 🚨 CRITICAL COMPLETION CRITERIA - Query Verification Process:
+      
+      ### Before Proceeding with ANY Tool Call:
+      1. **Query Analysis Checklist**:
+         - [ ] Original query broken down into atomic tasks
+         - [ ] Each task mapped to specific tool(s)
+         - [ ] Dependencies between tasks identified
+         - [ ] Current task's prerequisites verified
+         - [ ] Tool selection validated for current task
+      
+      ### After EACH Tool Call:
+      1. **Immediate Verification**:
+         - [ ] Tool response successful
+         - [ ] Expected changes applied correctly
+         - [ ] No unintended side effects
+         - [ ] Changes align with user's request
+      
+      2. **Progress Tracking**:
+         - [ ] Update task completion status
+         - [ ] Document completed aspects
+         - [ ] List remaining tasks
+         - [ ] Identify next action items
+      
+      ### Before STOPPING Tool Calls:
       **ABSOLUTELY DO NOT STOP until ALL of the following are true:**
       1. ✅ EVERY SINGLE aspect of the user's request has been addressed
       2. ✅ ALL identified resume sections have been updated as requested  
       3. ✅ NO validation errors or failures remain unresolved
       4. ✅ You can confidently confirm the user's query is 100% COMPLETELY finished
       5. ✅ You have explicitly verified that nothing else needs to be done
+      6. ✅ All completion verification checklists are complete
+      7. ✅ No partial or incomplete changes remain
+      8. ✅ User's original intent fully satisfied
+      
+      ### Final Verification Questions:
+      Before concluding, ask yourself:
+      1. "Have I addressed EVERY aspect of the original query?"
+      2. "Are there any edge cases I haven't considered?"
+      3. "Would the user consider this response complete?"
+      4. "Have I documented all changes made?"
+      5. "Is there ANY possibility something was missed?"
       
       **MANDATORY: Continue calling tools if ANY of these apply:**
       - ❌ ANY parts of the user's request remain unaddressed
