@@ -1,16 +1,29 @@
 import { NextRequest, NextResponse } from "next/server";
 import puppeteer from "puppeteer";
+import {
+  uploadToS3,
+  generateDownloadUrl,
+  generateFileKey,
+} from "@/lib/blob-storage";
+import { stackServerApp } from "@/stack";
 
 export const POST = async (req: NextRequest) => {
   let browser;
 
   try {
+    // Get the authenticated user
+    const user = await stackServerApp.getUser({ tokenStore: "nextjs-cookie" });
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const { html, filename = "document.pdf" } = await req.json();
 
     if (!html) {
       return NextResponse.json({ error: "No HTML provided" }, { status: 400 });
     }
 
+    // Generate PDF with Puppeteer
     browser = await puppeteer.launch({
       args: [
         "--no-sandbox",
@@ -35,15 +48,21 @@ export const POST = async (req: NextRequest) => {
       margin: { top: "10mm", right: "10mm", bottom: "10mm", left: "10mm" },
     });
 
-    // Convert to Buffer for NextResponse
-    const buffer = Buffer.from(pdfBuffer);
+    // Generate unique filename for blob storage
+    const fileName = generateFileKey(user.id, filename);
 
-    return new NextResponse(buffer, {
-      status: 200,
-      headers: {
-        "Content-Type": "application/pdf",
-        "Content-Disposition": `attachment; filename=\"${filename}\"`,
-      },
+    // Upload PDF to Vercel Blob (returns direct download URL)
+    const downloadUrl = await uploadToS3(
+      Buffer.from(pdfBuffer),
+      fileName,
+      "application/pdf"
+    );
+
+    return NextResponse.json({
+      success: true,
+      downloadUrl,
+      filename,
+      expiresIn: 3600, // 1 hour
     });
   } catch (error) {
     console.error("PDF generation error:", error);

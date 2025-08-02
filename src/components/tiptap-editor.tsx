@@ -703,30 +703,36 @@ const TiptapEditor = forwardRef<TiptapEditorRef, TiptapEditorProps>(
         });
 
         if (response.ok) {
-          const blob = await response.blob();
-          const url = window.URL.createObjectURL(blob);
-          const a = document.createElement("a");
-          a.href = url;
-          a.download = "document.pdf";
-          a.click();
-          window.URL.revokeObjectURL(url);
-          setIsLoading(false);
-          return;
+          const result = await response.json();
+
+          if (result.success && result.downloadUrl) {
+            // Open download URL in new tab/window for secure download
+            const a = document.createElement("a");
+            a.href = result.downloadUrl;
+            a.download = result.filename || "document.pdf";
+            a.target = "_blank";
+            a.rel = "noopener noreferrer";
+            a.click();
+            setIsLoading(false);
+            return;
+          } else {
+            throw new Error(result.error || "Failed to generate download URL");
+          }
         }
 
-        // Fallback to client-side PDF generation if server-side fails
-        console.warn(
-          "Server-side PDF generation failed, falling back to client-side"
+        // If response is not ok, parse the error
+        const errorResult = await response.json();
+        throw new Error(
+          errorResult.error || "Server-side PDF generation failed"
         );
-        const { exportToPDF } = await import("../lib/pdf-export");
-        const editorJSON = editor.getJSON();
-        await exportToPDF(editorJSON, "document.pdf");
-        setIsLoading(false);
       } catch (error: any) {
         console.error("PDF export error:", error);
 
-        // Try client-side fallback on any error
+        // Fallback to client-side PDF generation
         try {
+          console.warn(
+            "Server-side PDF generation failed, falling back to client-side"
+          );
           const { exportToPDF } = await import("../lib/pdf-export");
           const editorJSON = editor.getJSON();
           await exportToPDF(editorJSON, "document.pdf");
