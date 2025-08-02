@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 
 const PDF_SERVICE_URL =
-  process.env.PDF_SERVICE_URL || "https://0eb733b5ca8c.ngrok-free.app";
+  process.env.PDF_SERVICE_URL ||
+  "https://pdf-service-production-9e48.up.railway.app/";
 
 export const POST = async (req: NextRequest) => {
   try {
