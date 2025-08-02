@@ -29,6 +29,7 @@ import { LineHeight } from "@/lib/extensions/line-height";
 import { Margin } from "@/lib/extensions/margin";
 import { FontSize } from "@/lib/extensions/font-size";
 import { InlineEdit } from "@/lib/extensions/inline-edit";
+import { CleanPaste } from "@/lib/extensions/clean-paste";
 
 import { Button } from "@/components/ui/button";
 import LinkModal from "./LinkModal";
@@ -310,6 +311,7 @@ const TiptapEditor = forwardRef<TiptapEditorRef, TiptapEditorProps>(
     });
 
     const editor = useEditor({
+      // enablePasteRules: false,
       immediatelyRender: false,
       editorProps: {
         attributes: {
@@ -486,6 +488,7 @@ const TiptapEditor = forwardRef<TiptapEditorRef, TiptapEditorProps>(
           apiEndpoint: "/api/inline-edit",
           enabled: false,
         }),
+        CleanPaste,
       ],
       content,
       onUpdate: ({ editor }) => {

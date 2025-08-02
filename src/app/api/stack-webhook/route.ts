@@ -3,17 +3,53 @@ import { prisma } from "@/lib/db";
 
 export async function POST(req: NextRequest) {
   try {
+    // Optional: Verify webhook signature for security
+    // const signature = req.headers.get('stack-signature');
+    // if (!verifySignature(signature, body)) {
+    //   return new Response('Unauthorized', { status: 401 });
+    // }
+
     const event = await req.json();
-    console.log("Webhook event received:", event);
+    console.log("Webhook event received:", JSON.stringify(event, null, 2));
 
     if (event.type === "user.created") {
       const user = event.data;
-      await prisma.user.create({
+      console.log("Creating user:", user);
+
+      try {
+        const createdUser = await prisma.user.create({
+          data: {
+            id: user.id,
+            email: user.primary_email, // <-- use primary_email
+            name: user.display_name, // <-- use display_name
+          },
+        });
+        console.log("User created successfully:", createdUser);
+      } catch (userError) {
+        console.error("Error creating user:", userError);
+        // If user already exists, that's okay
+        if (
+          userError instanceof Error &&
+          userError.message.includes("Unique constraint")
+        ) {
+          console.log("User already exists, skipping creation");
+        } else {
+          throw userError;
+        }
+      }
+    } else if (event.type === "user.updated") {
+      const user = event.data;
+      await prisma.user.update({
+        where: { id: user.id },
         data: {
-          id: user.id,
-          email: user.primary_email, // <-- use primary_email
-          name: user.display_name, // <-- use display_name
+          email: user.primary_email,
+          name: user.display_name,
         },
+      });
+    } else if (event.type === "user.deleted") {
+      const user = event.data;
+      await prisma.user.delete({
+        where: { id: user.id },
       });
     }
 

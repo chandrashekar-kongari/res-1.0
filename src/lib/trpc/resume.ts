@@ -220,6 +220,23 @@ export const resumeRouter = router({
         message: "You must be logged in to access this resource",
       });
     }
+
+    // Ensure user exists in database first
+    const existingUser = await prisma.user.findUnique({
+      where: { email: ctx.user!.primaryEmail },
+    });
+
+    if (!existingUser) {
+      // Create user if it doesn't exist (fallback for webhook failures)
+      await prisma.user.create({
+        data: {
+          id: ctx.user!.id,
+          email: ctx.user!.primaryEmail,
+          name: ctx.user?.displayName || null,
+        },
+      });
+    }
+
     const resumes = await prisma.resume.findMany({
       where: {
         user: {
