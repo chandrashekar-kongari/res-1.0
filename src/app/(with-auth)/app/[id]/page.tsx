@@ -97,6 +97,40 @@ export default function Home({ params }: { params: Promise<{ id: string }> }) {
     if (abortControllerRef.current) {
       abortControllerRef.current.abort();
       setIsAgentRunning(false);
+
+      // Find the latest assistant message that is streaming
+      const lastAssistantMessage = [...messages]
+        .reverse()
+        .find((msg) => msg.role === "assistant" && msg.isStreaming);
+
+      // Update the message in the database
+      if (lastAssistantMessage && thread?.id && user?.id) {
+        upsertMessage.mutate({
+          message: {
+            created_at: new Date(),
+            updated_at: new Date(),
+            ...lastAssistantMessage,
+            user_id: user.id,
+            threadId: thread.id,
+            isStreaming: false,
+            deleted_at: null,
+            newEditorHTML: lastAssistantMessage.newEditorHTML || null,
+            diffEditorHTML: lastAssistantMessage.diffEditorHTML || null,
+            attachPartOfHTML: lastAssistantMessage.attachPartOfHTML || [],
+            events: lastAssistantMessage.events || [],
+          },
+          threadId: thread.id,
+        });
+
+        // Update the message in the UI
+        setMessages((prevMessages) =>
+          prevMessages.map((msg) =>
+            msg.id === lastAssistantMessage.id
+              ? { ...msg, isStreaming: false }
+              : msg
+          )
+        );
+      }
     }
   };
 
@@ -142,6 +176,7 @@ export default function Home({ params }: { params: Promise<{ id: string }> }) {
             attachPartOfHTML: userMessage.attachPartOfHTML || [],
             isStreaming: userMessage.isStreaming || false,
             events: userMessage.events || [],
+            id: userMessage.id,
           },
           threadId: thread.id,
         });
@@ -149,18 +184,37 @@ export default function Home({ params }: { params: Promise<{ id: string }> }) {
 
       // Only add user message on first attempt
       if (retryCount === 0) {
-        const updatedMessages = [
-          ...messages,
-          userMessage,
-          {
-            role: "assistant" as const,
-            content: "",
-            id: uuidv4(),
-            events: [],
-            isStreaming: true,
-          } as ChatMessage,
-        ];
+        const assistantMessage = {
+          role: "assistant" as const,
+          content: "",
+          id: uuidv4(),
+          events: [],
+          isStreaming: true,
+        } as ChatMessage;
+
+        const updatedMessages = [...messages, userMessage, assistantMessage];
         setMessages(updatedMessages);
+
+        // Also persist the assistant message to the database
+        if (thread?.id && user?.id) {
+          upsertMessage.mutate({
+            message: {
+              ...assistantMessage,
+              user_id: user.id,
+              threadId: thread.id,
+              created_at: new Date(),
+              updated_at: new Date(),
+              deleted_at: null,
+              newEditorHTML: null,
+              diffEditorHTML: null,
+              attachPartOfHTML: [],
+              isStreaming: true,
+              events: [],
+              id: assistantMessage.id,
+            },
+            threadId: thread.id,
+          });
+        }
       }
 
       setIsLoading(true);
@@ -201,7 +255,7 @@ export default function Home({ params }: { params: Promise<{ id: string }> }) {
                     ) {
                       const updated = [...prev];
                       const lastMessage = updated[lastIndex];
-                      updated[lastIndex] = updateMessageWithId(lastMessage, {
+                      const updatedMessage = updateMessageWithId(lastMessage, {
                         events: [
                           ...(lastMessage.events || []),
                           {
@@ -213,6 +267,32 @@ export default function Home({ params }: { params: Promise<{ id: string }> }) {
                           },
                         ],
                       });
+                      updated[lastIndex] = updatedMessage;
+
+                      // Persist the update to the database
+                      if (thread?.id && user?.id) {
+                        upsertMessage.mutate({
+                          message: {
+                            id: updatedMessage.id,
+                            role: updatedMessage.role,
+                            content: updatedMessage.content,
+                            user_id: user.id,
+                            threadId: thread.id,
+                            created_at: new Date(),
+                            updated_at: new Date(),
+                            deleted_at: null,
+                            newEditorHTML: updatedMessage.newEditorHTML || null,
+                            diffEditorHTML:
+                              updatedMessage.diffEditorHTML || null,
+                            attachPartOfHTML:
+                              updatedMessage.attachPartOfHTML || [],
+                            isStreaming: updatedMessage.isStreaming || false,
+                            events: updatedMessage.events || [],
+                          },
+                          threadId: thread.id,
+                        });
+                      }
+
                       return updated;
                     }
                     return prev;
@@ -237,18 +317,47 @@ export default function Home({ params }: { params: Promise<{ id: string }> }) {
                           e.callId === event?.data?.event?.item?.type?.call_id
                       );
                       if (!exists) {
-                        updated[lastIndex] = updateMessageWithId(lastMessage, {
-                          events: [
-                            ...(lastMessage.events || []),
-                            {
-                              callId: event?.data?.event?.item?.call_id,
-                              name: event?.data?.event?.item?.name,
-                              status: false,
-                              type: "function_call",
-                              data: event?.data?.event?.item,
+                        const updatedMessage = updateMessageWithId(
+                          lastMessage,
+                          {
+                            events: [
+                              ...(lastMessage.events || []),
+                              {
+                                callId: event?.data?.event?.item?.call_id,
+                                name: event?.data?.event?.item?.name,
+                                status: false,
+                                type: "function_call",
+                                data: event?.data?.event?.item,
+                              },
+                            ],
+                          }
+                        );
+                        updated[lastIndex] = updatedMessage;
+
+                        // Persist the update to the database
+                        if (thread?.id && user?.id) {
+                          upsertMessage.mutate({
+                            message: {
+                              id: updatedMessage.id,
+                              role: updatedMessage.role,
+                              content: updatedMessage.content,
+                              user_id: user.id,
+                              threadId: thread.id,
+                              created_at: new Date(),
+                              updated_at: new Date(),
+                              deleted_at: null,
+                              newEditorHTML:
+                                updatedMessage.newEditorHTML || null,
+                              diffEditorHTML:
+                                updatedMessage.diffEditorHTML || null,
+                              attachPartOfHTML:
+                                updatedMessage.attachPartOfHTML || [],
+                              isStreaming: updatedMessage.isStreaming || false,
+                              events: updatedMessage.events || [],
                             },
-                          ],
-                        });
+                            threadId: thread.id,
+                          });
+                        }
                       }
                       return updated;
                     }
@@ -900,6 +1009,7 @@ export default function Home({ params }: { params: Promise<{ id: string }> }) {
                 setAttachPartOfHTML={setAttachPartOfHTML}
                 setMessages={setMessages}
                 handleStopAssistant={handleStopAssistant}
+                resumeId={resume?.id || ""}
               />
             )}
           </div>

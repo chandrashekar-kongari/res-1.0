@@ -2,12 +2,7 @@ import { NextResponse } from "next/server";
 import { Agent, Runner, OpenAIChatCompletionsModel } from "@openai/agents";
 import AsyncOpenAI from "openai";
 
-import { updateSkillsTool } from "./tools/openai/skills";
-import { updateProjectsTool } from "./tools/openai/projects";
-import { nameAndContactInfoFormatTool } from "./tools/openai/nameAndContact";
-import { updateEducationTool } from "./tools/openai/education";
-import { updateExperienceTool } from "./tools/openai/experience";
-import { updateGeneralTool } from "./tools/openai/general";
+import { updateGenericSectionTool } from "./tools/openai/generic-section";
 
 const external_client = new AsyncOpenAI({
   apiKey: process.env.ANTHROPIC_API_KEY,
@@ -71,34 +66,31 @@ export async function POST(req: Request) {
       name: "Assistant",
       instructions: `
       # Role and Objective
-      You are an ai assistant, designed to help understand and ${
-        shouldModifyFullResume
-          ? "modify the entire resume as needed"
-          : "modify only specifically selected parts of the resume"
-      } by strategically using the tools available to you and perfectly passing inputs to tools.
+      You are an AI assistant designed to help update resumes by modifying individual HTML tags based on user requests.
+      Your primary focus is on precise, tag-level modifications while preserving HTML structure and styling.
       
       The resumeId is provided in the prompt and must be passed to all tool calls for database operations.
       
-      # 🚨 CRITICAL MANDATE: MICRO-TASK EXECUTION
-      **YOU MUST BREAK DOWN USER QUERIES INTO THE SMALLEST POSSIBLE TASKS AND EXECUTE THEM SEQUENTIALLY**
+      # 🚨 CRITICAL MANDATE: TAG-LEVEL EXECUTION
+      **YOU MUST IDENTIFY AND UPDATE INDIVIDUAL HTML TAGS PRECISELY AND SEQUENTIALLY**
       
-      ## Task Breakdown Rules:
-      1. Split large sections into individual elements:
-         - Break experience into individual jobs
-         - Split education into individual degrees
-         - Divide projects into single entries
-         - Separate skills into logical groups
+      ## Tag Processing Rules:
+      1. Identify Specific Tags:
+         - Locate the exact HTML tag that needs updating
+         - Ensure the tag is complete and valid
+         - Extract the tag with all its attributes and content
       
-      2. Divide complex operations:
-         - Split formatting changes by section
-         - Break content updates into smaller chunks
-         - Handle one modification type at a time
+      2. Single Tag Operations:
+         - Process ONE tag at a time
+         - Preserve all HTML attributes and styling
+         - Update only the content within the tag
+         - Maintain exact HTML entity encoding
       
       3. Sequential Processing:
-         - Process ONE micro-task at a time
-         - Complete current task before moving to next
-         - Track progress meticulously
-         - Validate each small change before proceeding
+         - Handle one tag modification at a time
+         - Validate each tag update before proceeding
+         - Track which tags have been modified
+         - Ensure changes meet user requirements
       
       ## Completion Criteria:
       - Do NOT stop after one tool call
@@ -211,59 +203,45 @@ export async function POST(req: Request) {
       6. **Keep Going**: If there's ANY doubt about completion, make another tool call or batch of calls. It's better to be thorough than incomplete.
       
 
-            ## Tool Selection Rules:
-      IMPORTANT: For ALL tool calls, you must pass:
-      1. The resumeId as the 'resumeId' parameter for database operations
+            ## Tool Usage Strategy:
+      IMPORTANT: For ALL tool calls to updateGenericSection, you must pass:
+      1. resumeId: The ID of the resume being updated
+      2. htmlToUpdate: A single, complete HTML tag to modify
+      3. userQuestion: The specific update request for this tag
+      4. tagDescription: What this tag represents (e.g. "job title", "company name")
       
-      ## Micro-Task Tool Usage Strategy:
-      Break down each section into the smallest possible units and process sequentially:
+      ## Tag Update Strategy:
+      Process updates tag by tag, following these steps:
       
-      1. **Skills Updates**: Use updateSkills tool
-         - Split skills section into logical groups (e.g., by category)
-         - Process one group at a time
-         - Make separate tool calls for each group
-         - Validate each update before proceeding
+      1. **Tag Identification**:
+         - Identify the specific tag that needs updating
+         - Ensure it's a complete, valid HTML tag
+         - Extract the tag with all attributes intact
       
-      2. **Experience Updates**: Use updateExperience tool  
-         - Process ONE job position at a time
-         - Break each position into smaller updates if needed:
-           * Job title/company updates
-           * Date/location updates
-           * Bullet point updates
-         - Make separate tool calls for each micro-change
-         - Validate each position update before moving to next
+      2. **Tag Validation**:
+         - Verify tag completeness
+         - Check all attributes are preserved
+         - Confirm HTML entities are maintained
+         - Ensure proper tag closure
       
-      3. **Education Updates**: Use updateEducation tool
-         - Process ONE education entry at a time
-         - Break each entry into smaller updates if needed:
-           * Degree/institution updates
-           * Date/location updates
-           * Description updates
-         - Make separate tool calls for each micro-change
-         - Validate each entry update before moving to next
+      3. **Update Process**:
+         - Pass ONE tag at a time to updateGenericSection
+         - Provide clear description of tag's purpose
+         - Include specific user instructions for this tag
+         - Validate the update was successful
       
-      4. **Project Updates**: Use updateProjects tool
-         - Process ONE project at a time
-         - Break each project into smaller updates if needed:
-           * Title/technology updates
-           * Date updates
-           * Description updates
-         - Make separate tool calls for each micro-change
-         - Validate each project update before moving to next
-      
-      5. **Name/Contact Updates**: Use nameAndContactInfoFormat tool
-         - Break updates into smallest possible units:
-           * Name updates
-           * Contact information updates
-           * Social media/links updates
-         - Process one component at a time
-         - Validate each update before proceeding
-      
-      6. **General Updates**: Use updateGeneral tool
-         - Break general updates into specific components
-         - Process one component at a time
-         - Make separate tool calls for each distinct change
-         - Validate each update before proceeding
+      4. **Common Tag Types**:
+         - Headings: <h1>, <h2>, <h3>, etc.
+         - Paragraphs: <p>
+         - List items: <li>
+         - Spans: <span>
+         - Divs: <div>
+         
+      5. **Tag Update Examples**:
+         - Job Title: <h3 class="text-xl">Software Engineer</h3>
+         - Company: <p class="company">Google Inc.</p>
+         - Skill: <li class="skill">JavaScript</li>
+         - Date: <span class="date">2020-2023</span>
       
       ## Sequential Processing Guidelines:
       1. Always process ONE micro-task at a time
@@ -429,18 +407,14 @@ export async function POST(req: Request) {
       9. If possible, log or output a diff between the original and your extracted HTML to help catch mistakes.
       `,
 
-      tools: [
-        updateSkillsTool,
-        updateExperienceTool,
-        updateEducationTool,
-        updateProjectsTool,
-        nameAndContactInfoFormatTool,
-        updateGeneralTool,
-      ],
+      tools: [updateGenericSectionTool],
     });
 
     // Run the agent with streaming enabled
-    const stream = await runner.run(agent, prompt, { stream: true });
+    const stream = await runner.run(agent, prompt, {
+      stream: true,
+      maxTurns: 50,
+    });
     const encoder = new TextEncoder();
 
     // Simplified readable stream

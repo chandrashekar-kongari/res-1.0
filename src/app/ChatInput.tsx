@@ -9,6 +9,7 @@ import {
   Axe,
   AxeIcon,
   ChevronDownIcon,
+  Circle,
   EllipsisVerticalIcon,
   FileTextIcon,
   Loader2,
@@ -33,6 +34,7 @@ interface ChatInputProps {
   setIsResumeSelected?: (value: boolean) => void;
   attachPartOfHTML?: string[];
   setAttachPartOfHTML?: (parts: string[]) => void;
+  onStop?: () => void;
 }
 
 const ChatInput = ({
@@ -42,6 +44,7 @@ const ChatInput = ({
   setIsResumeSelected,
   attachPartOfHTML = [],
   setAttachPartOfHTML,
+  onStop,
 }: ChatInputProps) => {
   const editorContainerRef = useRef<HTMLDivElement>(null);
 
@@ -103,6 +106,10 @@ const ChatInput = ({
   });
 
   const handleSend = useCallback(() => {
+    if (isStreaming) {
+      onStop?.();
+      return;
+    }
     if (!editor || !editor.getText().trim()) return;
     onSend?.(editor.getText());
     editor.commands.clearContent();
@@ -162,7 +169,7 @@ const ChatInput = ({
             <EditorContent disabled={isStreaming} editor={editor} />
           </div>
         </div>
-        <div className="flex justify-between ">
+        <div className="flex justify-between pt-1 ">
           <div>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -189,11 +196,10 @@ const ChatInput = ({
           <div>
             {isStreaming ? (
               <Button
-                onClick={handleSend}
-                disabled={isStreaming}
-                className="shrink-0 bg-white text-black/80 hover:bg-gray-50 hover:text-black/90 rounded-full border border-black/20 w-6 h-6 p-0 flex items-center justify-center"
+                onClick={onStop}
+                className="shrink-0 bg-red-50 text-red-600 hover:bg-red-100 hover:text-red-700 rounded-full border border-red-200 w-6 h-6 p-0 flex items-center justify-center"
               >
-                <Loader2 className="w-3 h-3 animate-spin" />
+                <Circle className="w-3 h-3" />
               </Button>
             ) : (
               <Button

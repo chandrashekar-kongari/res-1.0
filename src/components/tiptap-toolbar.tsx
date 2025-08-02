@@ -105,8 +105,8 @@ export function TiptapToolbar({
         {/* Color Dropdown */}
 
         <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <TooltipWrapper content="Text Color">
+          <TooltipWrapper content="Text Color">
+            <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="sm">
                 <PaletteIcon
                   className="h-4 w-4"
@@ -115,8 +115,8 @@ export function TiptapToolbar({
                   }}
                 />
               </Button>
-            </TooltipWrapper>
-          </DropdownMenuTrigger>
+            </DropdownMenuTrigger>
+          </TooltipWrapper>
           <DropdownMenuContent align="start">
             <DropdownMenuLabel className="text-xs">
               Text Color
@@ -159,8 +159,8 @@ export function TiptapToolbar({
         {/* Highlight Dropdown */}
 
         <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <TooltipWrapper content="Highlight Color">
+          <TooltipWrapper content="Highlight Color">
+            <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="sm">
                 <BrushIcon
                   className="h-4 w-4"
@@ -171,8 +171,8 @@ export function TiptapToolbar({
                   }}
                 />
               </Button>
-            </TooltipWrapper>
-          </DropdownMenuTrigger>
+            </DropdownMenuTrigger>
+          </TooltipWrapper>
           <DropdownMenuContent align="start">
             <DropdownMenuLabel className="text-xs">
               Highlight Color
@@ -243,13 +243,13 @@ export function TiptapToolbar({
         {/* Font Size Dropdown */}
 
         <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <TooltipWrapper content="Font Size">
+          <TooltipWrapper content="Font Size">
+            <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="sm">
                 <FontSizeIcon className="h-4 w-4" />
               </Button>
-            </TooltipWrapper>
-          </DropdownMenuTrigger>
+            </DropdownMenuTrigger>
+          </TooltipWrapper>
           <DropdownMenuContent align="start">
             <DropdownMenuLabel className="text-xs">Font Size</DropdownMenuLabel>
             {["12px", "14px", "16px", "18px", "21px"].map((size) => (
@@ -363,13 +363,13 @@ export function TiptapToolbar({
         {/* Line Height */}
 
         <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <TooltipWrapper content="Line Height">
+          <TooltipWrapper content="Line Height">
+            <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="sm">
                 <LineHeightIcon className="h-4 w-4" />
               </Button>
-            </TooltipWrapper>
-          </DropdownMenuTrigger>
+            </DropdownMenuTrigger>
+          </TooltipWrapper>
           <DropdownMenuContent align="start">
             <DropdownMenuLabel className="text-xs">
               Line Height
@@ -404,13 +404,13 @@ export function TiptapToolbar({
         {/* Margin Top */}
 
         <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <TooltipWrapper content="Margin Top">
+          <TooltipWrapper content="Margin Top">
+            <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="sm">
                 <TextAlignTopIcon className="h-4 w-4" />
               </Button>
-            </TooltipWrapper>
-          </DropdownMenuTrigger>
+            </DropdownMenuTrigger>
+          </TooltipWrapper>
           <DropdownMenuContent align="start">
             <DropdownMenuLabel className="text-xs">
               Margin Top
@@ -440,13 +440,13 @@ export function TiptapToolbar({
         {/* Margin Bottom */}
 
         <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <TooltipWrapper content="Margin Bottom">
+          <TooltipWrapper content="Margin Bottom">
+            <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="sm">
                 <TextAlignBottomIcon className="h-4 w-4" />
               </Button>
-            </TooltipWrapper>
-          </DropdownMenuTrigger>
+            </DropdownMenuTrigger>
+          </TooltipWrapper>
           <DropdownMenuContent align="start">
             <DropdownMenuLabel className="text-xs">
               Margin Bottom
