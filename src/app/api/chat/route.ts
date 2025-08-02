@@ -1,11 +1,29 @@
 import { NextResponse } from "next/server";
-import { Agent, Runner } from "@openai/agents";
-import { updateSkillsTool } from "./tools/skills";
-import { updateProjectsTool } from "./tools/projects";
-import { nameAndContactInfoFormatTool } from "./tools/nameAndContact";
-import { updateEducationTool } from "./tools/education";
-import { updateExperienceTool } from "./tools/experience";
-const runner = new Runner({ model: "gpt-4.1" });
+import { Agent, Runner, OpenAIChatCompletionsModel } from "@openai/agents";
+import AsyncOpenAI from "openai";
+
+import { updateSkillsTool } from "./tools/openai/skills";
+import { updateProjectsTool } from "./tools/openai/projects";
+import { nameAndContactInfoFormatTool } from "./tools/openai/nameAndContact";
+import { updateEducationTool } from "./tools/openai/education";
+import { updateExperienceTool } from "./tools/openai/experience";
+import { updateGeneralTool } from "./tools/openai/general";
+
+const external_client = new AsyncOpenAI({
+  apiKey: process.env.ANTHROPIC_API_KEY,
+  baseURL: "https://api.anthropic.com/v1/",
+});
+// Using Claude 3.5 Sonnet (20241022) - supports Claude 4 parallel tool calling best practices
+const runner = new Runner({
+  model: new OpenAIChatCompletionsModel(
+    external_client,
+    "claude-3-7-sonnet-20250219"
+  ),
+});
+
+// const runner = new Runner({
+//   model: "gpt-4.1",
+// });
 
 export async function POST(req: Request) {
   try {
@@ -61,12 +79,38 @@ export async function POST(req: Request) {
       
       The resumeId is provided in the prompt and must be passed to all tool calls for database operations.
       
-      # 🚨 CRITICAL MANDATE: COMPLETE TASK EXECUTION
-      **YOU MUST CONTINUE WORKING UNTIL THE USER'S QUERY IS 100% COMPLETELY RESOLVED.**
+      # 🚨 CRITICAL MANDATE: MICRO-TASK EXECUTION
+      **YOU MUST BREAK DOWN USER QUERIES INTO THE SMALLEST POSSIBLE TASKS AND EXECUTE THEM SEQUENTIALLY**
+      
+      ## Task Breakdown Rules:
+      1. Split large sections into individual elements:
+         - Break experience into individual jobs
+         - Split education into individual degrees
+         - Divide projects into single entries
+         - Separate skills into logical groups
+      
+      2. Divide complex operations:
+         - Split formatting changes by section
+         - Break content updates into smaller chunks
+         - Handle one modification type at a time
+      
+      3. Sequential Processing:
+         - Process ONE micro-task at a time
+         - Complete current task before moving to next
+         - Track progress meticulously
+         - Validate each small change before proceeding
+      
+      ## Completion Criteria:
       - Do NOT stop after one tool call
-      - Do NOT stop until EVERY aspect of the request is finished
-      - When in doubt, keep going and make another tool call
-      - Your job is not done until you can confidently say "EVERYTHING the user asked for is now complete"
+      - Do NOT stop until EVERY micro-task is finished
+      - When in doubt, break task down further
+      - Your job is not done until you can confidently say "EVERY micro-task is complete"
+      
+      ## Progress Tracking:
+      - Maintain a clear list of micro-tasks
+      - Mark each small task as complete
+      - Regularly summarize progress
+      - Identify remaining micro-tasks
       
       # Instructions for Resume Mode
       You should always be thorough, accurate, and proactive in gathering information before answering.
@@ -74,6 +118,14 @@ export async function POST(req: Request) {
       You should not make assumptions—if I don't know something, I should search or ask for clarification.
       You should never output resume changes directly; instead, you should use tools to make changes in the resume.
       You should always be clear, concise, and helpful in your explanations.
+      
+      🚨 CRITICAL HTML PRESERVATION RULE: When extracting HTML to pass to tools, you must preserve HTML entities EXACTLY as they appear. For example:
+      - "&amp;" must remain "&amp;" (NOT convert to "&")
+      - "&lt;" must remain "&lt;" (NOT convert to "<")
+      - "&gt;" must remain "&gt;" (NOT convert to ">")
+      - "&quot;" must remain "&quot;" (NOT convert to '"')
+      - "&nbsp;" must remain "&nbsp;" (NOT convert to space)
+      ANY HTML entity conversion will cause tool failures. Preserve the HTML byte-for-byte.
 
       ${
         !shouldModifyFullResume
@@ -113,40 +165,103 @@ export async function POST(req: Request) {
       🚨 MANDATORY: You MUST continue calling tools until the user's query is 100% COMPLETELY resolved. DO NOT STOP until EVERYTHING is finished.
       
       ## Tool Calling Strategy:
-      1. **One Tool Per Call**: Never call multiple tools simultaneously. Always wait for one tool to complete before calling the next.
-      2. **Continue Until Complete**: After EVERY tool call, you MUST assess if the user's query is fully resolved. If ANY part remains unfinished, continue with the next appropriate tool call.
-      3. **Iterative Process**: You may need to call the same tool multiple times or different tools in sequence to fully address the user's request.
+      1. **Sequential for Dependencies**: Only use sequential tool calls when operations have dependencies (e.g., one tool's output is needed for another tool's input).
+      2. **Continue Until Complete**: After tool calls complete, you MUST assess if the user's query is fully resolved. If ANY part remains unfinished, continue with the next appropriate tool call(s).
+      3. **Iterative Process**: You may need to call multiple tools in parallel or sequence multiple tool batches to fully address the user's request.
       4. **NEVER Stop Early**: Do NOT terminate your turn until you are absolutely certain that EVERY SINGLE aspect of the user's query has been addressed.
-      5. **Progress Tracking**: After each tool call, explicitly state what you've accomplished and what still needs to be done.
-      6. **Keep Going**: If there's ANY doubt about completion, make another tool call. It's better to be thorough than incomplete.
-
-      ## Tool Selection Rules:
-      IMPORTANT: For ALL tool calls, you must pass:
-      1. The complete current editor HTML as the 'currentEditorHTML' parameter for validation
-      2. The resumeId as the 'resumeId' parameter for database operations
+      5. **Progress Tracking**: After each batch of tool calls, explicitly state what you've accomplished and what still needs to be done.
+      6. **Keep Going**: If there's ANY doubt about completion, make another tool call or batch of calls. It's better to be thorough than incomplete.
       
-      ## When to Use Each Tool (Call ONE tool per iteration):
+
+            ## Tool Selection Rules:
+      IMPORTANT: For ALL tool calls, you must pass:
+      1. The resumeId as the 'resumeId' parameter for database operations
+      
+      ## Micro-Task Tool Usage Strategy:
+      Break down each section into the smallest possible units and process sequentially:
+      
       1. **Skills Updates**: Use updateSkills tool
-         - If multiple skill sections exist, call the tool once for each section separately
+         - Split skills section into logical groups (e.g., by category)
+         - Process one group at a time
+         - Make separate tool calls for each group
+         - Validate each update before proceeding
       
       2. **Experience Updates**: Use updateExperience tool  
-         - If the experience section has more than 2 entries, split and call the tool for each experience entry individually
-         - Make multiple sequential calls until all experience entries are updated
+         - Process ONE job position at a time
+         - Break each position into smaller updates if needed:
+           * Job title/company updates
+           * Date/location updates
+           * Bullet point updates
+         - Make separate tool calls for each micro-change
+         - Validate each position update before moving to next
       
       3. **Education Updates**: Use updateEducation tool
-         - If the education section has more than 2 entries, split and call the tool for each education entry individually  
-         - Make multiple sequential calls until all education entries are updated
+         - Process ONE education entry at a time
+         - Break each entry into smaller updates if needed:
+           * Degree/institution updates
+           * Date/location updates
+           * Description updates
+         - Make separate tool calls for each micro-change
+         - Validate each entry update before moving to next
       
       4. **Project Updates**: Use updateProjects tool
-         - If the projects section has more than 2 entries, split and call the tool for each project entry individually
-         - Make multiple sequential calls until all project entries are updated
+         - Process ONE project at a time
+         - Break each project into smaller updates if needed:
+           * Title/technology updates
+           * Date updates
+           * Description updates
+         - Make separate tool calls for each micro-change
+         - Validate each project update before moving to next
       
       5. **Name/Contact Updates**: Use nameAndContactInfoFormat tool
-         - If multiple contact sections exist, call the tool once for each section separately
+         - Break updates into smallest possible units:
+           * Name updates
+           * Contact information updates
+           * Social media/links updates
+         - Process one component at a time
+         - Validate each update before proceeding
+      
+      6. **General Updates**: Use updateGeneral tool
+         - Break general updates into specific components
+         - Process one component at a time
+         - Make separate tool calls for each distinct change
+         - Validate each update before proceeding
+      
+      ## Sequential Processing Guidelines:
+      1. Always process ONE micro-task at a time
+      2. Complete and validate current task before moving to next
+      3. Keep track of completed and remaining micro-tasks
+      4. If a task seems too large, break it down further
+      5. Never batch updates - process sequentially for maximum control
 
-      ## Execution Flow:
-      - Call ONE tool → Wait for completion → Assess progress → Call NEXT tool if needed → Repeat until query fully resolved
-      - Example: If user wants to update 5 experience entries, you will make 5 separate updateExperience tool calls
+      ## Micro-Task Execution Flow:
+      1. **Initial Analysis**:
+         - Break down user request into smallest possible tasks
+         - Create detailed task list with dependencies
+         - Identify natural break points in the content
+      
+      2. **Sequential Processing**:
+         - Process ONE micro-task at a time
+         - Example: For 5 experience entries:
+           * Update job title for entry 1
+           * Update dates for entry 1
+           * Update description for entry 1
+           * Validate entry 1 changes
+           * Move to entry 2 and repeat
+         - Never combine or batch updates
+      
+      3. **Progress Tracking**:
+         - After each micro-task:
+           * Validate the change
+           * Update task list
+           * Report progress
+           * Identify next micro-task
+      
+      4. **Completion Verification**:
+         - Review all completed micro-tasks
+         - Cross-reference with original request
+         - Verify each small change
+         - Only mark complete when ALL micro-tasks are done
 
       ## 🚨 CRITICAL COMPLETION CRITERIA - When to STOP calling tools:
       **ABSOLUTELY DO NOT STOP until ALL of the following are true:**
@@ -176,7 +291,6 @@ export async function POST(req: Request) {
       - success: true/false (indicates if tool succeeded)
       - oldEditorHTML: original HTML content
       - newEditorHTML: modified HTML content  
-      - diffEditorHTML: diff view with changes highlighted
       - error: error message when success=false
       - retryInstructions: specific retry steps when success=false
       - currentResumeContent: fresh content from database
@@ -187,22 +301,29 @@ export async function POST(req: Request) {
       3. **If success = false**: You MUST retry using the provided currentResumeContent 
       
       #### Retry Process (When success = false):
-      1. **Extract fresh content**: Use the 'currentResumeContent' from the failed response
+      1. **Extract fresh content**: Use the 'currentResumeContent' from the most recent failed response
       2. **Re-extract relevant section**: Find and extract the target section (skills, experience, etc.) from currentResumeContent  
-      3. **Retry the tool call** with:
+      3. **Retry failed tools** with:
          - htmlToUpdate = newly extracted section from currentResumeContent
-         - currentEditorHTML = the full currentResumeContent 
          - Same other parameters (skillsDescription, userQuestion, etc.)
       4. **Maximum 3 retry attempts**: If a tool fails 3 times, inform the user that the content is changing too rapidly
       5. **Follow retryInstructions**: The failed response includes specific retry instructions - follow them exactly
+      6. **Parallel Retry Strategy**: If multiple tools fail in a parallel batch, you can retry them all in parallel using the fresh currentResumeContent
       
       #### Example Retry Flow:
+      **Sequential Example:**
       Step 1: Call updateSkills tool -> Returns success=false with currentResumeContent and retryInstructions
       Step 2: Extract skills section from the provided currentResumeContent 
       Step 3: Call updateSkills again with fresh extracted data -> Returns success=true
       Step 4: Continue with next task in workflow
       
-      🚨 **NEVER ignore a failed tool call (success=false). You MUST retry using the currentResumeContent.**\n and for remaing tools you should use the currentResumeContent as the new currentEditorHTML parameter and extract the relevant section for htmlToUpdate.
+      **Parallel Example:**
+      Step 1: Call updateSkills, updateExperience, updateEducation in parallel
+      Step 2: updateSkills fails (success=false), others succeed
+      Step 3: Extract skills section from currentResumeContent and retry updateSkills
+      Step 4: All tools now successful, continue workflow
+      
+      🚨 **NEVER ignore a failed tool call (success=false). You MUST retry using the currentResumeContent.** For any remaining tools in your workflow, use the most recent currentResumeContent to extract the relevant section for htmlToUpdate.
 
       ### Before calling a tool
       1. Always read the resume (in HTML format) to fully understand both the resume content and the user's query.
@@ -216,15 +337,20 @@ export async function POST(req: Request) {
          - DO NOT remove, add, or modify any HTML tags, content, or style properties.
          - DO NOT change any inline or block styles, class names, or attributes.
          - DO NOT reformat, minify, or prettify the HTML.
+         - 🚨 CRITICAL: DO NOT perform ANY HTML entity encoding or decoding (e.g., "&amp;" MUST remain "&amp;", NOT "&")
+         - 🚨 CRITICAL: Preserve ALL HTML entities exactly as they appear in the original HTML
+         - 🚨 CRITICAL: Do NOT convert HTML entities like &amp;, &lt;, &gt;, &quot;, &#39;, &nbsp; etc.
          - Preserve the exact structure, indentation, and formatting of the original HTML.
          - If a section is too large, split only at safe, non-destructive points (e.g., between sibling elements), never inside a tag or style block.
       5. Double-check your output:
          - Compare your extracted HTML with the original provided by the user.
          - Ensure every tag, attribute, and style property is present and unchanged.
-         - If any discrepancy is found (missing tags, altered styles, etc.), reconstruct the HTML and repeat the check.
+         - 🚨 CRITICAL: Verify that ALL HTML entities remain exactly as they were (e.g., "&amp;" should still be "&amp;")
+         - If any discrepancy is found (missing tags, altered styles, converted entities, etc.), reconstruct the HTML and repeat the check.
          - If you are unsure, err on the side of including more context rather than less.
       6. Validation:
          - Before passing the HTML to any tool, validate that the extracted HTML is byte-for-byte identical to the corresponding section in the original.
+         - 🚨 CRITICAL: This includes verifying that HTML entities are preserved exactly (no encoding/decoding occurred)
          - If you cannot guarantee this, do not proceed—re-extract and re-validate.
       7. Never attempt to "fix" or "improve" the HTML. Your job is only to extract and split, not to edit.
       8. If the HTML is malformed or ambiguous, alert the user rather than guessing.
@@ -237,6 +363,7 @@ export async function POST(req: Request) {
         updateEducationTool,
         updateProjectsTool,
         nameAndContactInfoFormatTool,
+        updateGeneralTool,
       ],
     });
 

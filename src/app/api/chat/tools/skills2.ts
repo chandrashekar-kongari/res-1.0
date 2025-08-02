@@ -10,7 +10,6 @@ export const updateSkillsTool: FunctionTool<any> = {
   parameters: {
     type: "object",
     properties: {
-      htmlToUpdate: { type: "string", description: "The html to be updated" },
       skillsDescription: {
         type: "string",
         description: "The skills description or details",
@@ -22,14 +21,13 @@ export const updateSkillsTool: FunctionTool<any> = {
         description: "The ID of the resume being edited",
       },
     },
-    required: ["htmlToUpdate", "skillsDescription", "userQuestion", "resumeId"],
+    required: ["skillsDescription", "userQuestion", "resumeId"],
     additionalProperties: false,
   },
   strict: true,
   needsApproval: async () => false,
   invoke: async (_context: RunContext<unknown>, input: string) => {
     const parsedInput = JSON.parse(input) as {
-      htmlToUpdate: string;
       skillsDescription: string;
       userQuestion: string;
       resumeId: string;
@@ -40,31 +38,40 @@ export const updateSkillsTool: FunctionTool<any> = {
       name: "SkillsUpdater",
       instructions: `
       # Role and Objective
-      You are HTML, CSS and Resume building expert for tiptap editor, your task is to correctly construct the NewEditorHTML and DiffEditorHTML by updating the OldEditorHTML based on the skills description and user question.
+      You are an HTML, CSS and Resume building expert for tiptap editor. Your task is to:
+      1. First identify and extract the skills section from the full resume content
+      2. Update that skills section based on the skills description and user question
+      3. Generate the OldEditorHTML, NewEditorHTML, and DiffEditorHTML
 
      # Instructions:
+      You will receive the full resume content. You need to identify the skills section within it.
+      Look for skills-related content (skills, technologies, technical skills, etc.) and extract that specific HTML section.
       Analyze the current skills text and make requested modifications based on job description and user question.
       Just ADD skills DO NOT ADD unnecessary info.
       Organize skills into appropriate categories (Programming Languages, Backend Technologies, Frontend Technologies, Database Technologies, Cloud Technologies, etc.).
       If you are working with span tags, must create a new span tag inside any parent tag and keep the text inside the span tag.
 
       STEPS:
-      First build NewEditorHTML by updating the OldEditorHTML based on the skills description and user question.
-      Then build DiffEditorHTML by comparing the NewEditorHTML and OldEditorHTML. For removed content wrap it mark tag with style="background-color: #fdb8c0;" and for added content wrap it mark tag with style="background-color: #acf2bd;", If you are adding mark tags inside any span tag then must create a new span tag inside the mark tag and keep the text inside the span tag.
+      1. First, identify and extract the skills section from the full resume content - this becomes your OldEditorHTML
+      2. Create NewEditorHTML by updating the OldEditorHTML (skills section) based on the skills description and user question
+      3. Create DiffEditorHTML by comparing the NewEditorHTML and OldEditorHTML. For removed content wrap it with mark tag with style="background-color: #fdb8c0;" and for added content wrap it with mark tag with style="background-color: #acf2bd;". If you are adding mark tags inside any span tag then must create a new span tag inside the mark tag and keep the text inside the span tag.
 
       IMPORTANT:
-      - Do not remove or add any content from the OldEditorHTML.
-      - Create NewEditorHTML by updating the OldEditorHTML based on the skills description and user question.
-      - Create DiffEditorHTML by comparing the NewEditorHTML and OldEditorHTML.
-      - Do not remove or add any content from the NewEditorHTML.
-      - Do not remove or add any content from the DiffEditorHTML.
+      - First correctly identify the skills section from the full resume content
+      - OldEditorHTML should be the extracted skills section (not the full resume)
+      - NewEditorHTML should be the updated skills section (same structure but with modifications)
+      - DiffEditorHTML should show the changes between old and new skills sections
+      - Preserve all HTML structure and styling of the original skills section
 
       OUTPUT FORMAT:    
-      OldEditorHTML: The original HTML content you received (before any changes) (MUST be returned exactly as received, with no changes)
-      NewEditorHTML: The modified HTML content (after changes, without diff styling) (MUST be the full HTML, not just the changed part)
-      DiffEditorHTML: Generate a diff view of the OldEditorHTML and NewEditorHTML. 
+      OldEditorHTML: The original skills section HTML extracted from the full resume content (MUST be returned exactly as found)
+      NewEditorHTML: The modified skills section HTML (after changes, without diff styling) (MUST be the full skills section HTML, not just the changed part)
+      DiffEditorHTML: Generate a diff view of the OldEditorHTML and NewEditorHTML showing changes in the skills section.
 
-      Before returning the output, think step by step and make sure you have followed the steps correctly.
+      Before returning the output, think step by step and make sure you have:
+      1. Correctly identified the skills section
+      2. Applied the requested changes
+      3. Generated proper diff markup
 
 `,
       outputType: z.object({
@@ -75,7 +82,16 @@ export const updateSkillsTool: FunctionTool<any> = {
     });
     const subRunner = new Runner({ model: "gpt-4.1" });
 
-    const prompt = `Skills Description: ${parsedInput.skillsDescription}\nUser Question: ${parsedInput.userQuestion}\nHTML to Update: ${parsedInput.htmlToUpdate}`;
+    const resume = await prisma.resume.findUnique({
+      where: {
+        id: parsedInput.resumeId,
+      },
+      select: {
+        content: true,
+      },
+    });
+
+    const prompt = `Skills Description: ${parsedInput.skillsDescription}\nUser Question: ${parsedInput.userQuestion}\nFull Resume Content: ${resume?.content}`;
     try {
       const result: any = await subRunner.run(subAgent, prompt);
 
@@ -121,7 +137,7 @@ export const updateSkillsTool: FunctionTool<any> = {
           res = JSON.parse(parsedResult[0].content[0].text);
         }
 
-        // Validate that the oldEditorHTML from the tool matches what's in the current editor
+        // Validate that the oldEditorHTML (skills section) from the tool exists in the current resume content
         if (
           res.oldEditorHTML &&
           resume?.content &&
@@ -130,17 +146,16 @@ export const updateSkillsTool: FunctionTool<any> = {
           // Tool failed - return failure response with current resume content
           return JSON.stringify({
             success: false,
-            oldEditorHTML: parsedInput.htmlToUpdate,
-            newEditorHTML: parsedInput.htmlToUpdate,
-            diffEditorHTML: parsedInput.htmlToUpdate,
-            error: `TOOL_VALIDATION_FAILED: The HTML section to be updated was not found in the current editor. This likely means the editor content has changed since the tool was called. 
+            oldEditorHTML: resume?.content || "",
+            newEditorHTML: resume?.content || "",
+            diffEditorHTML: resume?.content || "",
+            error: `TOOL_VALIDATION_FAILED: The skills section identified by the tool was not found in the current resume content. This likely means the agent failed to correctly identify the skills section or the resume content has changed.
 
-RETRY REQUIRED: Use the currentResumeContent provided below as the new currentEditorHTML parameter. Extract the skills section from this updated content and retry the tool call.
+Tool returned oldEditorHTML (skills section): ${res.oldEditorHTML}
 
-Current editor content: ${resume?.content}
-`,
+RETRY REQUIRED: The tool should re-analyze the current resume content to correctly identify the skills section.`,
             retryInstructions:
-              "Extract the skills section from currentResumeContent and retry the updateSkills tool with: 1) htmlToUpdate = skills section from currentResumeContent, 2) same skillsDescription and userQuestion",
+              "Retry the updateSkills tool with the same skillsDescription and userQuestion. The agent should correctly identify the skills section from the current resume content.",
             currentResumeContent: resume?.content || "",
           });
         }
@@ -159,12 +174,12 @@ Current editor content: ${resume?.content}
         // Return failure response with current resume content
         return JSON.stringify({
           success: false,
-          oldEditorHTML: parsedInput.htmlToUpdate,
-          newEditorHTML: parsedInput.htmlToUpdate,
-          diffEditorHTML: parsedInput.htmlToUpdate,
-          error: `Failed to parse tool output: ${parseError.message}. RETRY REQUIRED: Use the currentResumeContent below and retry the tool call.`,
+          oldEditorHTML: resume?.content || "",
+          newEditorHTML: resume?.content || "",
+          diffEditorHTML: resume?.content || "",
+          error: `Failed to parse tool output: ${parseError.message}. RETRY REQUIRED: The tool should re-analyze the current resume content.`,
           retryInstructions:
-            "Extract the skills section from currentResumeContent and retry the updateSkills tool with: 1) htmlToUpdate = skills section from currentResumeContent, 2)  same skillsDescription and userQuestion",
+            "Retry the updateSkills tool with the same skillsDescription and userQuestion. The agent should correctly identify and update the skills section from the current resume content.",
           currentResumeContent: resume?.content || "",
         });
       }
@@ -186,9 +201,9 @@ Current editor content: ${resume?.content}
       // Return error response instead of throwing
       return JSON.stringify({
         success: false,
-        oldEditorHTML: parsedInput.htmlToUpdate,
-        newEditorHTML: parsedInput.htmlToUpdate,
-        diffEditorHTML: parsedInput.htmlToUpdate,
+        oldEditorHTML: currentResumeContent,
+        newEditorHTML: currentResumeContent,
+        diffEditorHTML: currentResumeContent,
         error: `Skills update tool failed: ${error.message || "Unknown error"}`,
         currentResumeContent: currentResumeContent,
       });

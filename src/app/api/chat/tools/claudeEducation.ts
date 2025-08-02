@@ -1,7 +1,16 @@
-import { Agent, Runner, tool, FunctionTool, RunContext } from "@openai/agents";
-import { z } from "zod";
 import { prisma } from "@/lib/db";
+import {
+  Agent,
+  Runner,
+  tool,
+  FunctionTool,
+  RunContext,
+  OpenAIChatCompletionsModel,
+} from "@openai/agents";
+import { z } from "zod";
+import AsyncOpenAI from "openai";
 
+// Define your tools as before (example for updateEducationTool)
 export const updateEducationTool: FunctionTool<any> = {
   type: "function",
   name: "updateEducation",
@@ -15,6 +24,7 @@ export const updateEducationTool: FunctionTool<any> = {
         description: "The education description or details",
       },
       userQuestion: { type: "string", description: "The user question" },
+
       resumeId: {
         type: "string",
         description: "The ID of the resume being edited",
@@ -37,50 +47,111 @@ export const updateEducationTool: FunctionTool<any> = {
       userQuestion: string;
       resumeId: string;
     };
+
+    // Create a sub-agent for this tool
     const subAgent = new Agent({
       name: "EducationUpdater",
       instructions: `
-      # Role and Objective
-      You are HTML, CSS and Resume building expert for tiptap editor, your task is to correctly construct the NewEditorHTML and DiffEditorHTML by updating the OldEditorHTML based on the education description and user question.
+<role>
+You are an expert HTML/CSS resume building specialist for tiptap editor. Your task is to update resume education sections while maintaining exact HTML structure and formatting consistency.
+</role>
 
-     # Instructions:
-      You must format the education header to be in the following format:
-      University Name [spaces] Location 
-      Degree [spaces] Graduation Date
-      You must also format the university name and location to be in the same line, University name on the left and location on the right and must be in the same line and add enough space between the university name and location so that university name will be left aligned and location will be right aligned.
-      You must also format the Degree and Graduation Date to be in the same line, Degree on the left and Graduation Date on the right and must be in the same line and add enough space between the Degree and Graduation Date so that Degree will be left aligned and Graduation Date will be right aligned.
-      If you are working with span tags, must create a new span tag inside any parent tag and keep the text inside the span tag.
+<task_overview>
+You will receive HTML content and must:
+1. Preserve the original HTML exactly as "oldEditorHTML"
+2. Create an updated version as "newEditorHTML" with education modifications
+</task_overview>
 
-      STEPS:
-      First build NewEditorHTML by updating the OldEditorHTML based on the education description and user question.
-      Then build DiffEditorHTML by comparing the NewEditorHTML and OldEditorHTML. For removed content wrap it mark tag with style="background-color: #fdb8c0;" and for added content wrap it mark tag with style="background-color: #acf2bd;", If you are adding mark tags inside any span tag then must create a new span tag inside the mark tag and keep the text inside the span tag.
+<input_requirements>
+- Education description: Context for what education to add/modify
+- User question: Specific request for education updates
+- HTML to update: The exact HTML content to modify
+</input_requirements>
 
-      IMPORTANT:
-      - Do not remove or add any content from the OldEditorHTML.
-      - Create NewEditorHTML by updating the OldEditorHTML based on the education description and user question.
-      - Create DiffEditorHTML by comparing the NewEditorHTML and OldEditorHTML.
-      - Do not remove or add any content from the NewEditorHTML.
-      - Do not remove or add any content from the DiffEditorHTML.
+<modification_guidelines>
+<education_formatting>
+- Format education header as: University Name [spaces] Location
+- Format second line as: Degree [spaces] Graduation Date
+- University name on left, location on right with enough spaces for proper alignment
+- Degree on left, graduation date on right with enough spaces for proper alignment
+- Only ADD relevant education based on the user's request
+- Do NOT remove existing education unless explicitly requested
+- Do NOT add unnecessary or unrelated information
+</education_formatting>
 
-      OUTPUT FORMAT:    
-      OldEditorHTML: The original HTML content you received (before any changes) (MUST be returned exactly as received, with no changes)
-      NewEditorHTML: The modified HTML content (after changes, without diff styling) (MUST be the full HTML, not just the changed part)
-      DiffEditorHTML: Generate a diff view of the OldEditorHTML and NewEditorHTML. 
+<html_structure_rules>
+- Preserve all existing HTML structure and attributes
+- When working with span tags, always create new span tags inside parent elements
+- Maintain consistent formatting and indentation
+- Keep all existing CSS classes and styling intact
+- Do not modify IDs, classes, or data attributes
+</html_structure_rules>
+</modification_guidelines>
 
-      Before returning the output, think step by step and make sure you have followed the steps correctly.
+<step_by_step_process>
+<step_1>
+Carefully analyze the provided HTML content and user requirements.
+Identify the education section that needs modification.
+</step_1>
 
+<step_2>
+Create newEditorHTML by:
+- Starting with the exact OldEditorHTML content
+- Adding only the requested education in proper format
+- Maintaining the existing HTML structure and formatting
+- Ensuring all new content follows the same patterns as existing content
+</step_2>
+
+
+</step_by_step_process>
+
+<critical_constraints>
+- oldEditorHTML MUST be returned exactly as received with zero modifications
+- newEditorHTML MUST contain the complete HTML document, not partial content
+- Output MUST be valid, parseable JSON
+- No explanatory text outside the JSON structure
+</critical_constraints>
+
+<output_format>
+Your response must be EXACTLY this JSON structure with no additional text:
+
+{
+  "oldEditorHTML": "EXACT copy of received HTML with no changes whatsoever",
+  "newEditorHTML": "Complete HTML document with education updates applied"
+}
+</output_format>
+
+<quality_checks>
+Before outputting, verify:
+1. oldEditorHTML matches input exactly (character-for-character)
+2. newEditorHTML includes all original content plus requested additions
+3. JSON is valid and parseable
+4. No content is lost or corrupted in any version
+</quality_checks>
+
+CRITICAL: Output only the JSON object. No reasoning, explanations, or additional text.
 `,
-      outputType: z.object({
-        oldEditorHTML: z.string(),
-        newEditorHTML: z.string(),
-        diffEditorHTML: z.string(),
-      }),
     });
-    const subRunner = new Runner({ model: "gpt-4.1" });
+
+    const external_client = new AsyncOpenAI({
+      apiKey: process.env.ANTHROPIC_API_KEY,
+      baseURL: "https://api.anthropic.com/v1/",
+    });
+    const runner = new Runner({
+      model: new OpenAIChatCompletionsModel(
+        external_client,
+        "claude-3-5-sonnet-20241022"
+      ),
+    });
+
     const prompt = `Education Description: ${parsedInput.educationDescription}\nUser Question: ${parsedInput.userQuestion}\nHTML to Update: ${parsedInput.htmlToUpdate}`;
     try {
-      const result: any = await subRunner.run(subAgent, prompt);
+      const result: any = await runner.run(subAgent, prompt, { stream: false });
+
+      console.log("result", result);
+
       let outputText = "";
+
       if (result && typeof result === "object" && "output" in result) {
         outputText = result.output;
       } else if (typeof result === "string") {
@@ -94,7 +165,6 @@ export const updateEducationTool: FunctionTool<any> = {
       } else {
         outputText = JSON.stringify(result);
       }
-      // Parse the result to validate oldEditorHTML
       // Get current resume content from database
       const resume = await prisma.resume.findUnique({
         where: {
@@ -133,12 +203,12 @@ export const updateEducationTool: FunctionTool<any> = {
             success: false,
             oldEditorHTML: parsedInput.htmlToUpdate,
             newEditorHTML: parsedInput.htmlToUpdate,
-            diffEditorHTML: parsedInput.htmlToUpdate,
             error: `TOOL_VALIDATION_FAILED: The HTML section to be updated was not found in the current editor. This likely means the editor content has changed since the tool was called. 
 
 RETRY REQUIRED: Use the currentResumeContent provided below as the new currentEditorHTML parameter. Extract the education section from this updated content and retry the tool call.
 
-Current editor content: ${resume?.content}
+Original HTML to update: ${parsedInput.htmlToUpdate}
+Tool returned oldEditorHTML: ${parsedResult.oldEditorHTML}
 `,
             retryInstructions:
               "Extract the education section from currentResumeContent and retry the updateEducation tool with: 1) htmlToUpdate = education section from currentResumeContent, 2) same educationDescription and userQuestion",
@@ -162,7 +232,6 @@ Current editor content: ${resume?.content}
           success: false,
           oldEditorHTML: parsedInput.htmlToUpdate,
           newEditorHTML: parsedInput.htmlToUpdate,
-          diffEditorHTML: parsedInput.htmlToUpdate,
           error: `Failed to parse tool output: ${parseError.message}. RETRY REQUIRED: Use the currentResumeContent below and retry the tool call.`,
           retryInstructions:
             "Extract the education section from currentResumeContent and retry the updateEducation tool with: 1) htmlToUpdate = education section from currentResumeContent, 2)  same educationDescription and userQuestion",
@@ -189,7 +258,6 @@ Current editor content: ${resume?.content}
         success: false,
         oldEditorHTML: parsedInput.htmlToUpdate,
         newEditorHTML: parsedInput.htmlToUpdate,
-        diffEditorHTML: parsedInput.htmlToUpdate,
         error: `Education update tool failed: ${
           error.message || "Unknown error"
         }`,

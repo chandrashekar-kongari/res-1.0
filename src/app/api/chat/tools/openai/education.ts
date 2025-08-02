@@ -1,11 +1,12 @@
+import { prisma } from "@/lib/db";
 import { Agent, Runner, tool, FunctionTool, RunContext } from "@openai/agents";
 import { z } from "zod";
-import { prisma } from "@/lib/db";
 
+// Define your tools as before (example for updateEducationTool)
 export const updateEducationTool: FunctionTool<any> = {
   type: "function",
   name: "updateEducation",
-  description: "Updates the education section of the resume",
+  description: "Updates the education entries of the resume",
   parameters: {
     type: "object",
     properties: {
@@ -15,6 +16,7 @@ export const updateEducationTool: FunctionTool<any> = {
         description: "The education description or details",
       },
       userQuestion: { type: "string", description: "The user question" },
+
       resumeId: {
         type: "string",
         description: "The ID of the resume being edited",
@@ -37,52 +39,82 @@ export const updateEducationTool: FunctionTool<any> = {
       userQuestion: string;
       resumeId: string;
     };
+
+    // Create a sub-agent for this tool
     const subAgent = new Agent({
       name: "EducationUpdater",
-      instructions: `
-      # Role and Objective
-      You are HTML, CSS and Resume building expert for tiptap editor, your task is to correctly construct the NewEditorHTML and DiffEditorHTML by updating the OldEditorHTML based on the education description and user question.
-
-     # Instructions:
-      You must format the education header to be in the following format:
-      University Name [spaces] Location 
-      Degree [spaces] Graduation Date
-      You must also format the university name and location to be in the same line, University name on the left and location on the right and must be in the same line and add enough space between the university name and location so that university name will be left aligned and location will be right aligned.
-      You must also format the Degree and Graduation Date to be in the same line, Degree on the left and Graduation Date on the right and must be in the same line and add enough space between the Degree and Graduation Date so that Degree will be left aligned and Graduation Date will be right aligned.
-      If you are working with span tags, must create a new span tag inside any parent tag and keep the text inside the span tag.
-
-      STEPS:
-      First build NewEditorHTML by updating the OldEditorHTML based on the education description and user question.
-      Then build DiffEditorHTML by comparing the NewEditorHTML and OldEditorHTML. For removed content wrap it mark tag with style="background-color: #fdb8c0;" and for added content wrap it mark tag with style="background-color: #acf2bd;", If you are adding mark tags inside any span tag then must create a new span tag inside the mark tag and keep the text inside the span tag.
-
-      IMPORTANT:
-      - Do not remove or add any content from the OldEditorHTML.
-      - Create NewEditorHTML by updating the OldEditorHTML based on the education description and user question.
-      - Create DiffEditorHTML by comparing the NewEditorHTML and OldEditorHTML.
-      - Do not remove or add any content from the NewEditorHTML.
-      - Do not remove or add any content from the DiffEditorHTML.
-
-      OUTPUT FORMAT:    
-      OldEditorHTML: The original HTML content you received (before any changes) (MUST be returned exactly as received, with no changes)
-      NewEditorHTML: The modified HTML content (after changes, without diff styling) (MUST be the full HTML, not just the changed part)
-      DiffEditorHTML: Generate a diff view of the OldEditorHTML and NewEditorHTML. 
-
-      Before returning the output, think step by step and make sure you have followed the steps correctly.
-
-`,
       outputType: z.object({
         oldEditorHTML: z.string(),
         newEditorHTML: z.string(),
-        diffEditorHTML: z.string(),
       }),
+      instructions: `
+<role>
+You are an expert HTML/CSS resume editor for the Tiptap editor. Your job is to update the education section of a resume, strictly preserving the original HTML structure and formatting.
+</role>
+
+<task>
+Given:
+- "oldEditorHTML": The current HTML content to update (must be preserved exactly).
+- "educationDescription": Context for the education to add or modify.
+- "userQuestion": The user's specific request for education updates.
+
+Your steps:
+1. Analyze the provided HTML and user requirements.
+2. Identify the education section to modify.
+3. Create "newEditorHTML" by:
+   - Starting with the exact "oldEditorHTML".
+   - Adding or updating only the requested education, following the formatting rules below.
+   - Preserving all existing HTML, CSS classes, IDs, and attributes.
+   - Ensuring the new content matches the style and structure of the original.
+
+<formatting_rules>
+- Education header: University Name [spaces] Location (university left, location right, aligned with spaces)
+- Second line: Degree [spaces] Graduation Date (degree left, date right, aligned with spaces)
+- Only add or update education as requested. Do NOT remove existing entries unless explicitly told.
+- Do NOT add unrelated or unnecessary information.
+</formatting_rules>
+
+<html_rules>
+- Do not alter any HTML outside the education section.
+- All new spans must be inside their parent elements.
+- Keep indentation, classes, and styling consistent.
+- Do not change IDs, classes, or data attributes.
+</html_rules>
+
+<output>
+Respond with a valid JSON object, and nothing else:
+{
+  "oldEditorHTML": "EXACT copy of input HTML",
+  "newEditorHTML": "Full HTML with education updates"
+}
+</output>
+
+<validation>
+- "oldEditorHTML" must match the input exactly, character-for-character.
+- "newEditorHTML" must include all original content plus the requested changes.
+- Output must be valid, parseable JSON. No extra text.
+</validation>
+`,
     });
+
     const subRunner = new Runner({ model: "gpt-4.1" });
+
     const prompt = `Education Description: ${parsedInput.educationDescription}\nUser Question: ${parsedInput.userQuestion}\nHTML to Update: ${parsedInput.htmlToUpdate}`;
     try {
-      const result: any = await subRunner.run(subAgent, prompt);
+      const result: any = await subRunner.run(subAgent, prompt, {
+        stream: false,
+      });
+
       let outputText = "";
-      if (result && typeof result === "object" && "output" in result) {
-        outputText = result.output;
+
+      if (result?.state?._currentStep?.output) {
+        try {
+          const parsedOutput = JSON.parse(result.state._currentStep.output);
+          outputText = parsedOutput;
+        } catch (e) {
+          console.error("Error parsing output:", e);
+          outputText = result.state._currentStep.output;
+        }
       } else if (typeof result === "string") {
         outputText = result;
       } else if (
@@ -94,7 +126,6 @@ export const updateEducationTool: FunctionTool<any> = {
       } else {
         outputText = JSON.stringify(result);
       }
-      // Parse the result to validate oldEditorHTML
       // Get current resume content from database
       const resume = await prisma.resume.findUnique({
         where: {
@@ -109,36 +140,22 @@ export const updateEducationTool: FunctionTool<any> = {
       try {
         const parsedResult = outputText as any;
 
-        // Try multiple parsing approaches for robustness
-        let res;
-        try {
-          // First try direct parsing (for newer format)
-          res =
-            typeof parsedResult === "string"
-              ? JSON.parse(parsedResult)
-              : parsedResult;
-        } catch {
-          // Fallback to nested parsing (for older format)
-          res = JSON.parse(parsedResult[0].content[0].text);
-        }
-
         // Validate that the oldEditorHTML from the tool matches what's in the current editor
         if (
-          res.oldEditorHTML &&
+          parsedResult.oldEditorHTML &&
           resume?.content &&
-          !resume?.content.includes(res.oldEditorHTML.trim())
+          !resume?.content.includes(parsedResult.oldEditorHTML.trim())
         ) {
           // Tool failed - return failure response with current resume content
           return JSON.stringify({
             success: false,
             oldEditorHTML: parsedInput.htmlToUpdate,
             newEditorHTML: parsedInput.htmlToUpdate,
-            diffEditorHTML: parsedInput.htmlToUpdate,
             error: `TOOL_VALIDATION_FAILED: The HTML section to be updated was not found in the current editor. This likely means the editor content has changed since the tool was called. 
 
 RETRY REQUIRED: Use the currentResumeContent provided below as the new currentEditorHTML parameter. Extract the education section from this updated content and retry the tool call.
 
-Current editor content: ${resume?.content}
+Current Resume Content: ${resume?.content}
 `,
             retryInstructions:
               "Extract the education section from currentResumeContent and retry the updateEducation tool with: 1) htmlToUpdate = education section from currentResumeContent, 2) same educationDescription and userQuestion",
@@ -162,7 +179,6 @@ Current editor content: ${resume?.content}
           success: false,
           oldEditorHTML: parsedInput.htmlToUpdate,
           newEditorHTML: parsedInput.htmlToUpdate,
-          diffEditorHTML: parsedInput.htmlToUpdate,
           error: `Failed to parse tool output: ${parseError.message}. RETRY REQUIRED: Use the currentResumeContent below and retry the tool call.`,
           retryInstructions:
             "Extract the education section from currentResumeContent and retry the updateEducation tool with: 1) htmlToUpdate = education section from currentResumeContent, 2)  same educationDescription and userQuestion",
@@ -189,7 +205,6 @@ Current editor content: ${resume?.content}
         success: false,
         oldEditorHTML: parsedInput.htmlToUpdate,
         newEditorHTML: parsedInput.htmlToUpdate,
-        diffEditorHTML: parsedInput.htmlToUpdate,
         error: `Education update tool failed: ${
           error.message || "Unknown error"
         }`,
