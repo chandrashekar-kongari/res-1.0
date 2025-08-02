@@ -38,51 +38,78 @@ export const updateSkillsTool: FunctionTool<any> = {
     // Create a sub-agent for this tool
     const subAgent = new Agent({
       name: "SkillsUpdater",
-      instructions: `
-      # Role and Objective
-      You are HTML, CSS and Resume building expert for tiptap editor, your task is to correctly construct the NewEditorHTML and DiffEditorHTML by updating the OldEditorHTML based on the skills description and user question.
-
-     # Instructions:
-      Analyze the current skills text and make requested modifications based on job description and user question.
-      Just ADD skills DO NOT ADD unnecessary info.
-      Organize skills into appropriate categories (Programming Languages, Backend Technologies, Frontend Technologies, Database Technologies, Cloud Technologies, etc.).
-      If you are working with span tags, must create a new span tag inside any parent tag and keep the text inside the span tag.
-
-      STEPS:
-      First build NewEditorHTML by updating the OldEditorHTML based on the skills description and user question.
-      Then build DiffEditorHTML by comparing the NewEditorHTML and OldEditorHTML. For removed content wrap it mark tag with style="background-color: #fdb8c0;" and for added content wrap it mark tag with style="background-color: #acf2bd;", If you are adding mark tags inside any span tag then must create a new span tag inside the mark tag and keep the text inside the span tag.
-
-      IMPORTANT:
-      - Do not remove or add any content from the OldEditorHTML.
-      - Create NewEditorHTML by updating the OldEditorHTML based on the skills description and user question.
-      - Create DiffEditorHTML by comparing the NewEditorHTML and OldEditorHTML.
-      - Do not remove or add any content from the NewEditorHTML.
-      - Do not remove or add any content from the DiffEditorHTML.
-
-      OUTPUT FORMAT:    
-      OldEditorHTML: The original HTML content you received (before any changes) (MUST be returned exactly as received, with no changes)
-      NewEditorHTML: The modified HTML content (after changes, without diff styling) (MUST be the full HTML, not just the changed part)
-      DiffEditorHTML: Generate a diff view of the OldEditorHTML and NewEditorHTML. 
-
-      Before returning the output, think step by step and make sure you have followed the steps correctly.
-
-`,
       outputType: z.object({
         oldEditorHTML: z.string(),
         newEditorHTML: z.string(),
-        diffEditorHTML: z.string(),
       }),
+      instructions: `
+<role>
+You are an expert HTML/CSS resume editor for the Tiptap editor. Your job is to update the skills section of a resume, strictly preserving the original HTML structure and formatting.
+</role>
+
+<task>
+Given:
+- "oldEditorHTML": The current HTML content to update (must be preserved exactly).
+- "skillsDescription": Context for the skills to add or modify.
+- "userQuestion": The user's specific request for skills updates.
+
+Your steps:
+1. Analyze the provided HTML and user requirements.
+2. Identify the skills section to modify.
+3. Create "newEditorHTML" by:
+   - Starting with the exact "oldEditorHTML".
+   - Adding or updating only the requested skills, following the formatting rules below.
+   - Preserving all existing HTML, CSS classes, IDs, and attributes.
+   - Ensuring the new content matches the style and structure of the original.
+
+<formatting_rules>
+- Group skills into logical categories: Programming Languages, Backend Technologies, Frontend Technologies, Database Technologies, Cloud Technologies, DevOps/Tools, etc.
+- Only add or update skills as requested. Do NOT remove existing entries unless explicitly told.
+- Do NOT add unrelated or unnecessary information.
+</formatting_rules>
+
+<html_rules>
+- Do not alter any HTML outside the skills section.
+- All new spans must be inside their parent elements.
+- Keep indentation, classes, and styling consistent.
+- Do not change IDs, classes, or data attributes.
+</html_rules>
+
+<output>
+Respond with a valid JSON object, and nothing else:
+{
+  "oldEditorHTML": "EXACT copy of input HTML",
+  "newEditorHTML": "Full HTML with skills updates"
+}
+</output>
+
+<validation>
+- "oldEditorHTML" must match the input exactly, character-for-character.
+- "newEditorHTML" must include all original content plus the requested changes.
+- Output must be valid, parseable JSON. No extra text.
+</validation>
+`,
     });
     const subRunner = new Runner({ model: "gpt-4.1" });
 
     const prompt = `Skills Description: ${parsedInput.skillsDescription}\nUser Question: ${parsedInput.userQuestion}\nHTML to Update: ${parsedInput.htmlToUpdate}`;
     try {
-      const result: any = await subRunner.run(subAgent, prompt);
+      const result: any = await subRunner.run(subAgent, prompt, {
+        stream: false,
+      });
+
+      // console.log("result", result);
 
       let outputText = "";
 
-      if (result && typeof result === "object" && "output" in result) {
-        outputText = result.output;
+      if (result?.state?._currentStep?.output) {
+        try {
+          const parsedOutput = JSON.parse(result.state._currentStep.output);
+          outputText = parsedOutput;
+        } catch (e) {
+          console.error("Error parsing output:", e);
+          outputText = result.state._currentStep.output;
+        }
       } else if (typeof result === "string") {
         outputText = result;
       } else if (
@@ -108,36 +135,22 @@ export const updateSkillsTool: FunctionTool<any> = {
       try {
         const parsedResult = outputText as any;
 
-        // Try multiple parsing approaches for robustness
-        let res;
-        try {
-          // First try direct parsing (for newer format)
-          res =
-            typeof parsedResult === "string"
-              ? JSON.parse(parsedResult)
-              : parsedResult;
-        } catch {
-          // Fallback to nested parsing (for older format)
-          res = JSON.parse(parsedResult[0].content[0].text);
-        }
-
         // Validate that the oldEditorHTML from the tool matches what's in the current editor
         if (
-          res.oldEditorHTML &&
+          parsedResult.oldEditorHTML &&
           resume?.content &&
-          !resume?.content.includes(res.oldEditorHTML.trim())
+          !resume?.content.includes(parsedResult.oldEditorHTML.trim())
         ) {
           // Tool failed - return failure response with current resume content
           return JSON.stringify({
             success: false,
             oldEditorHTML: parsedInput.htmlToUpdate,
             newEditorHTML: parsedInput.htmlToUpdate,
-            diffEditorHTML: parsedInput.htmlToUpdate,
             error: `TOOL_VALIDATION_FAILED: The HTML section to be updated was not found in the current editor. This likely means the editor content has changed since the tool was called. 
 
 RETRY REQUIRED: Use the currentResumeContent provided below as the new currentEditorHTML parameter. Extract the skills section from this updated content and retry the tool call.
 
-Current editor content: ${resume?.content}
+Current Resume Content: ${resume?.content}
 `,
             retryInstructions:
               "Extract the skills section from currentResumeContent and retry the updateSkills tool with: 1) htmlToUpdate = skills section from currentResumeContent, 2) same skillsDescription and userQuestion",
@@ -161,7 +174,6 @@ Current editor content: ${resume?.content}
           success: false,
           oldEditorHTML: parsedInput.htmlToUpdate,
           newEditorHTML: parsedInput.htmlToUpdate,
-          diffEditorHTML: parsedInput.htmlToUpdate,
           error: `Failed to parse tool output: ${parseError.message}. RETRY REQUIRED: Use the currentResumeContent below and retry the tool call.`,
           retryInstructions:
             "Extract the skills section from currentResumeContent and retry the updateSkills tool with: 1) htmlToUpdate = skills section from currentResumeContent, 2)  same skillsDescription and userQuestion",
@@ -188,7 +200,6 @@ Current editor content: ${resume?.content}
         success: false,
         oldEditorHTML: parsedInput.htmlToUpdate,
         newEditorHTML: parsedInput.htmlToUpdate,
-        diffEditorHTML: parsedInput.htmlToUpdate,
         error: `Skills update tool failed: ${error.message || "Unknown error"}`,
         currentResumeContent: currentResumeContent,
       });

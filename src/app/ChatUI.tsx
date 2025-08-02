@@ -169,7 +169,6 @@ const ChatUI = ({
   const handleRejectEvent = (
     oldEditorHTML: string,
     diffEditorHTML: string,
-    newEditorHTML: string,
     diffEditorHTMLId?: string,
     eventCallId?: string
   ) => {
@@ -184,8 +183,6 @@ const ChatUI = ({
       canvasEditor?.current?.setHTML?.(newHtml);
     } else if (htmlOfEditor) {
       if (!htmlOfEditor.includes(diffEditorHTML)) {
-        console.warn("diffEditorHTML not found in current editor HTML!");
-        // Update message state to mark as notFound
         setMessages((prev: ChatMessage[]) => {
           const newMessages = prev.map((message: ChatMessage) => {
             if (message.role === "assistant" && message.events) {
@@ -259,10 +256,7 @@ const ChatUI = ({
   };
 
   const handleAcceptEvent = (
-    oldEditorHTML: string,
-    diffEditorHTML: string,
     newEditorHTML: string,
-    diffFromAssistant: string,
     diffEditorHTMLId?: string,
     eventCallId?: string
   ) => {
@@ -320,7 +314,6 @@ const ChatUI = ({
         return;
       }
     } else {
-      console.log("something else: ", htmlOfEditor);
     }
 
     // Update message state to mark as accepted
@@ -377,7 +370,6 @@ const ChatUI = ({
             handleRejectEvent(
               event.output.oldEditorHTML,
               event.output.diffEditorHTML,
-              event.output.newEditorHTML,
               event.output.diffEditorHTMLId,
               event.callId
             );
@@ -408,10 +400,7 @@ const ChatUI = ({
             !event.rejected
           ) {
             handleAcceptEvent(
-              event.output.oldEditorHTML,
-              event.output.diffEditorHTML,
               event.output.newEditorHTML,
-              event.output.diffFromAssistant,
               event.output.diffEditorHTMLId,
               event.callId
             );
@@ -420,8 +409,6 @@ const ChatUI = ({
         }
       }
     }
-    // Only hide diff if we actually processed some events
-    setShowingDiff(false);
   };
 
   useEffect(() => {
@@ -635,8 +622,7 @@ const ChatUI = ({
                                                         ?.oldEditorHTML,
                                                       event.output
                                                         ?.diffEditorHTML,
-                                                      event.output
-                                                        ?.newEditorHTML,
+
                                                       event.output
                                                         ?.diffEditorHTMLId,
                                                       event.callId
@@ -652,13 +638,7 @@ const ChatUI = ({
                                                   onClick={() =>
                                                     handleAcceptEvent(
                                                       event.output
-                                                        ?.oldEditorHTML,
-                                                      event.output
-                                                        ?.diffEditorHTML,
-                                                      event.output
                                                         ?.newEditorHTML,
-                                                      event.output
-                                                        ?.diffFromAssistant,
                                                       event.output
                                                         ?.diffEditorHTMLId,
                                                       event.callId

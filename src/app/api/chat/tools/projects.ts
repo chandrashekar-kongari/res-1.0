@@ -15,10 +15,7 @@ export const updateProjectsTool: FunctionTool<any> = {
         description: "The project description or details",
       },
       userQuestion: { type: "string", description: "The user question" },
-      currentEditorHTML: {
-        type: "string",
-        description: "The current full editor HTML content for validation",
-      },
+
       resumeId: {
         type: "string",
         description: "The ID of the resume being edited",
@@ -28,7 +25,6 @@ export const updateProjectsTool: FunctionTool<any> = {
       "htmlToUpdate",
       "projectDescription",
       "userQuestion",
-      "currentEditorHTML",
       "resumeId",
     ],
     additionalProperties: false,
@@ -40,7 +36,6 @@ export const updateProjectsTool: FunctionTool<any> = {
       htmlToUpdate: string;
       projectDescription: string;
       userQuestion: string;
-      currentEditorHTML: string;
       resumeId: string;
     };
     const subAgent = new Agent({
@@ -126,11 +121,24 @@ export const updateProjectsTool: FunctionTool<any> = {
       try {
         const parsedResult = outputText as any;
 
+        // Try multiple parsing approaches for robustness
+        let res;
+        try {
+          // First try direct parsing (for newer format)
+          res =
+            typeof parsedResult === "string"
+              ? JSON.parse(parsedResult)
+              : parsedResult;
+        } catch {
+          // Fallback to nested parsing (for older format)
+          res = JSON.parse(parsedResult[0].content[0].text);
+        }
+
         // Validate that the oldEditorHTML from the tool matches what's in the current editor
         if (
-          parsedResult.oldEditorHTML &&
+          res.oldEditorHTML &&
           resume?.content &&
-          !resume?.content.includes(parsedResult.oldEditorHTML.trim())
+          !resume?.content.includes(res.oldEditorHTML.trim())
         ) {
           // Tool failed - return failure response with current resume content
           return JSON.stringify({
@@ -142,11 +150,10 @@ export const updateProjectsTool: FunctionTool<any> = {
 
 RETRY REQUIRED: Use the currentResumeContent provided below as the new currentEditorHTML parameter. Extract the projects section from this updated content and retry the tool call.
 
-Original HTML to update: ${parsedInput.htmlToUpdate}
-Tool returned oldEditorHTML: ${parsedResult.oldEditorHTML}
-Current editor content: ${parsedInput.currentEditorHTML}`,
+Current editor content: ${resume?.content}
+`,
             retryInstructions:
-              "Extract the projects section from currentResumeContent and retry the updateProjects tool with: 1) htmlToUpdate = projects section from currentResumeContent, 2) currentEditorHTML = currentResumeContent, 3) same projectDescription and userQuestion",
+              "Extract the projects section from currentResumeContent and retry the updateProjects tool with: 1) htmlToUpdate = projects section from currentResumeContent, 2)  same projectDescription and userQuestion",
             currentResumeContent: resume?.content || "",
           });
         }
@@ -170,7 +177,7 @@ Current editor content: ${parsedInput.currentEditorHTML}`,
           diffEditorHTML: parsedInput.htmlToUpdate,
           error: `Failed to parse tool output: ${parseError.message}. RETRY REQUIRED: Use the currentResumeContent below and retry the tool call.`,
           retryInstructions:
-            "Extract the projects section from currentResumeContent and retry the updateProjects tool with: 1) htmlToUpdate = projects section from currentResumeContent, 2) currentEditorHTML = currentResumeContent, 3) same projectDescription and userQuestion",
+            "Extract the projects section from currentResumeContent and retry the updateProjects tool with: 1) htmlToUpdate = projects section from currentResumeContent, 2)  same projectDescription and userQuestion",
           currentResumeContent: resume?.content || "",
         });
       }

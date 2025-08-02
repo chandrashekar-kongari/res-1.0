@@ -245,15 +245,280 @@ export default function Home({ params }: { params: Promise<{ id: string }> }) {
                     return prev;
                   });
                 } else if (
-                  event?.item?.type == "tool_call_output_item" &&
-                  event?.item?.rawItem?.type == "function_call_result"
+                  event?.type === "raw_model_stream_event" &&
+                  event?.data?.type === "model" &&
+                  event?.data?.event?.choices?.[0]?.delta?.tool_calls
                 ) {
-                  console.log("event", event);
+                  const toolCalls =
+                    event.data.event.choices[0].delta.tool_calls;
+
+                  toolCalls.forEach((toolCall: any) => {
+                    if (
+                      toolCall.type === "function" &&
+                      toolCall.id &&
+                      toolCall.function?.name
+                    ) {
+                      setMessages((prev) => {
+                        const lastIndex = prev.length - 1;
+                        if (
+                          lastIndex >= 0 &&
+                          prev[lastIndex].role === "assistant"
+                        ) {
+                          const updated = [...prev];
+                          const lastMessage = updated[lastIndex];
+                          const callId = toolCall.id;
+                          const exists = (lastMessage.events || []).some(
+                            (e) => e.callId === callId
+                          );
+                          if (!exists) {
+                            updated[lastIndex] = {
+                              ...lastMessage,
+                              events: [
+                                ...(lastMessage.events || []),
+                                {
+                                  callId: callId,
+                                  name: toolCall.function.name,
+                                  status: false, // Still in progress
+                                  type: "function_call",
+                                  data: toolCall,
+                                },
+                              ],
+                            };
+                          }
+                          return updated;
+                        }
+                        return prev;
+                      });
+                    }
+                  });
+                } else if (event?.name === "tool_called") {
+                  // Handle tool_called events - when a function is initially called
+                  if (
+                    event?.item?.rawItem?.callId &&
+                    event?.item?.rawItem?.name
+                  ) {
+                    setMessages((prev) => {
+                      const lastIndex = prev.length - 1;
+                      if (
+                        lastIndex >= 0 &&
+                        prev[lastIndex].role === "assistant"
+                      ) {
+                        const updated = [...prev];
+                        const lastMessage = updated[lastIndex];
+                        const callId = event.item.rawItem.callId;
+                        const exists = (lastMessage.events || []).some(
+                          (e) => e.callId === callId
+                        );
+                        if (!exists) {
+                          updated[lastIndex] = {
+                            ...lastMessage,
+                            events: [
+                              ...(lastMessage.events || []),
+                              {
+                                callId: callId,
+                                name: event.item.rawItem.name,
+                                status: false, // Still in progress
+                                type: "function_call",
+                                data: event.item.rawItem,
+                              },
+                            ],
+                          };
+                        }
+                        return updated;
+                      }
+                      return prev;
+                    });
+                  }
+                } else if (event?.name === "tool_output") {
                   if (event?.item?.rawItem?.output) {
                     const textObj = event?.item?.rawItem?.output?.text;
                     const responseObj = JSON.parse(textObj);
 
-                    console.log("RESPONSEOBJ", responseObj);
+                    if (responseObj.success === false) {
+                      //Retry the tool call with the updated HTML
+                      setMessages((prev) => {
+                        const lastIndex = prev.length - 1;
+                        if (
+                          lastIndex >= 0 &&
+                          prev[lastIndex].role === "assistant"
+                        ) {
+                          const updated = [...prev];
+                          const lastMessage = updated[lastIndex];
+                          const callId = event?.item?.rawItem?.callId;
+                          const exists = (lastMessage.events || []).some(
+                            (e) => e.callId === callId
+                          );
+                          if (exists) {
+                            updated[lastIndex] = {
+                              ...lastMessage,
+                              events: (lastMessage.events || []).map((e) =>
+                                e.callId === callId
+                                  ? {
+                                      ...e,
+                                      status: true,
+                                      notFound: true,
+                                    }
+                                  : e
+                              ),
+                            };
+                          }
+                          return updated;
+                        }
+                        return prev;
+                      });
+                      return;
+                    }
+
+                    // Handle new nested format - responseObj["0"]?.content?.[0]?.text
+                    let res = responseObj;
+
+                    if (res?.oldEditorHTML && res?.newEditorHTML) {
+                      const htmlOfEditor = editorRef.current?.getHTML?.();
+
+                      if (htmlOfEditor) {
+                        if (
+                          !htmlOfEditor.includes(res.oldEditorHTML.trim()) ||
+                          res.success === false
+                        ) {
+                          //Retry the tool call with the updated HTML
+                          setMessages((prev) => {
+                            const lastIndex = prev.length - 1;
+                            if (
+                              lastIndex >= 0 &&
+                              prev[lastIndex].role === "assistant"
+                            ) {
+                              const updated = [...prev];
+                              const lastMessage = updated[lastIndex];
+                              const callId = event?.item?.rawItem?.callId;
+                              const exists = (lastMessage.events || []).some(
+                                (e) => e.callId === callId
+                              );
+                              if (exists) {
+                                updated[lastIndex] = {
+                                  ...lastMessage,
+                                  events: (lastMessage.events || []).map((e) =>
+                                    e.callId === callId
+                                      ? {
+                                          ...e,
+                                          status: true,
+                                          notFound: true,
+                                        }
+                                      : e
+                                  ),
+                                };
+                              }
+                              return updated;
+                            }
+                            return prev;
+                          });
+                          return;
+                        }
+
+                        const randomId = Math.random()
+                          .toString(36)
+                          .substring(2, 15);
+                        const finalId = `diff-editor-html-${randomId}`;
+
+                        // Construct diffHTML with colored marks
+                        const diffFromAssistant = `<div id="${finalId}" style="font-size: 14px; padding: 0px; line-height: 1.25; font-family: Calibri, Arial, sans-serif; white-space: pre-wrap; margin: 0px;">
+                          <mark style="background-color: #fdb8c0;">${res.oldEditorHTML}</mark>
+                          <mark style="background-color: #acf2bd;">${res.newEditorHTML}</mark>
+                        </div>`;
+
+                        const replicaInitialHTML =
+                          replicaRef.current?.setHTML(diffFromAssistant);
+
+                        const replicaHtml = replicaRef.current
+                          ?.getHTML()
+                          ?.replace(
+                            /<p\s+style="font-size:\s*14px;\s*padding:\s*0px;\s*line-height:\s*1\.25;\s*font-family:\s*Calibri,\s*Arial,\s*sans-serif;\s*white-space:\s*pre-wrap;\s*margin:\s*0px;"\s*><\/p>\s*$/g,
+                            ""
+                          );
+
+                        const newHtml = htmlOfEditor.replace(
+                          res?.oldEditorHTML,
+                          replicaHtml ?? ""
+                        );
+                        editorRef.current?.setHTML?.(newHtml);
+
+                        setMessages((prev) => {
+                          const lastIndex = prev.length - 1;
+                          if (
+                            lastIndex >= 0 &&
+                            prev[lastIndex].role === "assistant"
+                          ) {
+                            const updated = [...prev];
+                            const lastMessage = updated[lastIndex];
+                            const callId = event?.item?.rawItem?.callId;
+                            const exists = (lastMessage.events || []).some(
+                              (e) => e.callId === callId
+                            );
+                            if (exists) {
+                              updated[lastIndex] = {
+                                ...lastMessage,
+                                events: (lastMessage.events || []).map((e) =>
+                                  e.callId === callId
+                                    ? {
+                                        ...e,
+                                        status: true,
+                                        output: {
+                                          diffEditorHTML: replicaHtml,
+                                          newEditorHTML: res?.newEditorHTML,
+                                          oldEditorHTML: res?.oldEditorHTML,
+                                          diffFromAssistant,
+                                          diffEditorHTMLId: finalId,
+                                        },
+                                      }
+                                    : e
+                                ),
+                              };
+                            }
+                            return updated;
+                          }
+                          return prev;
+                        });
+                      }
+                    } else {
+                      setMessages((prev) => {
+                        const lastIndex = prev.length - 1;
+                        if (
+                          lastIndex >= 0 &&
+                          prev[lastIndex].role === "assistant"
+                        ) {
+                          const updated = [...prev];
+                          const lastMessage = updated[lastIndex];
+                          const callId = event?.item?.rawItem?.callId;
+                          const exists = (lastMessage.events || []).some(
+                            (e) => e.callId === callId
+                          );
+                          if (exists) {
+                            updated[lastIndex] = {
+                              ...lastMessage,
+                              events: (lastMessage.events || []).map((e) =>
+                                e.callId === callId
+                                  ? {
+                                      ...e,
+                                      status: true,
+                                      notFound: true,
+                                    }
+                                  : e
+                              ),
+                            };
+                          }
+                          return updated;
+                        }
+                        return prev;
+                      });
+                      return;
+                    }
+                  }
+                } else if (
+                  event?.item?.type == "tool_call_output_item" &&
+                  event?.item?.rawItem?.type == "function_call_result"
+                ) {
+                  if (event?.item?.rawItem?.output) {
+                    const textObj = event?.item?.rawItem?.output?.text;
+                    const responseObj = JSON.parse(textObj);
 
                     if (responseObj.success === false) {
                       //Retry the tool call with the updated HTML
@@ -286,22 +551,18 @@ export default function Home({ params }: { params: Promise<{ id: string }> }) {
                         }
                         return prev;
                       });
-                      console.log("Should retry the tool call");
                       return;
                     }
 
                     if (responseObj[0]?.content) {
                       const res = JSON.parse(responseObj[0]?.content[0]?.text);
 
-                      if (res?.diffEditorHTML) {
+                      if (res?.oldEditorHTML && res?.newEditorHTML) {
                         const htmlOfEditor = editorRef.current?.getHTML?.();
 
                         if (htmlOfEditor) {
                           if (
-                            (res.oldEditorHTML &&
-                              !htmlOfEditor.includes(
-                                res.oldEditorHTML.trim()
-                              )) ||
+                            !htmlOfEditor.includes(res.oldEditorHTML.trim()) ||
                             res.success === false
                           ) {
                             //Retry the tool call with the updated HTML
@@ -337,66 +598,20 @@ export default function Home({ params }: { params: Promise<{ id: string }> }) {
                               }
                               return prev;
                             });
-                            console.log("Should retry the tool call");
                             return;
                           }
 
-                          // Check if res?.diffEditorHTML already has a root div with id
+                          const randomId = Math.random()
+                            .toString(36)
+                            .substring(2, 15);
+                          const finalId = `diff-editor-html-${randomId}`;
 
-                          const tempDiv = document.createElement("div");
-                          tempDiv.innerHTML = res.diffEditorHTML;
-                          const rootElement = tempDiv.firstElementChild;
+                          // Construct diffHTML with colored marks
+                          const diffFromAssistant = `<div id="${finalId}" style="font-size: 14px; padding: 0px; line-height: 1.25; font-family: Calibri, Arial, sans-serif; white-space: pre-wrap; margin: 0px;">
+                            <mark style="background-color: #fdb8c0;">${res.oldEditorHTML}</mark>
+                            <mark style="background-color: #acf2bd;">${res.newEditorHTML}</mark>
+                          </div>`;
 
-                          let finalId: string;
-                          let diffFromAssistant: string;
-
-                          if (
-                            rootElement &&
-                            rootElement.tagName === "DIV" &&
-                            rootElement.id
-                          ) {
-                            // Root div has an id
-                            if (rootElement.id.startsWith("diff-editor-html")) {
-                              // Keep existing id as it starts with "diff-editor-html"
-                              finalId = rootElement.id;
-                              diffFromAssistant = res.diffEditorHTML;
-                            } else {
-                              // Replace existing id with new one
-                              const randomId = Math.random()
-                                .toString(36)
-                                .substring(2, 15);
-                              finalId = `diff-editor-html-${randomId}`;
-                              const updatedHTML = res.diffEditorHTML.replace(
-                                `id="${rootElement.id}"`,
-                                `id="${finalId}"`
-                              );
-                              diffFromAssistant = updatedHTML;
-                            }
-                          } else {
-                            // No root div with id, use current approach
-                            const randomId = Math.random()
-                              .toString(36)
-                              .substring(2, 15);
-                            finalId = `diff-editor-html-${randomId}`;
-                            diffFromAssistant = `<div id="${finalId}" style="font-size: 14px; padding: 0px; line-height: 1.25; font-family: Calibri, Arial, sans-serif; white-space: pre-wrap; margin: 0px;">${res?.diffEditorHTML}</div>`;
-                          }
-
-                          const replicaInitialHTML =
-                            replicaRef.current?.setHTML(diffFromAssistant);
-
-                          // if (replicaInitialHTML) {
-                          //   replicaRef.current?.setHTML(
-                          //     replicaInitialHTML.replace(
-                          //       replicaInitialHTML,
-                          //       diffFromAssistant
-                          //     )
-                          //   );
-                          // }
-
-                          console.log(
-                            "replicaInitialHTML",
-                            replicaRef.current?.getHTML()
-                          );
                           const replicaHtml = replicaRef.current
                             ?.getHTML()
                             ?.replace(
@@ -433,8 +648,7 @@ export default function Home({ params }: { params: Promise<{ id: string }> }) {
                                             diffEditorHTML: replicaHtml,
                                             newEditorHTML: res?.newEditorHTML,
                                             oldEditorHTML: res?.oldEditorHTML,
-                                            diffFromAssistant:
-                                              res?.diffEditorHTML,
+                                            diffFromAssistant,
                                             diffEditorHTMLId: finalId,
                                           },
                                         }
@@ -449,7 +663,6 @@ export default function Home({ params }: { params: Promise<{ id: string }> }) {
                         }
                       }
                     } else {
-                      console.log("else");
                     }
                   }
                 }
@@ -463,7 +676,6 @@ export default function Home({ params }: { params: Promise<{ id: string }> }) {
             setIsAgentRunning(false);
             // Simple retry logic - only retry network errors, max 3 times
             if (err.name !== "AbortError" && retryCount < 3) {
-              console.log(`Retrying... (${retryCount + 1}/3)`);
               retryTimeoutRef.current = setTimeout(() => {
                 handleSendMessage(
                   message,
@@ -564,7 +776,6 @@ export default function Home({ params }: { params: Promise<{ id: string }> }) {
       } catch (err: any) {
         setIsAgentRunning(false);
         if (err.name !== "AbortError" && retryCount < 3) {
-          console.log(`Request failed, retrying... (${retryCount + 1}/3)`);
           retryTimeoutRef.current = setTimeout(() => {
             handleSendMessage(message, shouldSendEditorHTML, retryCount + 1);
           }, (retryCount + 1) * 2000);

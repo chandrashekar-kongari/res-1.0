@@ -1,17 +1,22 @@
+import { prisma } from "@/lib/db";
 import { Agent, Runner, tool, FunctionTool, RunContext } from "@openai/agents";
 import { z } from "zod";
-import { prisma } from "@/lib/db";
 
+// Define your tools as before (example for updateExperienceTool)
 export const updateExperienceTool: FunctionTool<any> = {
   type: "function",
   name: "updateExperience",
-  description: "Updates the experience section of the resume",
+  description: "Updates the experience positions of the resume",
   parameters: {
     type: "object",
     properties: {
       htmlToUpdate: { type: "string", description: "The html to be updated" },
-      jobDescription: { type: "string", description: "The job description" },
+      jobDescription: {
+        type: "string",
+        description: "The job description",
+      },
       userQuestion: { type: "string", description: "The user question" },
+
       resumeId: {
         type: "string",
         description: "The ID of the resume being edited",
@@ -33,52 +38,79 @@ export const updateExperienceTool: FunctionTool<any> = {
     // Create a sub-agent for this tool
     const subAgent = new Agent({
       name: "ExperienceUpdater",
-      instructions: `
-      # Role and Objective
-      You are HTML, CSS and Resume building expert for tiptap editor, your task is to correctly construct the NewEditorHTML and DiffEditorHTML by updating the OldEditorHTML based on the job description and user question.
-
-     # Instructions:
-      You must format the experience header to be in the following format: Role | Company | Location [spaces] Date
-      Add enough spaces between the role, company, location and date so that role, company, location(on the left end) and date(on the right end) are in the same line.
-      You must also format the experience header to be in the same line.
-      Update experince points based on the job description. 
-      use ul and li tags to list the experience points. Must create p tag inside li tag. If you create li tag by taking content from span tag then must create a new span tag inside the p tag and keep the text inside the span tag.
-
-      STEPS:
-      First build NewEditorHTML by updating the OldEditorHTML based on the job description and user question.
-      Then build DiffEditorHTML by comparing the NewEditorHTML and OldEditorHTML. For removed content wrap it mark tag with style="background-color: #fdb8c0;" and for added content wrap it mark tag with style="background-color: #acf2bd;", If you are adding mark tags inside any span tag then must create a new span tag inside the mark tag and keep the text inside the span tag.
-
-      IMPORTANT:
-      - Do not remove or add any content from the OldEditorHTML.
-      - Create NewEditorHTML by updating the OldEditorHTML based on the job description and user question.
-      - Create DiffEditorHTML by comparing the NewEditorHTML and OldEditorHTML.
-      - Do not remove or add any content from the NewEditorHTML.
-      - Do not remove or add any content from the DiffEditorHTML.
-
-      OUTPUT FORMAT:    
-      OldEditorHTML: The original HTML content you received (before any changes) (MUST be returned exactly as received, with no changes)
-      NewEditorHTML: The modified HTML content (after changes, without diff styling) (MUST be the full HTML, not just the changed part)
-      DiffEditorHTML: Generate a diff view of the OldEditorHTML and NewEditorHTML. 
-
-      Before returning the output, think step by step and make sure you have followed the steps correctly.
-
-`,
       outputType: z.object({
         oldEditorHTML: z.string(),
         newEditorHTML: z.string(),
-        diffEditorHTML: z.string(),
       }),
+      instructions: `
+<role>
+You are an expert HTML/CSS resume editor for the Tiptap editor. Your job is to update the experience section of a resume, strictly preserving the original HTML structure and formatting.
+</role>
+
+<task>
+Given:
+- "oldEditorHTML": The current HTML content to update (must be preserved exactly).
+- "jobDescription": Context for the experience to add or modify.
+- "userQuestion": The user's specific request for experience updates.
+
+Your steps:
+1. Analyze the provided HTML and user requirements.
+2. Identify the experience section to modify.
+3. Create "newEditorHTML" by:
+   - Starting with the exact "oldEditorHTML".
+   - Adding or updating only the requested experience, following the formatting rules below.
+   - Preserving all existing HTML, CSS classes, IDs, and attributes.
+   - Ensuring the new content matches the style and structure of the original.
+
+<formatting_rules>
+- Experience header: Role | Company | Location [spaces] Date (role, company, location left-aligned, date right-aligned, use spaces for alignment)
+- Use <ul> and <li> for experience points; each <li> must contain a <p> tag.
+- If creating <li> from a <span>, create a new <span> inside the <p>.
+- Only add or update experience as requested. Do NOT remove existing entries unless explicitly told.
+- Do NOT add unrelated or unnecessary information.
+</formatting_rules>
+
+<html_rules>
+- Do not alter any HTML outside the experience section.
+- All new spans must be inside their parent elements.
+- Keep indentation, classes, and styling consistent.
+- Do not change IDs, classes, or data attributes.
+</html_rules>
+
+<output>
+Respond with a valid JSON object, and nothing else:
+{
+  "oldEditorHTML": "EXACT copy of input HTML",
+  "newEditorHTML": "Full HTML with experience updates"
+}
+</output>
+
+<validation>
+- "oldEditorHTML" must match the input exactly, character-for-character.
+- "newEditorHTML" must include all original content plus the requested changes.
+- Output must be valid, parseable JSON. No extra text.
+</validation>
+`,
     });
 
     const subRunner = new Runner({ model: "gpt-4.1" });
-    const prompt = `Job Description: ${parsedInput.jobDescription}\nUser Question: ${parsedInput.userQuestion}\nHTML to Update: ${parsedInput.htmlToUpdate}`;
 
+    const prompt = `Job Description: ${parsedInput.jobDescription}\nUser Question: ${parsedInput.userQuestion}\nHTML to Update: ${parsedInput.htmlToUpdate}`;
     try {
-      const result: any = await subRunner.run(subAgent, prompt);
+      const result: any = await subRunner.run(subAgent, prompt, {
+        stream: false,
+      });
+
       let outputText = "";
 
-      if (result && typeof result === "object" && "output" in result) {
-        outputText = result.output;
+      if (result?.state?._currentStep?.output) {
+        try {
+          const parsedOutput = JSON.parse(result.state._currentStep.output);
+          outputText = parsedOutput;
+        } catch (e) {
+          console.error("Error parsing output:", e);
+          outputText = result.state._currentStep.output;
+        }
       } else if (typeof result === "string") {
         outputText = result;
       } else if (
@@ -90,8 +122,6 @@ export const updateExperienceTool: FunctionTool<any> = {
       } else {
         outputText = JSON.stringify(result);
       }
-
-      // Parse the result to validate oldEditorHTML
       // Get current resume content from database
       const resume = await prisma.resume.findUnique({
         where: {
@@ -106,36 +136,22 @@ export const updateExperienceTool: FunctionTool<any> = {
       try {
         const parsedResult = outputText as any;
 
-        // Try multiple parsing approaches for robustness
-        let res;
-        try {
-          // First try direct parsing (for newer format)
-          res =
-            typeof parsedResult === "string"
-              ? JSON.parse(parsedResult)
-              : parsedResult;
-        } catch {
-          // Fallback to nested parsing (for older format)
-          res = JSON.parse(parsedResult[0].content[0].text);
-        }
-
         // Validate that the oldEditorHTML from the tool matches what's in the current editor
         if (
-          res.oldEditorHTML &&
+          parsedResult.oldEditorHTML &&
           resume?.content &&
-          !resume?.content.includes(res.oldEditorHTML.trim())
+          !resume?.content.includes(parsedResult.oldEditorHTML.trim())
         ) {
           // Tool failed - return failure response with current resume content
           return JSON.stringify({
             success: false,
             oldEditorHTML: parsedInput.htmlToUpdate,
             newEditorHTML: parsedInput.htmlToUpdate,
-            diffEditorHTML: parsedInput.htmlToUpdate,
             error: `TOOL_VALIDATION_FAILED: The HTML section to be updated was not found in the current editor. This likely means the editor content has changed since the tool was called. 
 
 RETRY REQUIRED: Use the currentResumeContent provided below as the new currentEditorHTML parameter. Extract the experience section from this updated content and retry the tool call.
 
-Current editor content: ${resume?.content}
+Current Resume Content: ${resume?.content}
 `,
             retryInstructions:
               "Extract the experience section from currentResumeContent and retry the updateExperience tool with: 1) htmlToUpdate = experience section from currentResumeContent, 2) same jobDescription and userQuestion",
@@ -159,10 +175,9 @@ Current editor content: ${resume?.content}
           success: false,
           oldEditorHTML: parsedInput.htmlToUpdate,
           newEditorHTML: parsedInput.htmlToUpdate,
-          diffEditorHTML: parsedInput.htmlToUpdate,
           error: `Failed to parse tool output: ${parseError.message}. RETRY REQUIRED: Use the currentResumeContent below and retry the tool call.`,
           retryInstructions:
-            "Extract the experience section from currentResumeContent and retry the updateExperience tool with: 1) htmlToUpdate = experience section from currentResumeContent, 2) same jobDescription and userQuestion",
+            "Extract the experience section from currentResumeContent and retry the updateExperience tool with: 1) htmlToUpdate = experience section from currentResumeContent, 2)  same jobDescription and userQuestion",
           currentResumeContent: resume?.content || "",
         });
       }
@@ -186,7 +201,6 @@ Current editor content: ${resume?.content}
         success: false,
         oldEditorHTML: parsedInput.htmlToUpdate,
         newEditorHTML: parsedInput.htmlToUpdate,
-        diffEditorHTML: parsedInput.htmlToUpdate,
         error: `Experience update tool failed: ${
           error.message || "Unknown error"
         }`,
