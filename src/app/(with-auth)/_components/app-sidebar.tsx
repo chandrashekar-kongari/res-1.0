@@ -1,6 +1,6 @@
 "use client";
 
-import { Trash2Icon } from "lucide-react";
+import { DiamondIcon, Gem, Trash2Icon } from "lucide-react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 
@@ -37,6 +37,7 @@ import DeleteConfirmationDialog from "./DeleteConfirmationDialog";
 import { cn } from "@/lib/utils";
 import DuplicateFromPinnedResumeModal from "./DuplicateFromPinnedResumeModal";
 import Image from "next/image";
+import { PricingModal } from "@/components/ui/pricing-modal";
 
 function ResumeItemSkeleton() {
   return (
@@ -76,6 +77,8 @@ export function AppSidebar() {
 
   const { data: resumes, isLoading: isResumesLoading } =
     trpc.resume.getAllResumeNames.useQuery();
+
+  const { data: userInfo } = trpc.user.get.useQuery(undefined, {});
 
   const utils = trpc.useUtils();
 
@@ -117,8 +120,11 @@ export function AppSidebar() {
     setOpenDropdownId(null);
   };
 
+  const [openUpgradeModal, setOpenUpgradeModal] = useState(false);
+
   return (
     <>
+      <PricingModal open={openUpgradeModal} setOpen={setOpenUpgradeModal} />
       <CreateFromScratchModal
         open={createFromScratchModalOpen}
         setOpen={setCreateFromScratchModalOpen}
@@ -360,6 +366,19 @@ export function AppSidebar() {
                       </div>
                     )}
                   </div>
+                  <Separator className="my-2" />
+                  {userInfo?.subscription_status === "active" ? (
+                    <SidebarMenuButton
+                      asChild
+                      onClick={() => setOpenUpgradeModal(true)}
+                      className="rounded-xl cursor-pointer"
+                    >
+                      <div className="flex items-center ">
+                        <Gem className="w-4 h-4 text-[#AD46FF]" />
+                        <p className="text-xs">Upgrade to Pro</p>
+                      </div>
+                    </SidebarMenuButton>
+                  ) : null}
                   <Separator className="my-2" />
                   <div className="mt-auto">
                     <React.Suspense
