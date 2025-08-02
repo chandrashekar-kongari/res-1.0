@@ -130,7 +130,7 @@ const ChatInput = ({
             className="text-[10px] cursor-pointer rounded-xl"
             onClick={() => handleToggleResume(false)}
           >
-            <FileTextIcon className="w-3 h-3 mr-1 text-[#00C950]" /> Active
+            <FileTextIcon className="w-3 h-3 mr-1 text-[#00C950]" />
             Active Resume <X className="w-3 h-3 ml-1" />
           </Badge>
         ) : (

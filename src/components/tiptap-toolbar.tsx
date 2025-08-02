@@ -483,9 +483,9 @@ export function TiptapToolbar({
           >
             <Badge
               variant="outline"
-              className="cursor-pointer bg-[#F3EBFD] text-[#AD46FF] border-[#AD46FF] py-[3px] flex items-center gap-1"
+              className="cursor-pointer bg-[#AD46FF] hover:bg-[#AD46FF]/80 text-white shadow-lg shadow-[#AD46FF]/25 py-[3px] flex items-center gap-1"
             >
-              <DownloadIcon className="h-4 w-4 text-[#AD46FF]" /> pdf
+              <DownloadIcon className="h-4 w-4 text-white" /> pdf
             </Badge>
           </button>
         </TooltipWrapper>

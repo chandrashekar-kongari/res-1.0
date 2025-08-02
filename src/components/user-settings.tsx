@@ -10,13 +10,17 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Mail, LogOut, User2, MessageCircle } from "lucide-react";
+import { Mail, LogOut, User2, MessageCircle, CreditCard } from "lucide-react";
 import * as React from "react";
 import { SidebarMenuButton } from "./ui/sidebar";
 import { useUser } from "@stackframe/stack";
+import { trpc } from "@/lib/trpc";
 
 const UserSettings = () => {
   const user = useUser();
+
+  const { data: userInfo } = trpc.user.get.useQuery(undefined, {});
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild className="cursor-pointer">
@@ -78,6 +82,29 @@ const UserSettings = () => {
             </div>
           </div>
         </DropdownMenuItem>
+
+        {userInfo?.subscription_status === "active" && (
+          <DropdownMenuItem
+            className="rounded-2xl p-2 cursor-pointer hover:bg-purple-50 dark:hover:bg-purple-900/20 transition-all duration-200 focus:bg-purple-50 dark:focus:bg-purple-900/20 mb-2"
+            onClick={() => {
+              window.location.href = "/api/portal";
+            }}
+          >
+            <div className="flex items-center gap-3 w-full">
+              <div className="p-2 rounded-xl bg-purple-100 dark:bg-purple-900/30">
+                <CreditCard className="w-4 h-4 text-purple-600 dark:text-purple-400" />
+              </div>
+              <div className="flex-1">
+                <p className="text-xs font-medium text-gray-900 dark:text-gray-100">
+                  Billing Portal
+                </p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  Manage your subscription
+                </p>
+              </div>
+            </div>
+          </DropdownMenuItem>
+        )}
 
         <DropdownMenuItem
           className="rounded-2xl p-2 cursor-pointer hover:bg-red-50 dark:hover:bg-red-900/20 transition-all duration-200 focus:bg-red-50 dark:focus:bg-red-900/20"
