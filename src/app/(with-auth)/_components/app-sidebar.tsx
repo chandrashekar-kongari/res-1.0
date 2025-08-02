@@ -42,10 +42,9 @@ import { PricingModal } from "@/components/ui/pricing-modal";
 function ResumeItemSkeleton() {
   return (
     <SidebarMenuItem>
-      <SidebarMenuButton className="rounded-lg">
-        <div className="flex items-center gap-2 w-full animate-pulse">
+      <SidebarMenuButton className="rounded-lg  px-0">
+        <div className="flex items-center gap-1 w-full animate-pulse">
           {/* File icon skeleton */}
-          <div className="w-4 h-4 bg-black/15 rounded-sm"></div>
 
           {/* Resume name skeleton - varies in width for realism */}
           <div className="flex-1 ">
@@ -233,7 +232,7 @@ export function AppSidebar() {
                   <p className="text-xs text-gray-500 p-2">All resumes</p>
                   <div className="flex flex-col gap-2 flex-grow overflow-y-auto">
                     {isResumesLoading ? (
-                      <div className="flex flex-col gap-4">
+                      <div className="flex flex-col gap-2">
                         {Array.from({ length: 6 }).map((_, index) => (
                           <ResumeItemSkeleton key={`skeleton-${index}`} />
                         ))}
@@ -277,12 +276,12 @@ export function AppSidebar() {
                                     >
                                       {item.pinned ? (
                                         hoveredResumeId === item.id ? (
-                                          <DrawingPinIcon className="w-[14px] h-[14px] text-gray-700" />
+                                          <DrawingPinIcon className="w-[14px] h-[14px] text-black/50" />
                                         ) : (
                                           <DrawingPinFilledIcon className="w-[14px] h-[14px] text-[#FA2C37]" />
                                         )
                                       ) : (
-                                        <DrawingPinFilledIcon className="w-[14px] h-[14px] text-gray-700" />
+                                        <DrawingPinFilledIcon className="w-[14px] h-[14px] text-black/50" />
                                       )}
                                     </button>
                                   )}
