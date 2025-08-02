@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import puppeteer from "puppeteer";
 
 export const POST = async (req: NextRequest) => {
-  const { html, filename = "document.pdf" } = await req.json();
+  const { html, filename = "resume.pdf" } = await req.json();
 
   if (!html) {
     return NextResponse.json({ error: "No HTML provided" }, { status: 400 });
