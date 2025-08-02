@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import puppeteer from "puppeteer";
+
+const PDF_SERVICE_URL =
+  process.env.PDF_SERVICE_URL || "https://0eb733b5ca8c.ngrok-free.app";
 
 export const POST = async (req: NextRequest) => {
   try {
@@ -9,32 +11,29 @@ export const POST = async (req: NextRequest) => {
       return NextResponse.json({ error: "No HTML provided" }, { status: 400 });
     }
 
-    const browser = await puppeteer.launch({
-      args: [
-        "--no-sandbox",
-        "--disable-setuid-sandbox",
-        "--disable-dev-shm-usage",
-        "--disable-accelerated-2d-canvas",
-        "--no-first-run",
-        "--no-zygote",
-        "--disable-gpu",
-      ],
-    });
-    const page = await browser.newPage();
-    await page.setContent(html, { waitUntil: "networkidle0" });
-
-    const pdfBuffer = await page.pdf({
-      format: "A4",
-      printBackground: true,
-      margin: { top: "10mm", right: "10mm", bottom: "10mm", left: "10mm" },
+    // Call external PDF service
+    const response = await fetch(`${PDF_SERVICE_URL}/api/export-pdf`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ html, filename }),
     });
 
-    await browser.close();
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      return NextResponse.json(
+        {
+          error: "PDF generation failed",
+          details: errorData.details || "Unknown error",
+        },
+        { status: 500 }
+      );
+    }
 
-    // Convert to Buffer for NextResponse
-    const buffer = Buffer.from(pdfBuffer);
+    const pdfBuffer = await response.arrayBuffer();
 
-    return new NextResponse(buffer, {
+    return new NextResponse(pdfBuffer, {
       status: 200,
       headers: {
         "Content-Type": "application/pdf",
@@ -42,9 +41,12 @@ export const POST = async (req: NextRequest) => {
       },
     });
   } catch (error) {
-    console.error("PDF generation error:", error);
+    console.error("PDF service error:", error);
     return NextResponse.json(
-      { error: "Failed to generate PDF" },
+      {
+        error: "Failed to generate PDF",
+        details: error instanceof Error ? error.message : "Unknown error",
+      },
       { status: 500 }
     );
   }
