@@ -61,7 +61,7 @@ const Hero = () => {
         <div className="mt-12 sm:mt-16 lg:mt-24 transition-all duration-1000 delay-700 ease-in-out">
           <div className="relative">
             <img
-              src="test.webp"
+              src="sample.png"
               alt="AI-powered resume builder interface showing professional resume templates"
               className="mx-auto aspect-video w-full max-w-7xl rounded-xl lg:rounded-2xl object-cover shadow-2xl transition-all duration-700 ease-in-out transform-gpu hover:shadow-3xl"
             />

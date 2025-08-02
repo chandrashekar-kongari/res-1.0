@@ -28,7 +28,7 @@ const Features = () => {
           <div className="mx-auto w-full max-w-xs sm:max-w-lg md:max-w-2xl lg:max-w-4xl xl:max-w-6xl relative">
             <div className="relative aspect-video bg-[#00C950]/5 rounded-xl lg:rounded-2xl overflow-hidden shadow-lg border border-white/20">
               <video
-                src="tab-video-dark.mp4"
+                src="samplevideo.mp4"
                 poster="tab-video-dark.webp"
                 className="h-full w-full object-cover sm:object-contain"
                 autoPlay

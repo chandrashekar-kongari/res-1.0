@@ -14,7 +14,7 @@ const Feature = () => {
           <div className="relative">
             <div className="relative overflow-hidden rounded-xl lg:rounded-2xl shadow-xl">
               <img
-                src="test.webp"
+                src="sample.png"
                 alt="AI-powered resume builder interface showing intelligent content suggestions"
                 className="w-full h-64 sm:h-80 lg:h-96 xl:h-[28rem] object-cover transition-transform duration-700 hover:scale-105"
               />
