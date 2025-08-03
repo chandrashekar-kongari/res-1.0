@@ -840,7 +840,7 @@ const TiptapEditor = forwardRef<TiptapEditorRef, TiptapEditorProps>(
           )}
 
           <div className="flex justify-center items-center">
-            <div className="bg-white shadow-md w-[300px]">
+            <div className="bg-white shadow-md">
               <EditorContent
                 editor={editor}
                 className="w-full !outline-none !focus:outline-none !focus-visible:outline-none"
