@@ -122,15 +122,25 @@ export function TiptapToolbar({
               Text Color
             </DropdownMenuLabel>
             {[
-              "#000000",
-              "rgb(255,0,0)",
-              "rgb(0,255,0)",
-              "#404040",
-              "#4d4d4d",
-              "#595959",
-              "#666666",
-              "#737373",
-              "#808080",
+              // Dark colors for main text
+              "#000000", // Black
+
+              "#2d2d2d", // Dark Gray
+
+              // Professional blues
+              "#0066cc", // Professional Blue
+
+              "#0077b6", // Ocean Blue
+
+              // Accent colors
+              "#2d5a27", // Forest Green
+              "#6a4c93", // Royal Purple
+              "#780000", // Dark Red
+
+              // Muted colors
+              "#595959", // Medium Gray
+
+              "#808080", // Gray
             ].map((color) => (
               <DropdownMenuItem
                 key={color}
@@ -145,7 +155,6 @@ export function TiptapToolbar({
                   className="inline-block w-4 h-4 rounded-full mr-2"
                   style={{ backgroundColor: color }}
                 />
-                {color}
               </DropdownMenuItem>
             ))}
             <DropdownMenuItem
@@ -198,7 +207,6 @@ export function TiptapToolbar({
                   className="inline-block w-4 h-4 rounded-full mr-2"
                   style={{ backgroundColor: color }}
                 />
-                {color}
               </DropdownMenuItem>
             ))}
             <DropdownMenuItem
@@ -375,14 +383,16 @@ export function TiptapToolbar({
               Line Height
             </DropdownMenuLabel>
             {[
+              "0.10",
+              "0.20",
+              "0.25",
+              "0.50",
               "0.75",
-              "0.80",
-              "0.90",
               "1",
-              "1.10",
               "1.25",
               "1.5",
               "1.75",
+              "1.80",
               "2",
             ].map((lh) => (
               <DropdownMenuItem
@@ -415,25 +425,35 @@ export function TiptapToolbar({
             <DropdownMenuLabel className="text-xs">
               Margin Top
             </DropdownMenuLabel>
-            {["0.25", "0.5", "0.75", "1", "1.25", "1.5", "1.75", "2"].map(
-              (mt) => (
-                <DropdownMenuItem
-                  key={mt}
-                  onClick={() => {
-                    editor.commands.focus();
-                    (editor.commands as any).setMarginTop(mt + "em");
-                  }}
-                  className={cn(
-                    editor.getAttributes("paragraph").marginTop === mt + "em" ||
-                      editor.getAttributes("heading").marginTop === mt + "em"
-                      ? "bg-accent"
-                      : ""
-                  )}
-                >
-                  {mt}
-                </DropdownMenuItem>
-              )
-            )}
+            {[
+              "0.10",
+              "0.20",
+              "0.25",
+              "0.50",
+              "0.75",
+              "1",
+              "1.25",
+              "1.5",
+              "1.75",
+              "1.80",
+              "2",
+            ].map((mt) => (
+              <DropdownMenuItem
+                key={mt}
+                onClick={() => {
+                  editor.commands.focus();
+                  (editor.commands as any).setMarginTop(mt + "em");
+                }}
+                className={cn(
+                  editor.getAttributes("paragraph").marginTop === mt + "em" ||
+                    editor.getAttributes("heading").marginTop === mt + "em"
+                    ? "bg-accent"
+                    : ""
+                )}
+              >
+                {mt}
+              </DropdownMenuItem>
+            ))}
           </DropdownMenuContent>
         </DropdownMenu>
 
@@ -451,26 +471,36 @@ export function TiptapToolbar({
             <DropdownMenuLabel className="text-xs">
               Margin Bottom
             </DropdownMenuLabel>
-            {["0.25", "0.5", "0.75", "1", "1.25", "1.5", "1.75", "2"].map(
-              (mb) => (
-                <DropdownMenuItem
-                  key={mb}
-                  onClick={() => {
-                    editor.commands.focus();
-                    (editor.commands as any).setMarginBottom(mb + "em");
-                  }}
-                  className={cn(
-                    editor.getAttributes("paragraph").marginBottom ===
-                      mb + "em" ||
-                      editor.getAttributes("heading").marginBottom === mb + "em"
-                      ? "bg-accent"
-                      : ""
-                  )}
-                >
-                  {mb}
-                </DropdownMenuItem>
-              )
-            )}
+            {[
+              "0.10",
+              "0.20",
+              "0.25",
+              "0.50",
+              "0.75",
+              "1",
+              "1.25",
+              "1.5",
+              "1.75",
+              "1.80",
+              "2",
+            ].map((mb) => (
+              <DropdownMenuItem
+                key={mb}
+                onClick={() => {
+                  editor.commands.focus();
+                  (editor.commands as any).setMarginBottom(mb + "em");
+                }}
+                className={cn(
+                  editor.getAttributes("paragraph").marginBottom ===
+                    mb + "em" ||
+                    editor.getAttributes("heading").marginBottom === mb + "em"
+                    ? "bg-accent"
+                    : ""
+                )}
+              >
+                {mb}
+              </DropdownMenuItem>
+            ))}
           </DropdownMenuContent>
         </DropdownMenu>
 
