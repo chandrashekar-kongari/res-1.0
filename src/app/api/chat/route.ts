@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { Agent, Runner, OpenAIChatCompletionsModel } from "@openai/agents";
 import AsyncOpenAI from "openai";
 
-import { updateGenericSectionTool } from "./tools/openai/generic-section";
+import { updateResume } from "./tools/openai/generic-section";
 
 const external_client = new AsyncOpenAI({
   apiKey: process.env.ANTHROPIC_API_KEY,
@@ -418,7 +418,7 @@ export async function POST(req: Request) {
       9. If possible, log or output a diff between the original and your extracted HTML to help catch mistakes.
       `,
 
-      tools: [updateGenericSectionTool],
+      tools: [updateResume],
     });
 
     // Run the agent with streaming enabled

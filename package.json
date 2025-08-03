@@ -34,6 +34,8 @@
     "@stackframe/stack": "^2.8.17",
     "@tailwindcss/typography": "^0.5.16",
     "@tanstack/react-query": "^5.83.0",
+    "@tiptap-pro/extension-comments": "^3.0.1",
+    "@tiptap-pro/extension-export-docx": "^1.0.0-beta.4",
     "@tiptap/extension-bullet-list": "^3.0.1",
     "@tiptap/extension-code-block-lowlight": "^3.0.1",
     "@tiptap/extension-color": "^3.0.1",

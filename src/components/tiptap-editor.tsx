@@ -478,7 +478,7 @@ const TiptapEditor = forwardRef<TiptapEditorRef, TiptapEditorProps>(
           },
         }),
         PaginationPlus.configure({
-          pageHeight: 1100, // A4 height: 297mm = 1123px at 96 DPI
+          pageHeight: 1220, // A4 height: 297mm = 1123px at 96 DPI
           pageGap: 20,
           pageBreakBackground: "#f7f7f7",
           pageHeaderHeight: 45,
@@ -694,29 +694,95 @@ const TiptapEditor = forwardRef<TiptapEditorRef, TiptapEditorProps>(
       setError(null);
 
       try {
-        const html = editor.getHTML();
-        console.log("html: ", html);
+        // Get the editor content
+        const content = editor.getHTML();
 
-        const response = await fetch("/api/export-pdf", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ html, filename: "document.pdf" }),
-        });
+        // Create a hidden iframe
+        const iframe = document.createElement("iframe");
+        iframe.style.display = "none";
+        document.body.appendChild(iframe);
 
-        if (!response.ok) throw new Error("Failed to export PDF");
+        // Add print-specific styles
+        const printStyles = `
+          <style>
+            @page {
+              size: A4;
+              margin: 10mm;
+            }
+            @media print {
+              body {
+                font-family: Calibri, Arial, sans-serif;
+                padding: 0;
+                margin: 0;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+              }
+         
+              /* Ensure background colors and images are printed */
+              * {
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+              }
+            }
+            /* Preview styles */
+            body {
+              font-family: Calibri, Arial, sans-serif;
+              padding: 0;
+              margin: 0;
+              background: transparent;
+            }
+          </style>
+        `;
 
-        const blob = await response.blob();
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = "document.pdf";
-        a.click();
-        window.URL.revokeObjectURL(url);
+        // Set up the print document in the iframe
+        const iframeDoc = iframe.contentWindow?.document;
+        if (!iframeDoc) {
+          throw new Error("Failed to access iframe document");
+        }
 
-        setIsLoading(false);
+        iframeDoc.write(`
+          <!DOCTYPE html>
+          <html>
+            <head>
+              <title>Print Document</title>
+              ${printStyles}
+              <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            </head>
+            <body>
+              <div class="print-container">
+                ${content}
+              </div>
+            </body>
+          </html>
+        `);
+
+        iframeDoc.close();
+
+        // Wait for content and images to load
+        iframe.onload = () => {
+          // Get the iframe's window object
+          const iframeWindow = iframe.contentWindow;
+          if (!iframeWindow) {
+            throw new Error("Failed to access iframe window");
+          }
+
+          // Trigger print
+          iframeWindow.print();
+
+          // Remove the iframe after printing (or if user cancels)
+          setTimeout(() => {
+            document.body.removeChild(iframe);
+            setIsLoading(false);
+          }, 1000);
+        };
       } catch (error: any) {
         setError(error.message);
         setIsLoading(false);
+        // Clean up iframe if it exists
+        const existingIframe = document.querySelector("iframe");
+        if (existingIframe) {
+          document.body.removeChild(existingIframe);
+        }
       }
     }, [editor]);
 
