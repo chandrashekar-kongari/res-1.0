@@ -478,11 +478,11 @@ const TiptapEditor = forwardRef<TiptapEditorRef, TiptapEditorProps>(
           },
         }),
         PaginationPlus.configure({
-          pageHeight: 1140, // A4 height: 297mm = 1123px at 96 DPI
+          pageHeight: 1117, // A4 height: 297mm = 1123px at 96 DPI
           pageGap: 20,
           pageBreakBackground: "#f7f7f7",
-          pageHeaderHeight: 45,
-          maxPages: 10, // Allow more pages for longer documents
+          pageHeaderHeight: 60,
+          maxPages: 3, // Allow more pages for longer documents
         }),
         InlineEdit.configure({
           minLength: 3,
@@ -706,30 +706,45 @@ const TiptapEditor = forwardRef<TiptapEditorRef, TiptapEditorProps>(
         const printStyles = `
           <style>
             @page {
-              size: A4;
-              margin: 10mm;
-            }
-            @media print {
-              body {
-                font-family: Calibri, Arial, sans-serif;
-                padding: 0;
-                margin: 0;
-                -webkit-print-color-adjust: exact;
-                print-color-adjust: exact;
-              }
-         
-              /* Ensure background colors and images are printed */
-              * {
-                -webkit-print-color-adjust: exact !important;
-                print-color-adjust: exact !important;
-              }
-            }
-            /* Preview styles */
-            body {
-              font-family: Calibri, Arial, sans-serif;
-              padding: 0;
               margin: 0;
-              background: transparent;
+              padding: 0;
+            }
+            
+            html, body {
+              width: 100%;
+              height: 100%;
+              margin: 0;
+              padding: 0;
+              overflow: hidden;
+              font-size: 0;
+              font-family: Calibri, Arial, sans-serif;
+              -webkit-print-color-adjust: exact;
+              print-color-adjust: exact;
+            }
+
+            /* Ensure background colors and images are printed */
+            * {
+              -webkit-print-color-adjust: exact !important;
+              print-color-adjust: exact !important;
+            }
+
+            .print-container {
+              width: 100%;
+              height: 100%;
+            }
+
+            .print-container img {
+              width: 100%;
+              height: 100%;
+              object-fit: contain;
+            }
+
+            .content {
+              box-sizing: border-box;
+              width: 100%;
+              height: 100%;
+              padding: 10mm !important;
+              
             }
           </style>
         `;
@@ -750,7 +765,9 @@ const TiptapEditor = forwardRef<TiptapEditorRef, TiptapEditorProps>(
             </head>
             <body>
               <div class="print-container">
-                ${content}
+                <div class="content">
+                  ${content}
+                </div>
               </div>
             </body>
           </html>
@@ -795,7 +812,7 @@ const TiptapEditor = forwardRef<TiptapEditorRef, TiptapEditorProps>(
     }
 
     return (
-      <div className="flex flex-col bg-[#FCFCFC] h-full min-w-[794px]">
+      <div className="flex flex-col bg-[#FCFCFC] h-full ">
         {/* Toolbar */}
         <TiptapToolbar
           editor={editor}
@@ -807,7 +824,7 @@ const TiptapEditor = forwardRef<TiptapEditorRef, TiptapEditorProps>(
         {/* Editor Container - Scrollable */}
         <div
           className={cn(
-            "flex-1 overflow-auto bg-[#f6f1fc] border  shadow-none rounded-lg rounded-b-none p-3",
+            "flex-1 overflow-auto bg-[#f6f1fc] border  shadow-none rounded-lg rounded-b-none p-0",
             className
           )}
         >
@@ -823,7 +840,7 @@ const TiptapEditor = forwardRef<TiptapEditorRef, TiptapEditorProps>(
           )}
 
           <div className="flex justify-center items-center">
-            <div className="bg-white shadow-md w-[794px]">
+            <div className="bg-white shadow-md w-[300px]">
               <EditorContent
                 editor={editor}
                 className="w-full !outline-none !focus:outline-none !focus-visible:outline-none"

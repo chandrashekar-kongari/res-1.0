@@ -38,13 +38,39 @@ export const CleanPaste = Extension.create<CleanPasteOptions>({
             // Stop the default paste
             event.preventDefault();
 
-            // Insert the cleaned text
+            // Split text into words and create spans
+            const words = cleanText
+              .split(/(\s+)/)
+              .filter((word) => word.length > 0);
             const { tr, selection } = view.state;
             const { from, to } = selection;
-            const newText = view.state.schema.text(cleanText);
-            const transaction = tr.replaceWith(from, to, newText);
-            view.dispatch(transaction);
 
+            // Start a new transaction
+            let transaction = tr.deleteRange(from, to);
+            let currentPos = from;
+
+            // Insert each word wrapped in a span
+            words.forEach((word) => {
+              // Skip empty strings
+              if (!word) return;
+
+              if (word.trim()) {
+                // For actual words, create a span
+                const spanNode = view.state.schema.marks.customSpan.create();
+                const textNode = view.state.schema.text(word);
+                transaction = transaction
+                  .insert(currentPos, textNode)
+                  .addMark(currentPos, currentPos + word.length, spanNode);
+                currentPos += word.length;
+              } else if (word.length > 0) {
+                // For whitespace, just insert it directly
+                const textNode = view.state.schema.text(word);
+                transaction = transaction.insert(currentPos, textNode);
+                currentPos += word.length;
+              }
+            });
+
+            view.dispatch(transaction);
             return true;
           },
         },
