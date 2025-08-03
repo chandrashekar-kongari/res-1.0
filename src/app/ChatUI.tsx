@@ -198,7 +198,6 @@ const ChatUI = ({
           msg.role === "assistant" &&
           msg.events?.some((e) => e.callId === eventCallId)
       );
-      console.log("targetMessage", targetMessage);
       if (targetMessage?.id) {
         updateMessage.mutate({
           id: targetMessage.id,

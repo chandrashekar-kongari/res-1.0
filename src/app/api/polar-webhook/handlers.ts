@@ -72,25 +72,17 @@ export async function handleSubscriptionCreated(
   subscription: PolarSubscription,
   webhookEventId: string
 ) {
-  console.log(
-    `Processing subscription.created for subscription ${subscription.id}`
-  );
-
   const customerId = extractCustomerId(subscription);
   if (!customerId) {
-    console.error("No customer_id found in subscription data");
-    console.error("Subscription data:", JSON.stringify(subscription, null, 2));
     return;
   }
 
   const user = await findUserByCustomerId(customerId);
   if (!user) {
-    console.error(`User not found for customer_id: ${customerId}`);
     const availableUsers = await prisma.user.findMany({
       where: { customer_id: { not: null } },
       select: { id: true, email: true, customer_id: true },
     });
-    console.error("Available users with customer_id:", availableUsers);
     return;
   }
 
@@ -154,20 +146,13 @@ export async function handleSubscriptionUpdated(
   subscription: PolarSubscription,
   webhookEventId: string
 ) {
-  console.log(
-    `Processing subscription.updated for subscription ${subscription.id}`
-  );
-
   const customerId = extractCustomerId(subscription);
   if (!customerId) {
-    console.error("No customer_id found in subscription data");
-    console.error("Subscription data:", JSON.stringify(subscription, null, 2));
     return;
   }
 
   const user = await findUserByCustomerId(customerId);
   if (!user) {
-    console.error(`User not found for customer_id: ${customerId}`);
     return;
   }
 
@@ -231,14 +216,8 @@ export async function handleSubscriptionActive(
   subscription: PolarSubscription,
   webhookEventId: string
 ) {
-  console.log(
-    `Processing subscription.active for subscription ${subscription.id}`
-  );
-
   const customerId = extractCustomerId(subscription);
   if (!customerId) {
-    console.error("No customer_id found in subscription data");
-    console.error("Subscription data:", JSON.stringify(subscription, null, 2));
     return;
   }
 
@@ -288,19 +267,13 @@ export async function handleSubscriptionCanceled(
   subscription: PolarSubscription,
   webhookEventId: string
 ) {
-  console.log(
-    `Processing subscription.canceled for subscription ${subscription.id}`
-  );
-
   const customerId = extractCustomerId(subscription);
   if (!customerId) {
-    console.error("No customer_id found in subscription data");
     return;
   }
 
   const user = await findUserByCustomerId(customerId);
   if (!user) {
-    console.error(`User not found for customer_id: ${customerId}`);
     return;
   }
 
@@ -349,19 +322,13 @@ export async function handleSubscriptionUncanceled(
   subscription: PolarSubscription,
   webhookEventId: string
 ) {
-  console.log(
-    `Processing subscription.uncanceled for subscription ${subscription.id}`
-  );
-
   const customerId = extractCustomerId(subscription);
   if (!customerId) {
-    console.error("No customer_id found in subscription data");
     return;
   }
 
   const user = await findUserByCustomerId(customerId);
   if (!user) {
-    console.error(`User not found for customer_id: ${customerId}`);
     return;
   }
 
@@ -407,19 +374,13 @@ export async function handleSubscriptionRevoked(
   subscription: PolarSubscription,
   webhookEventId: string
 ) {
-  console.log(
-    `Processing subscription.revoked for subscription ${subscription.id}`
-  );
-
   const customerId = extractCustomerId(subscription);
   if (!customerId) {
-    console.error("No customer_id found in subscription data");
     return;
   }
 
   const user = await findUserByCustomerId(customerId);
   if (!user) {
-    console.error(`User not found for customer_id: ${customerId}`);
     return;
   }
 
@@ -465,18 +426,13 @@ export async function handleOrderCreated(
   order: PolarOrder,
   webhookEventId: string
 ) {
-  console.log(`Processing order.created for order ${order.id}`);
-
   const customerId = extractCustomerId(order);
   if (!customerId) {
-    console.error("No customer_id found in order data");
-    console.error("Order data:", JSON.stringify(order, null, 2));
     return;
   }
 
   const user = await findUserByCustomerId(customerId);
   if (!user) {
-    console.error(`User not found for customer_id: ${customerId}`);
     return;
   }
 
@@ -517,7 +473,6 @@ export async function handleOrderCreated(
 
   // Handle subscription renewal
   if (order.billing_reason === "subscription_cycle") {
-    console.log(`Subscription renewal detected for user ${user.id}`);
     // You can add additional renewal logic here
   }
 }
@@ -526,17 +481,13 @@ export async function handleOrderPaid(
   order: PolarOrder,
   webhookEventId: string
 ) {
-  console.log(`Processing order.paid for order ${order.id}`);
-
   const customerId = extractCustomerId(order);
   if (!customerId) {
-    console.error("No customer_id found in order data");
     return;
   }
 
   const user = await findUserByCustomerId(customerId);
   if (!user) {
-    console.error(`User not found for customer_id: ${customerId}`);
     return;
   }
 
@@ -557,17 +508,13 @@ export async function handleOrderRefunded(
   order: PolarOrder,
   webhookEventId: string
 ) {
-  console.log(`Processing order.refunded for order ${order.id}`);
-
   const customerId = extractCustomerId(order);
   if (!customerId) {
-    console.error("No customer_id found in order data");
     return;
   }
 
   const user = await findUserByCustomerId(customerId);
   if (!user) {
-    console.error(`User not found for customer_id: ${customerId}`);
     return;
   }
 
@@ -588,17 +535,13 @@ export async function handleOrderUpdated(
   order: PolarOrder,
   webhookEventId: string
 ) {
-  console.log(`Processing order.updated for order ${order.id}`);
-
   const customerId = extractCustomerId(order);
   if (!customerId) {
-    console.error("No customer_id found in order data");
     return;
   }
 
   const user = await findUserByCustomerId(customerId);
   if (!user) {
-    console.error(`User not found for customer_id: ${customerId}`);
     return;
   }
 
@@ -636,9 +579,6 @@ export async function handleCustomerCreated(
   customer: PolarCustomer,
   webhookEventId: string
 ) {
-  console.log(`Processing customer.created for customer ${customer.id}`);
-  console.log(`Customer email: ${customer.email}`);
-
   // Try to find existing user by email and update customer_id
   if (customer.email) {
     const user = await prisma.user.findUnique({
@@ -646,18 +586,10 @@ export async function handleCustomerCreated(
     });
 
     if (user) {
-      console.log(
-        `Found user ${user.id} for email ${customer.email}, linking customer ${customer.id}`
-      );
-
       await prisma.user.update({
         where: { id: user.id },
         data: { customer_id: customer.id },
       });
-
-      console.log(
-        `Successfully linked customer ${customer.id} to user ${user.id}`
-      );
 
       // Link webhook event to user
       await prisma.webhookEvent.update({
@@ -665,10 +597,8 @@ export async function handleCustomerCreated(
         data: { user_id: user.id },
       });
     } else {
-      console.log(`No user found with email ${customer.email}`);
     }
   } else {
-    console.log("No email found in customer data");
   }
 }
 
@@ -676,11 +606,8 @@ export async function handleCustomerUpdated(
   customer: PolarCustomer,
   webhookEventId: string
 ) {
-  console.log(`Processing customer.updated for customer ${customer.id}`);
-
   const user = await findUserByCustomerId(customer.id);
   if (!user) {
-    console.error(`User not found for customer_id: ${customer.id}`);
     return;
   }
 
@@ -703,11 +630,8 @@ export async function handleCustomerStateChanged(
   customer: PolarCustomer,
   webhookEventId: string
 ) {
-  console.log(`Processing customer.state_changed for customer ${customer.id}`);
-
   const user = await findUserByCustomerId(customer.id);
   if (!user) {
-    console.error(`User not found for customer_id: ${customer.id}`);
     return;
   }
 
@@ -724,9 +648,6 @@ export async function handleCustomerStateChanged(
     where: { id: webhookEventId },
     data: { user_id: user.id },
   });
-
-  // Additional customer state change logic can be added here
-  console.log(`Customer ${customer.id} state changed for user ${user.id}`);
 }
 
 // Checkout Event Handlers
@@ -735,8 +656,6 @@ export async function handleCheckoutUpdated(
   checkout: PolarCheckout,
   webhookEventId: string
 ) {
-  console.log(`Processing checkout.updated for checkout ${checkout.id}`);
-
   // If checkout has a customer, link the webhook event
   if (checkout.customer_id) {
     const user = await findUserByCustomerId(checkout.customer_id);
@@ -747,9 +666,4 @@ export async function handleCheckoutUpdated(
       });
     }
   }
-
-  // Additional checkout processing logic can be added here
-  console.log(
-    `Checkout ${checkout.id} updated with status: ${checkout.status}`
-  );
 }
