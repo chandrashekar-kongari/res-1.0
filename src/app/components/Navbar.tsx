@@ -88,7 +88,7 @@ const Navbar = () => {
               }}
               variant="outline"
               size="sm"
-              className="border-[#AD46FF] rounded-xl bg-[#F3EBFD] text-[#AD46FF] shadow-lg hover:bg-[#F3EBFD]/80 hover:text-[#AD46FF]/80 text-xs"
+              className="rounded-xl bg-[#AD46FF] hover:bg-[#AD46FF]/80 text-white shadow-lg border-none shadow-[#AD46FF]/25 text-xs hover:text-white"
             >
               Start for free
             </Button>

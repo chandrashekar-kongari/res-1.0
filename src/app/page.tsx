@@ -26,8 +26,7 @@ export default async function Page() {
           <Features1 />
           <Features2 />
           <Features3 />
-          <Features4 />
-          <SomeMoreFeatures />
+          {/* <Features4 /> */}
         </div>
 
         <div id="pricing">

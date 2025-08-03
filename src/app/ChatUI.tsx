@@ -392,7 +392,7 @@ const ChatUI = ({
   return (
     <div className="w-[410px] flex flex-col overflow-hidden ">
       <div className=" flex flex-row justify-between items-center">
-        <div className="pl-2 flex flex-row items-center gap-1">
+        <div className=" pl-2 flex flex-row items-center gap-1">
           <p className="p-2 text-xs ">Chat Window</p>
           <Button
             variant="ghost"
@@ -409,16 +409,16 @@ const ChatUI = ({
             New Chat
           </Button>
         </div>
-        <div className="flex flex-row items-center ">
+        {/* <div className="flex flex-row items-center ">
           <Button variant="ghost" className="hover:bg-gray-100">
             <CounterClockwiseClockIcon className="w-4 h-4 text-gray-600" />
           </Button>
-        </div>
+        </div> */}
       </div>
 
       {messages.length === 0 ? (
         // Render ChatInput at the top when no messages
-        <div className="p-2 pt-0 ">
+        <div className="p-2 pt-1 ">
           <ChatInput
             isStreaming={isAgentRunning}
             onSend={(message) => handleSendMessage(message, isResumeSelected)}
