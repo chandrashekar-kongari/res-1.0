@@ -324,7 +324,8 @@ const TiptapEditor = forwardRef<TiptapEditorRef, TiptapEditorProps>(
             "!outline-0 !focus:outline-0 !active:outline-0 !focus-visible:outline-0"
           ),
 
-          style: "outline: none !important; box-shadow: none !important;",
+          style:
+            "outline: none !important; box-shadow: none !important; width: 836px !important; min-width: 836px !important;",
         },
       },
       parseOptions: {
@@ -871,10 +872,13 @@ const TiptapEditor = forwardRef<TiptapEditorRef, TiptapEditorProps>(
           )}
 
           <div className="flex justify-center items-center">
-            <div className="bg-white shadow-md w-[836px]">
+            <div
+              style={{ width: "836px !important" }}
+              className="bg-white shadow-md"
+            >
               <EditorContent
                 editor={editor}
-                className="w-[836px]!important !outline-none !focus:outline-none !focus-visible:outline-none"
+                className="w-[836px] !important !outline-none !focus:outline-none !focus-visible:outline-none"
                 style={{ outline: "none !important" }}
               />
             </div>
