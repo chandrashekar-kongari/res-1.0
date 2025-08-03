@@ -20,6 +20,7 @@ import {
   BrushIcon,
   ArrowUpFromLineIcon,
   ArrowDownFromLineIcon,
+  Trash2Icon,
 } from "lucide-react";
 import { Editor } from "@tiptap/react";
 import { Toggle } from "./ui/toggle";
@@ -123,51 +124,34 @@ export function TiptapToolbar({
               </Button>
             </DropdownMenuTrigger>
           </TooltipWrapper>
-          <DropdownMenuContent align="start">
-            <DropdownMenuLabel className="text-xs">
-              Text Color
-            </DropdownMenuLabel>
-            {[
-              // Dark colors for main text
-              "#000000", // Black
-
-              "#2d2d2d", // Dark Gray
-
-              // Professional blues
-              "#0066cc", // Professional Blue
-
-              "#0077b6", // Ocean Blue
-
-              // Accent colors
-              "#2d5a27", // Forest Green
-              "#6a4c93", // Royal Purple
-              "#780000", // Dark Red
-
-              // Muted colors
-              "#595959", // Medium Gray
-
-              "#808080", // Gray
-            ].map((color) => (
+          <DropdownMenuContent align="start" className="w-fit p-1">
+            <div className="flex gap-1">
+              {[
+                "#000000", // Black
+                "#6b7280", // Gray
+                "#3b82f6", // Blue
+                "#10b981", // Green
+                "#ef4444", // Red
+                "#8b5cf6", // Purple
+              ].map((color) => (
+                <DropdownMenuItem
+                  key={color}
+                  onClick={() => editor.chain().focus().setColor(color).run()}
+                  className="p-0 h-auto w-auto cursor-pointer"
+                >
+                  <div
+                    className="w-4 h-4 rounded-full border border-gray-200"
+                    style={{ backgroundColor: color }}
+                  />
+                </DropdownMenuItem>
+              ))}
               <DropdownMenuItem
-                key={color}
-                onClick={() => editor.chain().focus().setColor(color).run()}
-                className={cn(
-                  editor.getAttributes("textStyle").color === color
-                    ? "bg-accent"
-                    : ""
-                )}
+                onClick={() => editor.chain().focus().unsetColor().run()}
+                className="p-0 h-auto w-auto cursor-pointer"
               >
-                <span
-                  className="inline-block w-4 h-4 rounded-full mr-2"
-                  style={{ backgroundColor: color }}
-                />
+                <Trash2Icon className="w-4 h-4 text-gray-500" />
               </DropdownMenuItem>
-            ))}
-            <DropdownMenuItem
-              onClick={() => editor.chain().focus().unsetColor().run()}
-            >
-              Remove Color
-            </DropdownMenuItem>
+            </div>
           </DropdownMenuContent>
         </DropdownMenu>
 
@@ -188,39 +172,37 @@ export function TiptapToolbar({
               </Button>
             </DropdownMenuTrigger>
           </TooltipWrapper>
-          <DropdownMenuContent align="start">
-            <DropdownMenuLabel className="text-xs">
-              Highlight Color
-            </DropdownMenuLabel>
-            {[
-              "#ffd700", // Yellow
-              "#ffc078", // Orange
-              "#8ce99a", // Green
-              "#74c0fc", // Blue
-              "#b197fc", // Purple
-              "#ffa8a8", // Red
-            ].map((color) => (
+          <DropdownMenuContent align="start" className="w-fit p-1">
+            <div className="flex gap-1">
+              {[
+                "#ffd700", // Yellow
+                "#ffc078", // Orange
+                "#8ce99a", // Green
+                "#74c0fc", // Blue
+                "#b197fc", // Purple
+                "#ffa8a8", // Red
+              ].map((color) => (
+                <DropdownMenuItem
+                  key={color}
+                  onClick={() =>
+                    editor.chain().focus().toggleHighlight({ color }).run()
+                  }
+                  className="p-0 h-auto w-auto cursor-pointer"
+                >
+                  <div
+                    className="w-4 h-4 rounded-full border border-gray-200"
+                    style={{ backgroundColor: color }}
+                  />
+                </DropdownMenuItem>
+              ))}
               <DropdownMenuItem
-                key={color}
-                onClick={() =>
-                  editor.chain().focus().toggleHighlight({ color }).run()
-                }
-                className={cn(
-                  editor.isActive("highlight", { color }) ? "bg-accent" : ""
-                )}
+                onClick={() => editor.chain().focus().unsetHighlight().run()}
+                disabled={!editor.isActive("highlight")}
+                className="p-0 h-auto w-auto cursor-pointer"
               >
-                <span
-                  className="inline-block w-4 h-4 rounded-full mr-2"
-                  style={{ backgroundColor: color }}
-                />
+                <Trash2Icon className="w-4 h-4 text-gray-500" />
               </DropdownMenuItem>
-            ))}
-            <DropdownMenuItem
-              onClick={() => editor.chain().focus().unsetHighlight().run()}
-              disabled={!editor.isActive("highlight")}
-            >
-              Remove Highlight
-            </DropdownMenuItem>
+            </div>
           </DropdownMenuContent>
         </DropdownMenu>
 

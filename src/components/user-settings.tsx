@@ -62,26 +62,23 @@ const UserSettings = () => {
           </div>
         </DropdownMenuLabel>
 
-        <DropdownMenuItem
-          className="rounded-2xl p-2 cursor-pointer hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-all duration-200 focus:bg-blue-50 dark:focus:bg-blue-900/20 mb-2"
-          onClick={() => {
-            window.open("https://tally.so/r/w505Ob", "_blank");
-          }}
-        >
-          <div className="flex items-center gap-3 w-full">
-            <div className="p-2 rounded-xl bg-blue-100 dark:bg-blue-900/30">
-              <MessageCircle className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+        <DropdownMenuLabel className="rounded-2xl p-2 cursor-pointer hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-all duration-200 focus:bg-blue-50 dark:focus:bg-blue-900/20 mb-2">
+          <a href="mailto:hello@memic.app">
+            <div className="flex items-center gap-3 w-full">
+              <div className="p-2 rounded-xl bg-blue-100 dark:bg-blue-900/30">
+                <MessageCircle className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+              </div>
+              <div className="flex-1">
+                <p className="text-xs font-medium text-gray-900 dark:text-gray-100">
+                  Contact Us
+                </p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  Email us at hello@memic.app
+                </p>
+              </div>
             </div>
-            <div className="flex-1">
-              <p className="text-xs font-medium text-gray-900 dark:text-gray-100">
-                Contact Us
-              </p>
-              <p className="text-xs text-gray-500 dark:text-gray-400">
-                Get help and support
-              </p>
-            </div>
-          </div>
-        </DropdownMenuItem>
+          </a>
+        </DropdownMenuLabel>
 
         {userInfo?.subscription_status === "active" && (
           <DropdownMenuItem
