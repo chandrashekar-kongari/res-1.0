@@ -14,6 +14,7 @@ import Underline from "@tiptap/extension-underline";
 import { CustomBulletList } from "@/lib/extensions/custom-bullet-list";
 import { CustomOrderedList } from "@/lib/extensions/custom-ordered-list";
 import { CustomListItem } from "@/lib/extensions/custom-list-item";
+import { CustomSpan } from "@/lib/extensions/custom-span";
 import {
   BorderBottomIcon,
   FontBoldIcon,
@@ -355,6 +356,7 @@ const TiptapEditor = forwardRef<TiptapEditorRef, TiptapEditorProps>(
         CustomBulletList,
         CustomOrderedList,
         CustomListItem,
+        CustomSpan,
         Image.configure({
           inline: true,
           HTMLAttributes: {
