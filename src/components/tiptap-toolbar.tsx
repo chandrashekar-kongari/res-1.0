@@ -14,7 +14,13 @@ import {
   LineHeightIcon,
   BorderBottomIcon,
 } from "@radix-ui/react-icons";
-import { DownloadIcon, PaletteIcon, BrushIcon } from "lucide-react";
+import {
+  DownloadIcon,
+  PaletteIcon,
+  BrushIcon,
+  ArrowUpFromLineIcon,
+  ArrowDownFromLineIcon,
+} from "lucide-react";
 import { Editor } from "@tiptap/react";
 import { Toggle } from "./ui/toggle";
 import { Button } from "./ui/button";
@@ -417,7 +423,7 @@ export function TiptapToolbar({
           <TooltipWrapper content="Margin Top">
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="sm">
-                <TextAlignTopIcon className="h-4 w-4" />
+                <ArrowUpFromLineIcon className="h-[10px] text-black/80 w-[10px]" />
               </Button>
             </DropdownMenuTrigger>
           </TooltipWrapper>
@@ -463,7 +469,7 @@ export function TiptapToolbar({
           <TooltipWrapper content="Margin Bottom">
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="sm">
-                <TextAlignBottomIcon className="h-4 w-4" />
+                <ArrowDownFromLineIcon className="h-4 w-4 text-black/80" />
               </Button>
             </DropdownMenuTrigger>
           </TooltipWrapper>
