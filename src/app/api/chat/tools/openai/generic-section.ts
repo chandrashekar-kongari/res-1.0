@@ -2,7 +2,7 @@ import { prisma } from "@/lib/db";
 import { Agent, Runner, FunctionTool, RunContext } from "@openai/agents";
 import { z } from "zod";
 
-export const updateGenericSectionTool: FunctionTool<any> = {
+export const updateResume: FunctionTool<any> = {
   type: "function",
   name: "updateGenericSection",
   description:
