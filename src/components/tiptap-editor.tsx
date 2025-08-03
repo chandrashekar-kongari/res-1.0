@@ -746,6 +746,37 @@ const TiptapEditor = forwardRef<TiptapEditorRef, TiptapEditorProps>(
               padding: 10mm !important;
               
             }
+
+            /* Custom List Support - matching tiptap extensions with higher specificity */
+            .content ul,
+            .print-container ul {
+              margin: 0 !important;
+              padding-left: 20px !important;
+              list-style-type: disc !important;
+              font-family: Calibri, Arial, sans-serif !important;
+              font-size: 14px !important;
+              display: block !important;
+            }
+
+            .content ol,
+            .print-container ol {
+              margin: 0 !important;
+              padding-left: 20px !important;
+              list-style-type: decimal !important;
+              font-family: Calibri, Arial, sans-serif !important;
+              font-size: 14px !important;
+              display: block !important;
+            }
+
+            .content li,
+            .print-container li {
+              margin: 0 !important;
+              padding: 0 !important;
+              line-height: 1.2 !important;
+              font-family: Calibri, Arial, sans-serif !important;
+              font-size: 14px !important;
+              display: list-item !important;
+            }
           </style>
         `;
 
