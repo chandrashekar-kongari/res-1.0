@@ -479,10 +479,10 @@ const TiptapEditor = forwardRef<TiptapEditorRef, TiptapEditorProps>(
         }),
         PaginationPlus.configure({
           pageHeight: 1117, // A4 height: 297mm = 1123px at 96 DPI
-          pageGap: 20,
+          pageGap: 4,
           pageBreakBackground: "#f7f7f7",
           pageHeaderHeight: 60,
-          maxPages: 3, // Allow more pages for longer documents
+          maxPages: 2, // Allow more pages for longer documents
         }),
         InlineEdit.configure({
           minLength: 3,
@@ -843,7 +843,7 @@ const TiptapEditor = forwardRef<TiptapEditorRef, TiptapEditorProps>(
     }
 
     return (
-      <div className="flex flex-col bg-[#FCFCFC] h-full ">
+      <div className="flex flex-col bg-[#FCFCFC] h-full  ">
         {/* Toolbar */}
         <TiptapToolbar
           editor={editor}
@@ -855,7 +855,7 @@ const TiptapEditor = forwardRef<TiptapEditorRef, TiptapEditorProps>(
         {/* Editor Container - Scrollable */}
         <div
           className={cn(
-            "flex-1 overflow-auto bg-[#f6f1fc] border  shadow-none rounded-lg rounded-b-none p-0",
+            "flex-1 overflow-auto bg-[#f6f1fc] w-[836px] border  shadow-none rounded-lg rounded-b-none p-0",
             className
           )}
         >
@@ -871,10 +871,10 @@ const TiptapEditor = forwardRef<TiptapEditorRef, TiptapEditorProps>(
           )}
 
           <div className="flex justify-center items-center">
-            <div className="bg-white shadow-md w-full">
+            <div className="bg-white shadow-md w-[836px]">
               <EditorContent
                 editor={editor}
-                className="w-full !outline-none !focus:outline-none !focus-visible:outline-none"
+                className="w-[836px]!important !outline-none !focus:outline-none !focus-visible:outline-none"
                 style={{ outline: "none !important" }}
               />
             </div>
