@@ -10,11 +10,9 @@ export async function POST(req: NextRequest) {
     // }
 
     const event = await req.json();
-    console.log("Webhook event received:", JSON.stringify(event, null, 2));
 
     if (event.type === "user.created") {
       const user = event.data;
-      console.log("Creating user:", user);
 
       try {
         const createdUser = await prisma.user.create({
@@ -24,15 +22,12 @@ export async function POST(req: NextRequest) {
             name: user.display_name, // <-- use display_name
           },
         });
-        console.log("User created successfully:", createdUser);
       } catch (userError) {
-        console.error("Error creating user:", userError);
         // If user already exists, that's okay
         if (
           userError instanceof Error &&
           userError.message.includes("Unique constraint")
         ) {
-          console.log("User already exists, skipping creation");
         } else {
           throw userError;
         }

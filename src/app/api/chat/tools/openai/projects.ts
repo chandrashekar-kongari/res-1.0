@@ -106,8 +106,6 @@ Respond with a valid JSON object, and nothing else:
         stream: false,
       });
 
-      console.log("result", result);
-
       let outputText = "";
 
       if (result?.state?._currentStep?.output) {

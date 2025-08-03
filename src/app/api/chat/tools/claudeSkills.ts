@@ -141,8 +141,6 @@ CRITICAL: Output only the JSON object. No reasoning, explanations, or additional
     try {
       const result: any = await runner.run(subAgent, prompt, { stream: false });
 
-      console.log("result", result);
-
       let outputText = "";
 
       if (result && typeof result === "object" && "output" in result) {

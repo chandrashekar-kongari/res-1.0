@@ -40,8 +40,6 @@ export async function POST(req: NextRequest) {
       process.env.POLAR_WEBHOOK_SECRET!
     );
 
-    console.log(`Received webhook event: ${event.type}`);
-
     // Store webhook event for tracking
     const webhookEvent = await prisma.webhookEvent.create({
       data: {
@@ -118,7 +116,6 @@ export async function POST(req: NextRequest) {
           break;
 
         default:
-          console.log(`Unhandled webhook event type: ${event.type}`);
       }
 
       // Mark webhook as processed
@@ -129,8 +126,6 @@ export async function POST(req: NextRequest) {
 
       return NextResponse.json({ success: true }, { status: 202 });
     } catch (processingError) {
-      console.error("Error processing webhook:", processingError);
-
       // Update webhook event with error
       await prisma.webhookEvent.update({
         where: { id: webhookEvent.id },

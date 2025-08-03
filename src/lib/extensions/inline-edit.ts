@@ -381,7 +381,6 @@ export const InlineEdit = Extension.create<InlineEditOptions>({
       text: string,
       context: string
     ) {
-      console.log("🔍 Generating suggestions for:", { text, context });
       try {
         // Get the full resume content
         const fullResumeContent = view.state.doc.textContent;
@@ -407,7 +406,6 @@ export const InlineEdit = Extension.create<InlineEditOptions>({
         }
 
         const responseData = await response.json();
-        console.log("📡 API Response:", responseData);
         const {
           suggestion,
           type,
@@ -427,7 +425,6 @@ export const InlineEdit = Extension.create<InlineEditOptions>({
         ) as InlineEditPluginState;
 
         if (!suggestion || !suggestion.trim()) {
-          console.log("❌ No suggestion returned or empty suggestion");
           view.dispatch(
             currentState.tr.setMeta(plugin, {
               type: "setSuggestions",
@@ -592,11 +589,6 @@ export const InlineEdit = Extension.create<InlineEditOptions>({
           decorations
         );
 
-        console.log("✅ Creating suggestion:", {
-          suggestion,
-          type,
-          suggestionPosition,
-        });
         view.dispatch(
           currentState.tr.setMeta(plugin, {
             type: "setSuggestions",

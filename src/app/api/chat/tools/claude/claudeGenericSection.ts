@@ -213,8 +213,6 @@ CRITICAL: Output only the JSON object. No reasoning, explanations, or additional
         stream: false,
       });
 
-      console.log("result", result);
-
       let outputText = "";
 
       // Handle Claude's specific output structure
@@ -286,8 +284,6 @@ Current Resume Content: ${resume?.content}
             currentResumeContent: resume?.content || "",
           });
         }
-
-        console.log("res", res);
 
         // Success case - add success flag and current resume content
         const successResult = {

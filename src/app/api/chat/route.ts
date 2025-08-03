@@ -459,9 +459,7 @@ export async function POST(req: Request) {
         }
       },
 
-      cancel() {
-        console.log("Client cancelled the stream");
-      },
+      cancel() {},
     });
 
     return new Response(readable, {

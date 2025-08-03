@@ -495,10 +495,6 @@ const TiptapEditor = forwardRef<TiptapEditorRef, TiptapEditorProps>(
       ],
       content,
       onUpdate: ({ editor }) => {
-        console.log("onUpdate", editor.getHTML());
-
-        console.log("editor.getJSON(): ", editor.getJSON());
-
         onChange?.(editor.getHTML());
         saveResumeMutation.mutate({
           content: editor.getHTML(),
@@ -614,7 +610,6 @@ const TiptapEditor = forwardRef<TiptapEditorRef, TiptapEditorProps>(
     }, [editor]);
 
     const handleAddToChat = useCallback(() => {
-      console.log("Adding to chat:", floatingButton.selectedHTML);
       if (setAttachPartOfHTML) {
         setAttachPartOfHTML((prev: string[]) => [
           ...prev,
