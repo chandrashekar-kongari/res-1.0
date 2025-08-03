@@ -11,7 +11,7 @@ const Hero = () => {
       <div className="container px-4 sm:px-6 lg:px-8">
         <div className="z-10 mx-auto flex max-w-4xl flex-col items-center gap-8 sm:gap-12 lg:gap-14 text-center">
           <div className="space-y-4 sm:space-y-6">
-            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-medium text-gray-900 text-pretty leading-tight sm:leading-tight lg:leading-tight">
+            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-6xl font-bold text-gray-900 text-pretty leading-tight sm:leading-tight lg:leading-tight">
               Cursor For{" "}
               <span
                 style={{
@@ -30,7 +30,7 @@ const Hero = () => {
             </h1>
             <p className="mx-auto max-w-lg sm:max-w-lg text-sm sm:text-base lg:text-2xl text-black/70 leading-relaxed">
               We are not just building a resume builder, we are reimagining the
-              way you build resumes.
+              way we build resumes.
             </p>
           </div>
 
@@ -51,7 +51,7 @@ const Hero = () => {
               onClick={() => {
                 window.location.href = SIGNUP_URL;
               }}
-              className="w-full sm:w-auto sm:min-w-[200px] h-12 sm:h-14 text-sm sm:text-base rounded-2xl font-medium border-[#AD46FF] bg-[#F3EBFD]  text-[#AD46FF]  shadow-lg hover:bg-[#F3EBFD]/80 hover:text-[#AD46FF]/80"
+              className="w-full sm:w-auto sm:min-w-[200px] h-12 sm:h-14 text-sm sm:text-base rounded-2xl font-medium bg-[#AD46FF] hover:bg-[#AD46FF]/80 text-white shadow-lg border-none shadow-[#AD46FF]/25 hover:text-white"
             >
               Create Now
             </Button>
