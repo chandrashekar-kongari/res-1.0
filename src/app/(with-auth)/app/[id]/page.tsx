@@ -978,8 +978,8 @@ export default function Home({ params }: { params: Promise<{ id: string }> }) {
         <div className="flex min-h-screen w-full gap-0">
           <div className="h-screen w-full flex flex-row rounded-none bg-[#FCFCFC]">
             {/* Editor Section - Left side */}
-            <div className="flex-1 flex flex-col overflow-hidden">
-              <div className="flex-1 overflow-hidden">
+            <div className="flex-1 flex flex-col overflow-hidden max-w-[836px]">
+              <div className="flex-1 overflow-hidden max-w-[836px]">
                 <TiptapEditor
                   ref={editorRef}
                   content={content}
