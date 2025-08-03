@@ -10,6 +10,15 @@ import {
 } from "@microsoft/fetch-event-source";
 import TiptapEditorReplica from "@/components/tiptap-editor-replica";
 import { trpc } from "@/lib/trpc";
+import { debounce } from "lodash";
+
+// Debounced database update function
+const debouncedDatabaseUpdate = debounce(
+  async (updateFn: () => Promise<void>) => {
+    await updateFn();
+  },
+  1000
+);
 import { v4 as uuidv4 } from "uuid";
 import { Loader2 } from "lucide-react";
 
@@ -134,7 +143,6 @@ export default function Home({ params }: { params: Promise<{ id: string }> }) {
     }
   };
 
-  // Simplified message sending with built-in retry
   const handleSendMessage = useCallback(
     async (
       message: string,
@@ -269,27 +277,30 @@ export default function Home({ params }: { params: Promise<{ id: string }> }) {
                       });
                       updated[lastIndex] = updatedMessage;
 
-                      // Persist the update to the database
+                      // Debounced database update
                       if (thread?.id && user?.id) {
-                        upsertMessage.mutate({
-                          message: {
-                            id: updatedMessage.id,
-                            role: updatedMessage.role,
-                            content: updatedMessage.content,
-                            user_id: user.id,
+                        debouncedDatabaseUpdate(async () => {
+                          await upsertMessage.mutate({
+                            message: {
+                              id: updatedMessage.id,
+                              role: updatedMessage.role,
+                              content: updatedMessage.content,
+                              user_id: user.id,
+                              threadId: thread.id,
+                              created_at: new Date(),
+                              updated_at: new Date(),
+                              deleted_at: null,
+                              newEditorHTML:
+                                updatedMessage.newEditorHTML || null,
+                              diffEditorHTML:
+                                updatedMessage.diffEditorHTML || null,
+                              attachPartOfHTML:
+                                updatedMessage.attachPartOfHTML || [],
+                              isStreaming: updatedMessage.isStreaming || false,
+                              events: updatedMessage.events || [],
+                            },
                             threadId: thread.id,
-                            created_at: new Date(),
-                            updated_at: new Date(),
-                            deleted_at: null,
-                            newEditorHTML: updatedMessage.newEditorHTML || null,
-                            diffEditorHTML:
-                              updatedMessage.diffEditorHTML || null,
-                            attachPartOfHTML:
-                              updatedMessage.attachPartOfHTML || [],
-                            isStreaming: updatedMessage.isStreaming || false,
-                            events: updatedMessage.events || [],
-                          },
-                          threadId: thread.id,
+                          });
                         });
                       }
 
@@ -334,28 +345,31 @@ export default function Home({ params }: { params: Promise<{ id: string }> }) {
                         );
                         updated[lastIndex] = updatedMessage;
 
-                        // Persist the update to the database
+                        // Debounced database update
                         if (thread?.id && user?.id) {
-                          upsertMessage.mutate({
-                            message: {
-                              id: updatedMessage.id,
-                              role: updatedMessage.role,
-                              content: updatedMessage.content,
-                              user_id: user.id,
+                          debouncedDatabaseUpdate(async () => {
+                            await upsertMessage.mutate({
+                              message: {
+                                id: updatedMessage.id,
+                                role: updatedMessage.role,
+                                content: updatedMessage.content,
+                                user_id: user.id,
+                                threadId: thread.id,
+                                created_at: new Date(),
+                                updated_at: new Date(),
+                                deleted_at: null,
+                                newEditorHTML:
+                                  updatedMessage.newEditorHTML || null,
+                                diffEditorHTML:
+                                  updatedMessage.diffEditorHTML || null,
+                                attachPartOfHTML:
+                                  updatedMessage.attachPartOfHTML || [],
+                                isStreaming:
+                                  updatedMessage.isStreaming || false,
+                                events: updatedMessage.events || [],
+                              },
                               threadId: thread.id,
-                              created_at: new Date(),
-                              updated_at: new Date(),
-                              deleted_at: null,
-                              newEditorHTML:
-                                updatedMessage.newEditorHTML || null,
-                              diffEditorHTML:
-                                updatedMessage.diffEditorHTML || null,
-                              attachPartOfHTML:
-                                updatedMessage.attachPartOfHTML || [],
-                              isStreaming: updatedMessage.isStreaming || false,
-                              events: updatedMessage.events || [],
-                            },
-                            threadId: thread.id,
+                            });
                           });
                         }
                       }
@@ -854,7 +868,7 @@ export default function Home({ params }: { params: Promise<{ id: string }> }) {
             setIsLoading(false);
           },
 
-          onclose() {
+          async onclose() {
             setIsAgentRunning(false);
             setIsLoading(false);
             // Mark streaming as finished
@@ -867,6 +881,7 @@ export default function Home({ params }: { params: Promise<{ id: string }> }) {
                   isStreaming: false,
                 };
                 if (thread?.id && user?.id) {
+                  // Final database update - no need to debounce this one as it's the last update
                   upsertMessage.mutate({
                     message: {
                       id: updated[lastIndex].id,
