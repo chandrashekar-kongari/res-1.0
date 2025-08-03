@@ -478,10 +478,10 @@ const TiptapEditor = forwardRef<TiptapEditorRef, TiptapEditorProps>(
           },
         }),
         PaginationPlus.configure({
-          pageHeight: 1123, // A4 height: 297mm = 1123px at 96 DPI
+          pageHeight: 1100, // A4 height: 297mm = 1123px at 96 DPI
           pageGap: 20,
           pageBreakBackground: "#f7f7f7",
-          pageHeaderHeight: 37.8,
+          pageHeaderHeight: 45,
           maxPages: 10, // Allow more pages for longer documents
         }),
         InlineEdit.configure({

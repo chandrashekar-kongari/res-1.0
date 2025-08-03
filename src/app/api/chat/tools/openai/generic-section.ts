@@ -65,7 +65,11 @@ Your steps:
 1. Analyze the provided HTML tag and user requirements.
 2. Create "newEditorHTML" by:
    - Starting with the exact "oldEditorHTML".
-   - Updating ONLY the content within the tag.
+   - Use <p> tags for all content types:
+     * Main headers: <p >
+     * Subheadings: <p >
+     * Bullet points: <p >
+     * Regular text: <p>
    - Preserving ALL HTML attributes, classes, IDs, and styling.
    - Ensuring the new content matches the style of the original.
 
@@ -163,11 +167,17 @@ HTML TAG REQUIREMENTS:
 - Update ONLY the text content within the tag.
 - Maintain exact HTML entity encoding (&amp;, &lt;, etc.).
 - Keep indentation and whitespace consistent.
-- For bullet points, preserve <ul>, <li>, and <p> tag structure.
+- Use <p> tags for all content with appropriate classes:
+  * Headers: <p class="header"><strong>HEADER TEXT</strong></p>
+  * Subheaders: <p class="subheader"><strong>Subheader Text</strong></p>
+  * Bullet points: <p class="bullet">• Bullet point text</p>
+  * Regular text: <p>Regular paragraph text</p>
 - When adding bold formatting, use proper HTML tags (<strong> or <b>).
 - When adding emphasis, use proper HTML tags (<em> or <i>).
-- Wrap formatted text with appropriate HTML tags while preserving existing structure.
-- Example: Transform "Skills" to "<strong>SKILLS</strong>" for section headers.
+- Preserve existing classes and add new ones only if needed.
+- Example: Transform "Skills" to "<p class="header"><strong>SKILLS</strong></p>"
+- Example: Transform bullet points into "<p class="bullet">• Point 1</p>"
+- Example: Transform descriptions into "<p>Description text here</p>"
 </html_rules>
 
 <output>
