@@ -61,7 +61,7 @@ const Navbar = () => {
               </NavigationMenuItem>
               <NavigationMenuItem>
                 <NavigationMenuLink
-                  href="#"
+                  href="mailto:hello@memic.app"
                   className={`${navigationMenuTriggerStyle()} text-gray-700 text-xs rounded-xl hover:text-gray-900 hover:bg-gray-50 transition-colors`}
                 >
                   Contact
@@ -139,7 +139,7 @@ const Navbar = () => {
                     Pricing
                   </a>
                   <a
-                    href="#"
+                    href="mailto:hello@memic.app"
                     className="font-medium text-base py-2 px-3 rounded-md hover:bg-gray-50 transition-colors text-gray-700"
                   >
                     Contact
