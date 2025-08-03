@@ -167,18 +167,19 @@ HTML TAG REQUIREMENTS:
 - Update ONLY the text content within the tag.
 - Maintain exact HTML entity encoding (&amp;, &lt;, etc.).
 - Keep indentation and whitespace consistent.
+- EVERY WORD must be wrapped in a <span> tag.
 - Use <p> tags for all content with appropriate classes:
-  * Headers: <p class="header"><strong>HEADER TEXT</strong></p>
-  * Subheaders: <p class="subheader"><strong>Subheader Text</strong></p>
-  * Bullet points: <p class="bullet">• Bullet point text</p>
-  * Regular text: <p>Regular paragraph text</p>
+  * Headers: <p class="header"><strong><span>HEADER</span> <span>TEXT</span></strong></p>
+  * Subheaders: <p class="subheader"><strong><span>Subheader</span> <span>Text</span></strong></p>
+  * Bullet points: <p class="bullet">• <span>Bullet</span> <span>point</span> <span>text</span></p>
+  * Regular text: <p><span>Regular</span> <span>paragraph</span> <span>text</span></p>
 - When adding bold formatting, use proper HTML tags (<strong> or <b>).
 - When adding emphasis, use proper HTML tags (<em> or <i>).
 - Preserve existing classes and add new ones only if needed.
-- Example: Transform "Skills" to "<p class="header"><strong>SKILLS</strong></p>"
-- Example: Transform bullet points into "<p class="bullet">• Point 1</p>"
-- Example: Transform descriptions into "<p>Description text here</p>"
-</html_rules>
+- Example: Transform "Skills" to "<p class="header"><strong><span>SKILLS</span></strong></p>"
+- Example: Transform bullet points into "<p class="bullet">• <span>Point</span> <span>1</span></p>"
+- Example: Transform descriptions into "<p><span>Description</span> <span>text</span> <span>here</span></p>"
+- Special characters (•, |, etc.) should NOT be wrapped in spans, only actual words.</html_rules>
 
 <output>
 Respond with a valid JSON object, and nothing else:
