@@ -39,6 +39,8 @@ model User {
   customer_id String?
   subscription_status String? // active, inactive, canceled, etc.
   subscription_id String?
+  request_limit Int @default(30)
+  no_limit Boolean @default(true)
   // Add any other fields you want
   resumes   resume[]
   threads   thread[]

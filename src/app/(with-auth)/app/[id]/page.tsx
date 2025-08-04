@@ -73,9 +73,18 @@ export default function Home({ params }: { params: Promise<{ id: string }> }) {
       { enabled: !!thread?.id }
     );
   const upsertMessage = trpc.message.upsert.useMutation();
+  const decrementRequestLimit = trpc.user.decrementRequestLimit.useMutation();
   const { data: resume, isLoading: isResumeLoading } = trpc.resume.get.useQuery(
     { id }
   );
+  const [userRequestLimit, setUserRequestLimit] = useState(
+    user?.request_limit || 0
+  );
+
+  useEffect(() => {
+    setUserRequestLimit(user?.request_limit || 0);
+  }, [user?.request_limit]);
+
   const [content, setContent] = useState(resume?.content || "");
   const [isAgentRunning, setIsAgentRunning] = useState(false);
 
@@ -151,6 +160,39 @@ export default function Home({ params }: { params: Promise<{ id: string }> }) {
     ) => {
       if (!message.trim()) return;
 
+      setUserRequestLimit((prev) => prev - 1);
+
+      // Check request limit before allowing the request (only on first attempt)
+      if (retryCount === 0 && user) {
+        if (
+          !user.no_limit &&
+          user.request_limit <= 0 &&
+          userRequestLimit <= 0
+        ) {
+          setMessages((prev) => [
+            ...prev,
+            {
+              id: uuidv4(),
+              role: "assistant",
+              content: "",
+              events: [
+                {
+                  callId: `text-delta-${Date.now()}-${Math.random()}`,
+                  name: "text_delta",
+                  status: true,
+                  type: "output_text_delta",
+                  data: {
+                    delta:
+                      "You have reached your request limit. Please upgrade your plan to continue or reach out to hello@memic.app",
+                  },
+                },
+              ],
+            },
+          ]);
+          return;
+        }
+      }
+
       // Cancel existing request
       if (abortControllerRef.current) {
         abortControllerRef.current.abort();
@@ -222,6 +264,11 @@ export default function Home({ params }: { params: Promise<{ id: string }> }) {
             },
             threadId: thread.id,
           });
+        }
+
+        // Decrement request limit after successfully initiating the request
+        if (user) {
+          decrementRequestLimit.mutate();
         }
       }
 
@@ -965,7 +1012,14 @@ export default function Home({ params }: { params: Promise<{ id: string }> }) {
         setIsLoading(false);
       }
     },
-    [messages, attachPartOfHTML]
+    [
+      messages,
+      attachPartOfHTML,
+      user,
+      decrementRequestLimit,
+      upsertMessage,
+      thread,
+    ]
   );
 
   if (isResumeLoading) {
