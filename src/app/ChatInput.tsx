@@ -26,6 +26,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { CleanPasteChat } from "@/lib/extensions/clean-paste-chat";
 
 interface ChatInputProps {
   onSend?: (message: string) => void;
@@ -78,6 +79,7 @@ const ChatInput = ({
         showOnlyWhenEditable: true,
         includeChildren: false,
       }),
+      CleanPasteChat,
     ],
     content: "",
     immediatelyRender: false,
