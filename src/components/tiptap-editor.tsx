@@ -491,7 +491,6 @@ const TiptapEditor = forwardRef<TiptapEditorRef, TiptapEditorProps>(
           apiEndpoint: "/api/inline-edit",
           enabled: false,
         }),
-        CleanPaste,
       ],
       content,
       onUpdate: ({ editor }) => {
