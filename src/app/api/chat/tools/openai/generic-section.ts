@@ -4,7 +4,7 @@ import { z } from "zod";
 
 export const updateResume: FunctionTool<any> = {
   type: "function",
-  name: "updateGenericSection",
+  name: "updateResumeSection",
   description:
     "Updates a single HTML tag in the resume based on user's request",
   parameters: {
@@ -64,12 +64,7 @@ Given:
 Your steps:
 1. Analyze the provided HTML tag and user requirements.
 2. Create "newEditorHTML" by:
-   - Starting with the exact "oldEditorHTML".
-   - Use <p> tags for all content types:
-     * Main headers: <p >
-     * Subheadings: <p >
-     * Bullet points: <p >
-     * Regular text: <p>
+   - Starting with the exact "oldEditorHTML"
    - Preserving ALL HTML attributes, classes, IDs, and styling.
    - Ensuring the new content matches the style of the original.
 
@@ -83,14 +78,7 @@ ALL sub-headers (experience positions, project titles, skills categories, etc.) 
 - BOLD formatting using HTML tags (<strong> or <b>)
 - Properly formatted within their respective sections
 
-HTML TAG REQUIREMENTS:
-- Use <strong> or <b> tags for bold text
-- For uppercase text, use CSS text-transform or write in uppercase
-- Preserve existing HTML structure while adding formatting tags
-- Example: <strong>SKILLS</strong> or <b>EXPERIENCE</b> for section headers
-- Example: <strong>Software Engineer</strong> for position titles
-- Example: <strong>Languages:</strong> for skill categories
-</header_formatting_rules>
+
 
 <section_formatting_rules>
 1. Education Section (if present):
@@ -117,6 +105,7 @@ HTML TAG REQUIREMENTS:
    - Order: Most relevant/important skills first in each category
    - Proficiency: Optional level indicators if in original format
    - Keep technical and soft skills separate
+   - Category followed by a colon and all skills in that category separated by a comma.
 
 4. Projects Section (if present):
    - Project Header: "Project Name | Technologies [spaces] Duration" (MUST be BOLD)
@@ -167,19 +156,6 @@ HTML TAG REQUIREMENTS:
 - Update ONLY the text content within the tag.
 - Maintain exact HTML entity encoding (&amp;, &lt;, etc.).
 - Keep indentation and whitespace consistent.
-- EVERY WORD must be wrapped in a <span> tag.
-- Use <p> tags for all content with appropriate classes:
-  * Headers: <p class="header"><strong><span>HEADER</span> <span>TEXT</span></strong></p>
-  * Subheaders: <p class="subheader"><strong><span>Subheader</span> <span>Text</span></strong></p>
-  * Bullet points: <p class="bullet">• <span>Bullet</span> <span>point</span> <span>text</span></p>
-  * Regular text: <p><span>Regular</span> <span>paragraph</span> <span>text</span></p>
-- When adding bold formatting, use proper HTML tags (<strong> or <b>).
-- When adding emphasis, use proper HTML tags (<em> or <i>).
-- Preserve existing classes and add new ones only if needed.
-- Example: Transform "Skills" to "<p class="header"><strong><span>SKILLS</span></strong></p>"
-- Example: Transform bullet points into "<p class="bullet">• <span>Point</span> <span>1</span></p>"
-- Example: Transform descriptions into "<p><span>Description</span> <span>text</span> <span>here</span></p>"
-- Special characters (•, |, etc.) should NOT be wrapped in spans, only actual words.</html_rules>
 
 <output>
 Respond with a valid JSON object, and nothing else:

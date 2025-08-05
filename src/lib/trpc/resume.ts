@@ -251,12 +251,13 @@ export const resumeRouter = router({
     if (resumes.length === 0) {
       return prisma.resume.create({
         data: {
-          name: "Default",
+          name: "Sample Resume",
           user: {
             connect: {
               email: ctx.user!.primaryEmail,
             },
           },
+          content: `<p style="font-size: 14px; padding: 0px; line-height: 1.25; font-family: Calibri, Arial, sans-serif; white-space: pre-wrap; margin: 0px;"><strong><span>experience</span></strong></p><p style="font-size: 14px; padding: 0px; line-height: 1.25; font-family: Calibri, Arial, sans-serif; white-space: pre-wrap; margin: 0px;"><span>ABC COMPANY New York </span><em><span>Team lead / Founding Software Engineer &nbsp;&nbsp; Jan 2022 - Present</span></em></p><p style="font-size: 14px; padding: 0px; line-height: 1.25; font-family: Calibri, Arial, sans-serif; white-space: pre-wrap; margin: 0px;"><span>Implemented </span><strong><span>cloud infrastructure as code</span></strong><span> on AWS using </span><strong><span>Terraform</span></strong><span>, deploying services including ECS, ELB, and ASG. Designed and implemented a scalable real-time </span><strong><span>chat service</span></strong><span> for the Metajungle platform leveraging </span><strong><span>WebSockets</span></strong><span>, </span><strong><span>Kafka queues</span></strong><span>, </span><strong><span>MongoDB change streams</span></strong><span>, and </span><strong><span>load balancers</span></strong><span> to ensure high availability and low latency communication. Built an advanced </span><strong><span>Retrieval-Augmented Generation (RAG)</span></strong><span> system to dynamically enrich NFT data with contextual information.</span></p><p style="font-size: 14px; padding: 0px; line-height: 1.25; font-family: Calibri, Arial, sans-serif; white-space: pre-wrap; margin: 0px;"></p><p style="font-size: 14px; padding: 0px; line-height: 1.25; font-family: Calibri, Arial, sans-serif; white-space: pre-wrap; margin: 0px;"><strong><span>skills</span></strong></p><p style="font-size: 14px; padding: 0px; line-height: 1.25; font-family: Calibri, Arial, sans-serif; white-space: pre-wrap; margin: 0px;"><span>Distributed Systems, Node.js, React.js, Next.js, Typescript, Spring Boot, GraphQL, REST APIs, Design Patterns, Multi-Threading GoLang, HTML, JavaScript, Parquet, Tailwind CSS, AWS, CI/CD, Kafka, Docker, Kubernetes, Cloud Computing, Python, MongoDB Cassandra, SQL, SQLite, NoSQL, Redis, ETL, Airflow, Apache Spark, Hadoop, Presto, Hive, LangChain, Scala, RAG, Solidity</span></p><p style="font-size: 14px; padding: 0px; line-height: 1.25; font-family: Calibri, Arial, sans-serif; white-space: pre-wrap; margin: 0px;"></p>`,
         },
       });
     }
