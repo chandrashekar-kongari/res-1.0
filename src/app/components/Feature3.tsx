@@ -4,7 +4,7 @@ const Features3 = () => {
       <div className="container px-4 sm:px-6 lg:px-8">
         <div className="z-10 mx-auto pb-8 sm:pb-12 lg:pb-16 flex max-w-4xl flex-col items-center gap-8 sm:gap-12 lg:gap-14 text-center">
           <div className="space-y-4">
-            <h2 className="text-3xl md:text-4xl lg:text-5xl font-medium text-gray-900 leading-tight">
+            <h2 className="text-3xl md:text-4xl lg:text-6xl font-bold text-gray-900 leading-tight">
               <span className="text-orange-500 font-bold">Format</span> your
               resume in seconds
             </h2>
@@ -15,7 +15,7 @@ const Features3 = () => {
           </div>
         </div>
 
-        <div className="transition-all duration-1000 delay-700 ease-in-out">
+        {/* <div className="transition-all duration-1000 delay-700 ease-in-out">
           <div className="mx-auto w-full max-w-xs sm:max-w-lg md:max-w-2xl lg:max-w-4xl xl:max-w-6xl">
             <div className="relative aspect-video bg-gradient-to-br from-gray-900 to-gray-800 rounded-xl lg:rounded-2xl overflow-hidden shadow-2xl">
               <video
@@ -41,7 +41,6 @@ const Features3 = () => {
                 </div>
               </div>
 
-              {/* Subtle corner accents */}
               <div className="absolute top-0 left-0 w-20 h-20 bg-gradient-to-br from-[#AD46FF]/20 to-transparent"></div>
               <div className="absolute bottom-0 right-0 w-24 h-24 bg-gradient-to-tl from-[#00C950]/15 to-transparent"></div>
             </div>
@@ -53,7 +52,7 @@ const Features3 = () => {
               </p>
             </div>
           </div>
-        </div>
+        </div> */}
       </div>
     </section>
   );

@@ -7,8 +7,8 @@ import { SIGNUP_URL } from "@/utils/constants";
 
 const Hero = () => {
   return (
-    <section className="py-16 sm:py-24 lg:py-32 bg-gradient-to-b from-white to-gray-50/30">
-      <div className="container px-4 sm:px-6 lg:px-8">
+    <section className="py-16 sm:py-24 lg:py-32 bg-gradient-to-b ">
+      <div className="container px-4 sm:px-6 lg:px-8 ">
         <div className="z-10 mx-auto flex max-w-4xl flex-col items-center gap-8 sm:gap-12 lg:gap-14 text-center">
           <div className="space-y-4 sm:space-y-6">
             <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-6xl font-bold text-gray-900 text-pretty leading-tight sm:leading-tight lg:leading-tight">
@@ -58,20 +58,11 @@ const Hero = () => {
           </div>
         </div>
 
-        <div className="mt-12 sm:mt-16 lg:mt-24 transition-all duration-1000 delay-700 ease-in-out">
+        <div className="mt-12 sm:mt-16 lg:mt-24 transition-all duration-1000 ">
           <div className="relative">
-            <img
-              src="sample.png"
-              alt="AI-powered resume builder interface showing professional resume templates"
-              className="mx-auto aspect-video w-full max-w-7xl rounded-xl lg:rounded-2xl object-cover shadow-2xl transition-all duration-700 ease-in-out transform-gpu hover:shadow-3xl"
-            />
-            <div className="absolute inset-0 rounded-xl lg:rounded-2xl bg-gradient-to-t from-black/5 to-transparent"></div>
-
-            {/* Subtle color accents around the image */}
-            <div className="absolute -top-2 -left-2 w-4 h-4 bg-gradient-to-br from-[#AD46FF] to-transparent rounded-full opacity-60 blur-sm"></div>
-            <div className="absolute -top-3 -right-4 w-6 h-6 bg-gradient-to-bl from-[#00C950] to-transparent rounded-full opacity-40 blur-sm"></div>
-            <div className="absolute -bottom-2 -left-4 w-5 h-5 bg-gradient-to-tr from-[#FE9900] to-transparent rounded-full opacity-50 blur-sm"></div>
-            <div className="absolute -bottom-2 -right-4 w-5 h-5 bg-gradient-to-tr from-[#FA2C37] to-transparent rounded-full opacity-50 blur-sm"></div>
+            <video src="/demo2.mp4" controls playsInline>
+              Your browser does not support the video tag.
+            </video>
           </div>
 
           <div className="mt-4 sm:mt-6 text-center">
