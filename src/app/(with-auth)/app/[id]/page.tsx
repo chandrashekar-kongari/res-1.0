@@ -279,7 +279,11 @@ export default function Home({ params }: { params: Promise<{ id: string }> }) {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            messages: [...messages, userMessage],
+            messages: [...messages, userMessage].map((msg) =>
+              msg.role === "assistant"
+                ? { id: msg.id, role: msg.role, content: msg.content }
+                : msg
+            ),
             editorHTML,
             attachPartOfHTML:
               attachPartOfHTML.length > 0 ? attachPartOfHTML : undefined,
@@ -293,6 +297,7 @@ export default function Home({ params }: { params: Promise<{ id: string }> }) {
             if (ev.data) {
               try {
                 const event = JSON.parse(ev.data);
+                console.log("event", event);
 
                 // Skip any meta messages
                 if (event?.type === "error") {
@@ -321,6 +326,7 @@ export default function Home({ params }: { params: Promise<{ id: string }> }) {
                             data: { delta: text },
                           },
                         ],
+                        content: (lastMessage.content || "") + (text || ""),
                       });
                       updated[lastIndex] = updatedMessage;
 
@@ -357,11 +363,14 @@ export default function Home({ params }: { params: Promise<{ id: string }> }) {
                   });
                 }
 
-                // ... rest of existing event handling remains the same ...
+                if (event?.data?.event?.item?.type == "function_call") {
+                  console.log("function_call", event?.data);
+                }
                 if (
                   event?.data?.event?.item?.type == "function_call" &&
                   event?.data?.event?.item?.status == "completed"
                 ) {
+                  // ... rest of existing event handling remains the same ...
                   setMessages((prev) => {
                     const lastIndex = prev.length - 1;
                     if (
@@ -554,74 +563,23 @@ export default function Home({ params }: { params: Promise<{ id: string }> }) {
                     // Handle new nested format - responseObj["0"]?.content?.[0]?.text
                     let res = responseObj;
 
-                    if (res?.oldEditorHTML && res?.newEditorHTML) {
+                    if (
+                      res?.oldEditorHTML !== undefined &&
+                      res?.newEditorHTML !== undefined &&
+                      res?.oldEditorHTML !== null &&
+                      res?.newEditorHTML !== null
+                    ) {
                       const htmlOfEditor = editorRef.current?.getHTML?.();
+                      if (!htmlOfEditor) {
+                        return;
+                      }
 
-                      if (htmlOfEditor) {
-                        if (
-                          !htmlOfEditor.includes(res.oldEditorHTML.trim()) ||
-                          res.success === false
-                        ) {
-                          //Retry the tool call with the updated HTML
-                          setMessages((prev) => {
-                            const lastIndex = prev.length - 1;
-                            if (
-                              lastIndex >= 0 &&
-                              prev[lastIndex].role === "assistant"
-                            ) {
-                              const updated = [...prev];
-                              const lastMessage = updated[lastIndex];
-                              const callId = event?.item?.rawItem?.callId;
-                              const exists = (lastMessage.events || []).some(
-                                (e) => e.callId === callId
-                              );
-                              if (exists) {
-                                updated[lastIndex] = {
-                                  ...lastMessage,
-                                  events: (lastMessage.events || []).map((e) =>
-                                    e.callId === callId
-                                      ? {
-                                          ...e,
-                                          status: true,
-                                          notFound: true,
-                                        }
-                                      : e
-                                  ),
-                                };
-                              }
-                              return updated;
-                            }
-                            return prev;
-                          });
-                          return;
-                        }
-
-                        const randomId = Math.random()
-                          .toString(36)
-                          .substring(2, 15);
-                        const finalId = `diff-editor-html-${randomId}`;
-
-                        // Construct diffHTML with colored marks
-                        const diffFromAssistant = `<div id="${finalId}" style="font-size: 14px; padding: 0px; line-height: 1.25; font-family: Calibri, Arial, sans-serif; white-space: pre-wrap; margin: 0px;">
-                          <mark style="background-color: #fdb8c0;">${res.oldEditorHTML}</mark>
-                          <mark style="background-color: #acf2bd;">${res.newEditorHTML}</mark>
-                        </div>`;
-
-                        replicaRef.current?.setHTML(diffFromAssistant);
-
-                        const replicaHtml = replicaRef.current
-                          ?.getHTML()
-                          ?.replace(
-                            /<p\s+style="font-size:\s*14px;\s*padding:\s*0px;\s*line-height:\s*1\.25;\s*font-family:\s*Calibri,\s*Arial,\s*sans-serif;\s*white-space:\s*pre-wrap;\s*margin:\s*0px;"\s*><\/p>\s*$/g,
-                            ""
-                          );
-
-                        const newHtml = htmlOfEditor.replace(
-                          res?.oldEditorHTML,
-                          replicaHtml ?? ""
-                        );
-                        editorRef.current?.setHTML?.(newHtml);
-
+                      if (
+                        (htmlOfEditor &&
+                          !htmlOfEditor.includes(res.oldEditorHTML.trim())) ||
+                        res.success === false
+                      ) {
+                        //Retry the tool call with the updated HTML
                         setMessages((prev) => {
                           const lastIndex = prev.length - 1;
                           if (
@@ -642,13 +600,7 @@ export default function Home({ params }: { params: Promise<{ id: string }> }) {
                                     ? {
                                         ...e,
                                         status: true,
-                                        output: {
-                                          diffEditorHTML: replicaHtml,
-                                          newEditorHTML: res?.newEditorHTML,
-                                          oldEditorHTML: res?.oldEditorHTML,
-                                          diffFromAssistant,
-                                          diffEditorHTMLId: finalId,
-                                        },
+                                        notFound: true,
                                       }
                                     : e
                                 ),
@@ -658,7 +610,71 @@ export default function Home({ params }: { params: Promise<{ id: string }> }) {
                           }
                           return prev;
                         });
+                        return;
                       }
+
+                      const randomId = Math.random()
+                        .toString(36)
+                        .substring(2, 15);
+                      const finalId = `diff-editor-html-${randomId}`;
+
+                      // Construct diffHTML with colored marks
+                      const diffFromAssistant = `<div id="${finalId}" style="font-size: 14px; padding: 0px; line-height: 1.25; font-family: Calibri, Arial, sans-serif; white-space: pre-wrap; margin: 0px;">
+                          <mark style="background-color: #fdb8c0;">${res.oldEditorHTML}</mark>
+                          <mark style="background-color: #acf2bd;">${res.newEditorHTML}</mark>
+                        </div>`;
+
+                      replicaRef.current?.setHTML(diffFromAssistant);
+
+                      const replicaHtml = replicaRef.current
+                        ?.getHTML()
+                        ?.replace(
+                          /<p\s+style="font-size:\s*14px;\s*padding:\s*0px;\s*line-height:\s*1\.25;\s*font-family:\s*Calibri,\s*Arial,\s*sans-serif;\s*white-space:\s*pre-wrap;\s*margin:\s*0px;"\s*><\/p>\s*$/g,
+                          ""
+                        );
+
+                      const newHtml = htmlOfEditor.replace(
+                        res?.oldEditorHTML,
+                        replicaHtml ?? ""
+                      );
+                      editorRef.current?.setHTML?.(newHtml);
+
+                      setMessages((prev) => {
+                        const lastIndex = prev.length - 1;
+                        if (
+                          lastIndex >= 0 &&
+                          prev[lastIndex].role === "assistant"
+                        ) {
+                          const updated = [...prev];
+                          const lastMessage = updated[lastIndex];
+                          const callId = event?.item?.rawItem?.callId;
+                          const exists = (lastMessage.events || []).some(
+                            (e) => e.callId === callId
+                          );
+                          if (exists) {
+                            updated[lastIndex] = {
+                              ...lastMessage,
+                              events: (lastMessage.events || []).map((e) =>
+                                e.callId === callId
+                                  ? {
+                                      ...e,
+                                      status: true,
+                                      output: {
+                                        diffEditorHTML: replicaHtml,
+                                        newEditorHTML: res?.newEditorHTML,
+                                        oldEditorHTML: res?.oldEditorHTML,
+                                        diffFromAssistant,
+                                        diffEditorHTMLId: finalId,
+                                      },
+                                    }
+                                  : e
+                              ),
+                            };
+                          }
+                          return updated;
+                        }
+                        return prev;
+                      });
                     } else {
                       setMessages((prev) => {
                         const lastIndex = prev.length - 1;
