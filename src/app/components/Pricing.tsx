@@ -8,7 +8,7 @@ import { SIGNUP_URL } from "@/utils/constants";
 
 const Pricing = () => {
   return (
-    <section className="py-16 sm:py-24 lg:py-32 bg-gradient-to-b from-gray-50/30 to-white">
+    <section className="py-16 sm:py-24 lg:py-32">
       <div className="container px-4 sm:px-6 lg:px-8">
         <div className="mx-auto flex max-w-6xl flex-col items-center gap-8 sm:gap-12 lg:gap-14 text-center">
           {/* Header Section */}
