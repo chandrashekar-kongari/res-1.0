@@ -9,6 +9,7 @@ import { BottomCall } from "./components/BottomCall";
 import { Features2 } from "./components/Features2";
 import { Features3 } from "./components/Feature3";
 import { Features4 } from "./components/Feature4";
+import { HeroScrollDemo } from "./components/HeroScrollDemo";
 
 export default async function Page() {
   // SSR: Check if user is logged in
@@ -18,15 +19,19 @@ export default async function Page() {
   }
 
   return (
-    <div>
-      <div className="flex flex-col items-center justify-center ">
-        <Navbar />
-        <Hero />
-        <div id="features">
-          <Features1 />
-          <Features2 />
-          <Features3 />
-          {/* <Features4 /> */}
+    <div className=" min-h-screen bg-[#FCFCFC] w-full relative mx-auto flex flex-col items-center justify-center">
+      <div className=" w-full relative max-w-4xl ">
+        <div className="flex flex-col items-center justify-center w-full relative z-0">
+          <Navbar />
+          <Hero />
+          <HeroScrollDemo />
+          <div id="features">
+            <Features1 />
+            <Features2 />
+            <Features3 />
+
+            <Features4 />
+          </div>
         </div>
 
         <div id="pricing">

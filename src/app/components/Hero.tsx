@@ -1,17 +1,43 @@
 "use client";
 
-import { Calendar } from "lucide-react";
+import React from "react";
+import {
+  SpeakerLoudIcon,
+  SpeakerOffIcon,
+  EnterFullScreenIcon,
+  ExitFullScreenIcon,
+} from "@radix-ui/react-icons";
 
 import { Button } from "@/components/ui/button";
 import { SIGNUP_URL } from "@/utils/constants";
+import { TypeWriterInput } from "./TypeWriter";
+import { BackgroundGradientAnimation } from "@/components/ui/background-gradient-animation";
 
 const Hero = () => {
+  const [isMuted, setIsMuted] = React.useState(true);
+  const [isFullscreen, setIsFullscreen] = React.useState(false);
+
+  React.useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(!!document.fullscreenElement);
+      const container = document.getElementById("video-container");
+      if (container) {
+        container.style.backgroundColor = document.fullscreenElement
+          ? "#FCFCFC"
+          : "transparent";
+      }
+    };
+
+    document.addEventListener("fullscreenchange", handleFullscreenChange);
+    return () =>
+      document.removeEventListener("fullscreenchange", handleFullscreenChange);
+  }, []);
   return (
-    <section className="py-16 sm:py-24 lg:py-32 bg-gradient-to-b ">
-      <div className="container px-4 sm:px-6 lg:px-8 ">
+    <section className="h-[calc(100vh-120px)] relative">
+      <div className="container px-4 sm:px-6 lg:px-8 relative h-full flex justify-center items-center">
         <div className="z-10 mx-auto flex max-w-4xl flex-col items-center gap-8 sm:gap-12 lg:gap-14 text-center">
           <div className="space-y-4 sm:space-y-6">
-            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-6xl font-bold text-gray-900 text-pretty leading-tight sm:leading-tight lg:leading-tight">
+            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-8xl font-bold text-gray-900 text-pretty leading-tight sm:leading-tight lg:leading-tight">
               Cursor For{" "}
               <span
                 style={{
@@ -34,8 +60,20 @@ const Hero = () => {
             </p>
           </div>
 
-          <div className="flex w-full flex-col items-center justify-center gap-4 sm:gap-6 lg:flex-row lg:gap-8">
-            <div className="flex flex-col items-center gap-2 lg:items-start">
+          <TypeWriterInput
+            sentences={[
+              "Update resume to match above job description",
+              "Rewrite experience section with metrics",
+              "Update skills to match job description",
+              "Add projects to match job description",
+            ]}
+            onButtonClick={() => {
+              window.location.href = SIGNUP_URL;
+            }}
+          />
+
+          {/* <div className="flex w-full flex-col items-center justify-center gap-4 sm:gap-6 lg:flex-row lg:gap-8">
+            <div className="flex flex-col items-center gap-2 lg:items-center">
               <p className="text-xs sm:text-sm text-black/80">
                 Save your time from copy pasting
               </p>
@@ -55,14 +93,64 @@ const Hero = () => {
             >
               Create Now
             </Button>
-          </div>
+          </div> */}
         </div>
 
-        <div className="mt-12 sm:mt-16 lg:mt-24 transition-all duration-1000 ">
-          <div className="relative">
-            <video src="/demo2.mp4" controls playsInline>
-              Your browser does not support the video tag.
-            </video>
+        {/* <div className="mt-12 sm:mt-16 lg:mt-24 duration-1000 ">
+          <div className="relative rounded-xl overflow-hidden">
+            <div className="relative" id="video-container">
+              <video
+                src="/memic.mp4"
+                playsInline
+                muted
+                autoPlay
+                loop
+                className="rounded-xl w-full"
+                id="hero-video"
+              >
+                Your browser does not support the video tag.
+              </video>
+              <div className="absolute bottom-2 right-2 flex gap-1.5 z-50">
+                <button
+                  onClick={() => {
+                    const video = document.getElementById(
+                      "hero-video"
+                    ) as HTMLVideoElement;
+                    if (video) {
+                      video.muted = !video.muted;
+                      setIsMuted(video.muted);
+                    }
+                  }}
+                  className="p-1.5 rounded-full bg-black/40 hover:bg-black/60 text-white"
+                >
+                  {isMuted ? (
+                    <SpeakerOffIcon className="w-4 h-4" />
+                  ) : (
+                    <SpeakerLoudIcon className="w-4 h-4" />
+                  )}
+                </button>
+                <button
+                  onClick={() => {
+                    const container =
+                      document.getElementById("video-container");
+                    if (container) {
+                      if (document.fullscreenElement) {
+                        document.exitFullscreen();
+                      } else {
+                        container.requestFullscreen();
+                      }
+                    }
+                  }}
+                  className="p-1.5 rounded-full bg-black/40 hover:bg-black/60 text-white"
+                >
+                  {isFullscreen ? (
+                    <ExitFullScreenIcon className="w-4 h-4" />
+                  ) : (
+                    <EnterFullScreenIcon className="w-4 h-4" />
+                  )}
+                </button>
+              </div>
+            </div>
           </div>
 
           <div className="mt-4 sm:mt-6 text-center">
@@ -70,7 +158,7 @@ const Hero = () => {
               Build your resume the same way you build code.
             </p>
           </div>
-        </div>
+        </div> */}
       </div>
 
       <style jsx>{`

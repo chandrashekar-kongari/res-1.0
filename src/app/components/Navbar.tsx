@@ -23,7 +23,7 @@ import Image from "next/image";
 
 const Navbar = () => {
   return (
-    <section className="sticky top-2 sm:top-2 z-50 max-w-4xl w-full mx-auto px-4 sm:px-6">
+    <section className="sticky top-2 sm:top-2 z-[100]  max-w-4xl w-full mx-auto px-4 sm:px-6">
       <div className="py-2 sm:py-3 px-3 sm:px-6 border border-white/20 rounded-2xl mt-2 sm:mt-4 bg-white/20 backdrop-blur ">
         <nav className="flex items-center justify-between">
           <a href="#" className="flex items-center gap-2 min-w-0 flex-shrink-0">
