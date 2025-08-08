@@ -297,7 +297,6 @@ export default function Home({ params }: { params: Promise<{ id: string }> }) {
             if (ev.data) {
               try {
                 const event = JSON.parse(ev.data);
-                console.log("event", event);
 
                 // Skip any meta messages
                 if (event?.type === "error") {
@@ -364,7 +363,6 @@ export default function Home({ params }: { params: Promise<{ id: string }> }) {
                 }
 
                 if (event?.data?.event?.item?.type == "function_call") {
-                  console.log("function_call", event?.data);
                 }
                 if (
                   event?.data?.event?.item?.type == "function_call" &&
