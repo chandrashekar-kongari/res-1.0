@@ -20,7 +20,7 @@ export async function POST(req: NextRequest) {
             id: user.id,
             email: user.primary_email, // <-- use primary_email
             name: user.display_name, // <-- use display_name
-            request_limit: 30,
+            request_limit: 20,
             no_limit: false,
           },
         });
