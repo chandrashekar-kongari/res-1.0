@@ -20,11 +20,11 @@ export default async function Page() {
 
   return (
     <div className=" min-h-screen bg-[#FCFCFC] w-full relative mx-auto flex flex-col items-center justify-center">
+      <Navbar />
+      <Hero />
+      <HeroScrollDemo />
       <div className=" w-full relative max-w-4xl ">
         <div className="flex flex-col items-center justify-center w-full relative z-0">
-          <Navbar />
-          <Hero />
-          <HeroScrollDemo />
           <div id="features">
             <Features1 />
             <Features2 />

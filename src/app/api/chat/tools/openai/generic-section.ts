@@ -97,15 +97,21 @@ ALL sub-headers (experience positions, project titles, skills categories, etc.) 
      * Include metrics and numbers when possible
      * Use present tense for current roles, past for previous
    - Technologies: Highlight relevant tools/technologies used
-   - Bullet points: Preserve <ul>, <li>, and <p> tag structure, if not present create them.
+   - Bullet points: If user asked to format the bullet points, use <ul>, <li>, and <p> tag structure
 
 3. Skills Section (if present):
    - Categories: Group by type (e.g., "Languages:", "Frameworks:", "Tools:") (MUST be BOLD)
-   - Format: Use consistent separators (", ")
-   - Order: Most relevant/important skills first in each category
+   - Format PER CATEGORY: Each category has its own line with skills side by side, comma-separated
+   - Layout: Within each category, all skills flow horizontally on the same line
+   - Structure: Category name (BOLD) followed by colon, then all skills in that category comma-separated
+   - Example format:
+     **Languages:** JavaScript, Python, TypeScript, Java, C++
+     **Frameworks:** React, Angular, Vue.js, Express.js, Django
+     **Tools:** Git, Docker, AWS, MongoDB, PostgreSQL
+   - Order: Most relevant/important skills first within each category
    - Proficiency: Optional level indicators if in original format
-   - Keep technical and soft skills separate
-   - Category followed by a colon and all skills in that category separated by a comma.
+   - Keep technical and soft skills in separate categories
+   - NO bullet points or vertical lists within categories - skills must be inline and comma-separated per category
 
 4. Projects Section (if present):
    - Project Header: "Project Name | Technologies [spaces] Duration" (MUST be BOLD)
