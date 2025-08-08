@@ -50,7 +50,7 @@ const Hero = () => {
               </a>
             </div>
             <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-8xl font-bold text-gray-900 text-pretty leading-tight sm:leading-tight lg:leading-tight">
-              Cursor For{" "}
+              AI For{" "}
               <span
                 style={{
                   background:
