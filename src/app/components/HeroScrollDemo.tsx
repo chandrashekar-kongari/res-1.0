@@ -7,6 +7,7 @@ import {
   ExitFullScreenIcon,
 } from "@radix-ui/react-icons";
 import { ContainerScroll } from "@/components/ui/container-scroll-animation";
+import ReactPlayer from "react-player";
 
 export function HeroScrollDemo() {
   const [isMuted, setIsMuted] = React.useState(true);
@@ -23,61 +24,33 @@ export function HeroScrollDemo() {
   }, []);
 
   return (
-    <div className="flex flex-col overflow-hidden">
-      <ContainerScroll titleComponent={<></>}>
-        <div className="relative" id="hero-scroll-video-container">
-          <video
-            src="/demo2.mp4"
-            autoPlay
-            loop
-            muted
-            playsInline
-            className="w-full h-full rounded-2xl object-cover"
-            id="hero-scroll-video"
-          />
-          <div className="absolute bottom-2 right-2 flex gap-1.5 z-50">
-            <button
-              onClick={() => {
-                const video = document.getElementById(
-                  "hero-scroll-video"
-                ) as HTMLVideoElement;
-                if (video) {
-                  video.muted = !video.muted;
-                  setIsMuted(video.muted);
-                }
+    <div className="flex flex-col overflow-hidden w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="mt-8 sm:mt-12 md:mt-16 lg:mt-24 duration-1000">
+        <div className="relative rounded-lg sm:rounded-xl overflow-hidden shadow-lg sm:shadow-xl">
+          <div
+            className="relative aspect-video w-full min-h-[250px] xs:min-h-[300px] sm:min-h-[400px] md:min-h-[450px] lg:min-h-[500px] xl:min-h-[600px]"
+            id="video-container"
+          >
+            <ReactPlayer
+              src="https://youtu.be/22q14TVRhCQ"
+              controls
+              width="100%"
+              height="100%"
+              style={{
+                position: "absolute",
+                top: 0,
+                left: 0,
               }}
-              className="p-1.5 rounded-full bg-black/40 hover:bg-black/60 text-white transition-colors"
-            >
-              {isMuted ? (
-                <SpeakerOffIcon className="w-4 h-4" />
-              ) : (
-                <SpeakerLoudIcon className="w-4 h-4" />
-              )}
-            </button>
-            <button
-              onClick={() => {
-                const container = document.getElementById(
-                  "hero-scroll-video-container"
-                );
-                if (container) {
-                  if (document.fullscreenElement) {
-                    document.exitFullscreen();
-                  } else {
-                    container.requestFullscreen();
-                  }
-                }
-              }}
-              className="p-1.5 rounded-full bg-black/40 hover:bg-black/60 text-white transition-colors"
-            >
-              {isFullscreen ? (
-                <ExitFullScreenIcon className="w-4 h-4" />
-              ) : (
-                <EnterFullScreenIcon className="w-4 h-4" />
-              )}
-            </button>
+            />
           </div>
         </div>
-      </ContainerScroll>
+
+        <div className="mt-4 sm:mt-6 text-center px-4">
+          <p className="text-xs sm:text-sm md:text-base text-gray-500 max-w-2xl mx-auto leading-relaxed">
+            Build your resume the same way you build code.
+          </p>
+        </div>
+      </div>
     </div>
   );
 }

@@ -44,7 +44,7 @@ const Features3 = () => {
           </div>
         </div>
 
-        <div className="transition-all duration-1000 delay-700 ease-in-out">
+        {/* <div className="transition-all duration-1000 delay-700 ease-in-out">
           <div className="mx-auto w-full max-w-xs sm:max-w-lg md:max-w-2xl lg:max-w-4xl xl:max-w-6xl">
             <div className="relative aspect-video bg-gradient-to-br from-gray-900 to-gray-800 rounded-xl lg:rounded-2xl overflow-hidden shadow-2xl">
               <div className="relative" id="feature3-video-container">
@@ -113,7 +113,7 @@ const Features3 = () => {
               </p>
             </div>
           </div>
-        </div>
+        </div> */}
       </div>
     </section>
   );

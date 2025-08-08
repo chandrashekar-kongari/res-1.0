@@ -35,8 +35,20 @@ const Hero = () => {
   return (
     <section className="h-[calc(100vh-120px)] relative">
       <div className="container px-4 sm:px-6 lg:px-8 relative h-full flex justify-center items-center">
-        <div className="z-10 mx-auto flex max-w-4xl flex-col items-center gap-8 sm:gap-12 lg:gap-14 text-center">
+        <div className="z-10 mx-auto flex max-w-4xl flex-col items-center gap-8 sm:gap-12 lg:gap-6 text-center">
           <div className="space-y-4 sm:space-y-6">
+            <div className="flex justify-center">
+              <a
+                href="https://www.producthunt.com/products/memic?embed=true&utm_source=badge-featured&utm_medium=badge&utm_source=badge-memic"
+                target="_blank"
+              >
+                <img
+                  src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=1002920&theme=light&t=1754609352606"
+                  alt="Memic - Cursor&#0032;For&#0032;Resume&#0032;Building | Product Hunt"
+                  style={{ height: "40px" }}
+                />
+              </a>
+            </div>
             <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-8xl font-bold text-gray-900 text-pretty leading-tight sm:leading-tight lg:leading-tight">
               Cursor For{" "}
               <span
@@ -54,7 +66,7 @@ const Hero = () => {
               </span>{" "}
               Building
             </h1>
-            <p className="mx-auto max-w-lg sm:max-w-lg text-sm sm:text-base lg:text-2xl text-black/70 leading-relaxed">
+            <p className="mx-auto max-w-lg sm:max-w-lg text-sm sm:text-base lg:text-xl text-black/70 leading-relaxed">
               We are not just building a resume builder, we are reimagining the
               way we build resumes.
             </p>
