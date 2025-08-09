@@ -37,7 +37,7 @@ const Hero = () => {
       <div className="container px-4 sm:px-6 lg:px-8 relative h-full flex justify-center items-center">
         <div className="z-10 mx-auto flex max-w-4xl flex-col items-center gap-8 sm:gap-12 lg:gap-6 text-center">
           <div className="space-y-4 sm:space-y-6">
-            <div className="flex justify-center">
+            {/* <div className="flex justify-center">
               <a
                 href="https://www.producthunt.com/products/memic?embed=true&utm_source=badge-featured&utm_medium=badge&utm_source=badge-memic"
                 target="_blank"
@@ -48,7 +48,7 @@ const Hero = () => {
                   style={{ height: "40px" }}
                 />
               </a>
-            </div>
+            </div> */}
             <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-8xl font-bold text-gray-900 text-pretty leading-tight sm:leading-tight lg:leading-tight">
               AI For{" "}
               <span
