@@ -365,7 +365,7 @@ export function AppSidebar() {
                       </div>
                     )}
                   </div>
-                  <Separator className="my-2" />
+                  {/* <Separator className="my-2" />
                   {userInfo?.subscription_status === "active" ? (
                     <SidebarMenuButton
                       asChild
@@ -377,7 +377,7 @@ export function AppSidebar() {
                         <p className="text-xs">Upgrade to Pro</p>
                       </div>
                     </SidebarMenuButton>
-                  ) : null}
+                  ) : null} */}
                   <Separator className="my-2" />
                   <div className="mt-auto">
                     <React.Suspense

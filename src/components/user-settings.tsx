@@ -80,7 +80,7 @@ const UserSettings = () => {
           </a>
         </DropdownMenuLabel>
 
-        {userInfo?.subscription_status === "active" && (
+        {/* {userInfo?.subscription_status === "active" && (
           <DropdownMenuItem
             className="rounded-2xl p-2 cursor-pointer hover:bg-purple-50 dark:hover:bg-purple-900/20 transition-all duration-200 focus:bg-purple-50 dark:focus:bg-purple-900/20 mb-2"
             onClick={() => {
@@ -101,7 +101,7 @@ const UserSettings = () => {
               </div>
             </div>
           </DropdownMenuItem>
-        )}
+        )} */}
 
         <DropdownMenuItem
           className="rounded-2xl p-2 cursor-pointer hover:bg-red-50 dark:hover:bg-red-900/20 transition-all duration-200 focus:bg-red-50 dark:focus:bg-red-900/20"

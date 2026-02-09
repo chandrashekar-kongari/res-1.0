@@ -438,7 +438,7 @@ const ChatUI = ({
             followButtonClassName="hidden"
             mode="bottom"
           >
-            <div ref={scrollContainerRef} className="p-3 pt-0">
+            <div ref={scrollContainerRef} className="p-3 pt-1">
               {messages.map((message, index) => {
                 // Only render user messages
                 if (message.role === "user") {
